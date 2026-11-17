@@ -1,0 +1,6 @@
+{
+  "name": "Bao Bì An Phát – Bán Sỉ Bao Bì & Blog",
+  "description": "Nền tảng website giới thiệu sản phẩm bao bì thực phẩm bán sỉ kết hợp blog chuyên ngành tiếng Việt, xây dựng trên Next.js App Router, Payload CMS và PostgreSQL.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

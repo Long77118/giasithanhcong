@@ -1,0 +1,13 @@
+node_modules/
+.next/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+.playwright-cli/
+public/media/
+media/
+tsconfig.tsbuildinfo
