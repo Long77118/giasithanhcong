@@ -94,7 +94,9 @@ try {
   console.log('PASS: Worker public pages, noindex, admin login/edit pages, R2 upload/read/delete, immediate CMS updates, draft/privacy/404 checks and shared PostgreSQL rate limits.');
 } catch (error) {
   console.error(String(error));
-  console.error(fs.readFileSync('.ci/worker.log', 'utf8').slice(-12000));
+  const log = fs.readFileSync('.ci/worker.log', 'utf8');
+  console.error(log.slice(0, 12000));
+  console.error(log.slice(-6000));
   process.exitCode = 1;
 } finally {
   worker.kill('SIGTERM');

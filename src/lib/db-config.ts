@@ -1,4 +1,5 @@
 import type { PoolConfig } from 'pg';
+import { Socket } from 'node:net';
 
 export interface PostgresPoolOptions {
   useAdminCredentials?: boolean;
@@ -14,6 +15,8 @@ export function getPostgresPoolConfig(options: PostgresPoolOptions = {}): PoolCo
   if (options.hyperdrive) {
     return {
       ...options.hyperdrive,
+      // Workers implements node:net. Avoid pg-cloudflare's close/read race on disposal.
+      stream: () => new Socket(),
       max: 4,
       // Do not reuse a TCP client across Workers request contexts. Hyperdrive pools upstream.
       maxUses: 1,
