@@ -47,6 +47,7 @@ jobs:
       - run: git diff --exit-code -- src/payload-types.ts
       - run: bun run test
       - run: bun run typecheck
+      - run: bun run cf:check
       - run: bun run db:migrate
       - run: bunx tsx scripts/ci-pool-smoke.ts
       - run: bun run db:seed
