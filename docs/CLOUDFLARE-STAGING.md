@@ -13,14 +13,20 @@ Database dùng PostgreSQL, không chuyển sang D1. Hướng dẫn dành cho tà
 | R2 bucket | `giasithanhcong-staging-media` | Ảnh upload từ CMS |
 | Worker | `giasithanhcong-staging` | Website, admin và API |
 
-Payload/OpenNext thường vượt giới hạn bundle của Workers Free. Kiểm tra kích thước gzip trong CI trước khi triển khai và tự chọn gói phù hợp trong Cloudflare; repository không tự mua hoặc nâng gói.
+Bundle thử đã đo khoảng 18 MiB chưa nén (4.2 MiB gzip). Theo [giới hạn Cloudflare hiện tại](https://developers.cloudflare.com/workers/platform/limits/), giới hạn bundle là 64 MiB chưa nén cho cả Free/Paid; không kết luận phải nâng gói chỉ vì gzip vượt 3 MiB. Tuy nhiên Free có CPU 10 ms/request, cần kiểm tra SSR/đăng nhập CMS trên URL thật; emulator không chứng minh được giới hạn CPU ở cloud. Repository không tự mua hoặc nâng gói.
 
 ## 1. Tạo Neon
 
 1. Đăng ký tại [Neon](https://console.neon.tech/). Có thể dùng tài khoản GitHub.
 2. Tạo project `giasithanhcong`, chọn PostgreSQL 18 và khu vực gần khách truy cập. Dùng khu vực châu Á nếu có trong danh sách.
 3. Tạo branch `staging`, database `giasithanhcong_staging`.
-4. Trong **Roles**, tạo role ứng dụng `giasithanhcong_app`. Giữ role owner để chạy migrations/import, không dùng owner cho Worker.
+4. Giữ role owner để chạy migrations/import. Tạo role ứng dụng bằng **SQL Editor** trên branch staging, dùng mật khẩu mạnh riêng do bạn tự tạo:
+
+   ```sql
+   CREATE ROLE giasithanhcong_app LOGIN PASSWORD 'THAY_BANG_MAT_KHAU_RIENG';
+   ```
+
+   Không dùng mật khẩu minh họa trên. Theo [tài liệu Neon](https://neon.com/docs/manage/roles), role tạo qua giao diện Roles mặc định có `neon_superuser`; tạo qua SQL rồi cấp quyền ở bước 2 giúp Worker chỉ có quyền đọc/ghi dữ liệu cần thiết.
 5. Mở **Connect**, chọn đúng branch/database/role. **Tắt Connection pooling** để lấy hostname DIRECT. Hyperdrive sẽ đảm nhiệm pooling.
 6. Lưu host, database, mật khẩu app và mật khẩu owner trong `.env.staging` ở máy cá nhân, sao chép từ `.env.staging.example`. Không gửi các giá trị này vào chat/GitHub.
 7. Đặt `SQL_SSL=true`, `ALLOW_INDEXING=false`, `DEPLOYMENT_STAGE=staging`.
@@ -141,5 +147,6 @@ Chỉ đánh dấu deploy thành công sau các bước trên trên **URL cloud 
 - Query CMS ở Worker staging đọc trực tiếp, không giữ cache nội dung giữa các instance, để sửa admin có hiệu lực ngay. Có thể thiết kế cache phân tán cho bản production sau khi thử ổn định.
 - PostgreSQL trên Worker dùng pool ngắn hạn riêng cho từng thao tác; giao dịch giữ cùng client đến khi commit/rollback. Hyperdrive quản lý pool upstream. Điều này tránh chia sẻ socket/promise giữa các request khi Payload cache adapter trong isolate. Driver dùng `node:net` của Workers để tránh lỗi đóng socket của `pg-cloudflare`; timeout kết nối 15 giây, truy vấn 20 giây. Local Node giữ pool hiện tại.
 - Đây là noindex, không phải cơ chế giữ kín URL. Muốn chỉ nhóm thử truy cập, cấu hình Cloudflare Access riêng.
+- Chưa cấu hình dịch vụ email; dùng tài khoản admin hiện có khi thử. Email khôi phục mật khẩu chưa gửi tới hộp thư thật.
 
 Tài liệu gốc: [Payload trên Workers](https://github.com/payloadcms/payload/tree/v3.93.0/templates/with-cloudflare-d1), [OpenNext](https://opennext.js.org/cloudflare), [Neon với Hyperdrive](https://developers.cloudflare.com/hyperdrive/examples/connect-to-postgres/postgres-database-providers/neon/), [Payload R2](https://payloadcms.com/docs/upload/storage-adapters).
