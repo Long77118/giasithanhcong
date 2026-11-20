@@ -24,7 +24,7 @@
     "cf:build": "cross-env DEPLOY_TARGET=cloudflare CLOUDFLARE_BUILD=true ALLOW_INDEXING=false opennextjs-cloudflare build",
     "cf:preview": "opennextjs-cloudflare preview",
     "cf:check": "node scripts/check-cloudflare-config.mjs",
-    "cf:deploy": "npm run cf:check && opennextjs-cloudflare deploy",
+    "cf:deploy": "npm run cf:check && cross-env CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://deploy_only:deploy_only@127.0.0.1:5432/deploy_only opennextjs-cloudflare deploy",
     "cf:whoami": "wrangler whoami"
   },
   "dependencies": {

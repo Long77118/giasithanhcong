@@ -55,8 +55,10 @@ jobs:
       - run: bun run build
       - run: node scripts/ci-node-smoke.mjs
       - run: bun run cf:build
-      - name: Package Worker without deploying
-        run: bunx wrangler deploy --dry-run --outdir artifacts/worker
+      - name: Exercise OpenNext deployment preflight without deploying
+        # Use the real deploy command and project config, not the smoke-test
+        # config that already supplies a working local Hyperdrive connection.
+        run: bun run cf:deploy --dry-run --outdir artifacts/worker
       - uses: actions/upload-artifact@v4
         if: success()
         with:

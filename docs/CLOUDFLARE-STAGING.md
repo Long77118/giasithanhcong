@@ -115,16 +115,16 @@ bun run cf:deploy
 ```
 
 `cf:check` dừng nếu Hyperdrive ID/URL vẫn là placeholder hoặc staging bị bật index.
+`cf:deploy` cấp một chuỗi PostgreSQL giả trên `127.0.0.1` chỉ cho môi trường mô phỏng mà OpenNext tạo khi đọc bindings trước deploy. Bước này không truy vấn database và không cần PostgreSQL trên máy build. Chuỗi giả không phải runtime variable hay mật khẩu Neon; Worker đã deploy vẫn dùng Hyperdrive ID trong `wrangler.jsonc`. Không thêm chuỗi này vào runtime secrets. CI chạy chính lệnh `bun run cf:deploy --dry-run --outdir artifacts/worker` để kiểm tra cả bước này mà không triển khai thật.
 Khi dùng CLI lần đầu, đăng nhập qua `bunx wrangler login`; chủ tài khoản tự hoàn tất bước cấp quyền của Cloudflare.
 
 Nếu dùng Cloudflare **Workers Builds** kết nối GitHub:
 
 - Repository: `Long77118/giasithanhcong`, branch `main`.
 - Worker name: `giasithanhcong-staging`, khớp `wrangler.jsonc`.
-- Install command: `bun install --frozen-lockfile`.
-- Build command: `bun run cf:build`.
+- Build command: `bun install --frozen-lockfile && bun run cf:build`.
 - Deploy command: `bun run cf:deploy`.
-- Đặt phiên bản Node/Bun đúng ở phần cấu hình build.
+- Build variables: `NODE_VERSION=22.23.5`, `BUN_VERSION=1.4.3`, `SKIP_DEPENDENCY_INSTALL=1`.
 - Tạo database, nhập dữ liệu/admin, điền Hyperdrive ID, bucket và runtime secrets **trước khi mở URL cho người khác thử**.
 - Không đặt `CLOUDFLARE_BUILD=true` vào runtime secrets; cờ này chỉ do lệnh build sử dụng.
 
