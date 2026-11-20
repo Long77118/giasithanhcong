@@ -16,8 +16,8 @@
   },
   "hyperdrive": [{
     "binding": "HYPERDRIVE",
-    // Replace with the configuration ID created against Neon's DIRECT endpoint.
-    "id": "00000000000000000000000000000000"
+    // Neon staging via the application role; disable query caching in Hyperdrive.
+    "id": "9e732017f38c44778cc81427c021a6cf"
   }],
   "r2_buckets": [{ "binding": "MEDIA_BUCKET", "bucket_name": "giasithanhcong-staging-media" }],
   "observability": { "enabled": true }
