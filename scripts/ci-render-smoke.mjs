@@ -116,9 +116,16 @@ try {
   await request(detailPath);
   const updatedName = 'Sản phẩm kiểm tra Render CI';
   await saveProduct({ name: updatedName, images: [{ image: media.id, alt: 'Ảnh CI' }] });
+  const saved = await (await request(productPath + '?depth=1', { headers: auth })).json();
+  const galleryImage = saved.images[0].image;
+  assert.equal(galleryImage.id, media.id);
+  const galleryUrl = galleryImage.sizes?.card?.url || galleryImage.url;
   const updatedHtml = await (await request(detailPath)).text();
   assert.ok(updatedHtml.includes(updatedName), 'CMS update should be visible immediately');
-  assert.ok(updatedHtml.includes(media.filename), 'Published product should render the uploaded image');
+  assert.ok(updatedHtml.includes(galleryUrl), 'Published product should render the uploaded image');
+  const galleryResponse = await request(galleryUrl);
+  assert.match(galleryResponse.headers.get('content-type') ?? '', /^image\//);
+  await galleryResponse.arrayBuffer();
 
   await saveProduct({ name: original.name, images: original.images.map(({ image, alt }) => ({ image: image.id, alt })) });
   await request(`/api/media/${media.id}`, { method: 'DELETE', headers: auth });
