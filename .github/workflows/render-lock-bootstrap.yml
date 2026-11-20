@@ -1,0 +1,20 @@
+name: Resolve Render staging lockfile
+on:
+  push:
+    branches: [codex/render-staging]
+permissions:
+  contents: read
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+      - run: bun install --lockfile-only
+      - uses: actions/upload-artifact@v4
+        with:
+          name: render-bun-lock
+          path: bun.lock
+          retention-days: 1
