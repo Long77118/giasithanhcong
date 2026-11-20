@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildConfig, type TextFieldSingleValidation } from 'payload';
-import { postgresAdapter } from '@payloadcms/db-postgres';
+import { createPostgresAdapter } from './lib/worker-postgres';
 import { lexicalEditor, LinkFeature, RelationshipFeature, UploadFeature } from '@payloadcms/richtext-lexical';
 import { seoPlugin } from '@payloadcms/plugin-seo';
 import { vi } from '@payloadcms/translations/languages/vi';
@@ -97,7 +97,7 @@ export default buildConfig({
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
-  db: postgresAdapter({
+  db: createPostgresAdapter({
     // Keep the generated schema aligned with the category deletion policy and its migration.
     beforeSchemaInit: [({ adapter, schema }) => {
       for (const [table, field] of [
@@ -113,8 +113,8 @@ export default buildConfig({
     }],
     pool: getPostgresPoolConfig({ hyperdrive: cloudflare?.HYPERDRIVE }),
     push: false,
-    migrationDir: path.resolve(dirname, 'migrations'),
-  }),
+      migrationDir: path.resolve(dirname, 'migrations'),
+    }, Boolean(cloudflare)),
   sharp,
   plugins: [
     ...(cloudflare ? [r2Storage({ bucket: cloudflare.MEDIA_BUCKET, collections: { media: true } })] : []),

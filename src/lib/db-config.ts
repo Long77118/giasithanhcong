@@ -21,6 +21,8 @@ export function getPostgresPoolConfig(options: PostgresPoolOptions = {}): PoolCo
       // Do not reuse a TCP client across Workers request contexts. Hyperdrive pools upstream.
       maxUses: 1,
       connectionTimeoutMillis: 15000,
+      query_timeout: 20000,
+      statement_timeout: 20000,
     };
   }
   if (process.env.CLOUDFLARE_BUILD === 'true') {

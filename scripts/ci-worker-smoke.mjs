@@ -48,6 +48,11 @@ try {
     if (route === '/') assert.match(html, /noindex/);
     evidence.routes.push(route);
   }
+  // Exercise a reused isolate with independent overlapping HTTP request contexts.
+  await Promise.all(['/', '/san-pham', '/blog', '/san-pham?q=PET', '/lien-he'].map(async route => {
+    const response = await request(route);
+    await response.arrayBuffer();
+  }));
   await request('/san-pham/hop-ba-mia-2-ngan-noi-bo-draft', {}, 404);
   await request('/san-pham?page=999999', {}, 404);
   await request('/api/users?limit=1', {}, 403);

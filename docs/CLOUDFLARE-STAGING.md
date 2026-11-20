@@ -139,6 +139,7 @@ Chỉ đánh dấu deploy thành công sau các bước trên trên **URL cloud 
 - Bản Workers không dùng Sharp native; ảnh mới được giữ bản gốc trong R2. Các ảnh responsive/thumbnail đã nhập vẫn dùng được; giao diện có fallback về ảnh gốc.
 - Next Image ở bản thử phục vụ ảnh gốc, chưa bật dịch vụ Cloudflare Images phát sinh phí. Local Node vẫn tối ưu/resize như trước.
 - Query CMS ở Worker staging đọc trực tiếp, không giữ cache nội dung giữa các instance, để sửa admin có hiệu lực ngay. Có thể thiết kế cache phân tán cho bản production sau khi thử ổn định.
+- PostgreSQL trên Worker dùng pool ngắn hạn riêng cho từng thao tác; giao dịch giữ cùng client đến khi commit/rollback. Hyperdrive quản lý pool upstream. Điều này tránh chia sẻ socket/promise giữa các request khi Payload cache adapter trong isolate. Driver dùng `node:net` của Workers để tránh lỗi đóng socket của `pg-cloudflare`; timeout kết nối 15 giây, truy vấn 20 giây. Local Node giữ pool hiện tại.
 - Đây là noindex, không phải cơ chế giữ kín URL. Muốn chỉ nhóm thử truy cập, cấu hình Cloudflare Access riêng.
 
 Tài liệu gốc: [Payload trên Workers](https://github.com/payloadcms/payload/tree/v3.93.0/templates/with-cloudflare-d1), [OpenNext](https://opennext.js.org/cloudflare), [Neon với Hyperdrive](https://developers.cloudflare.com/hyperdrive/examples/connect-to-postgres/postgres-database-providers/neon/), [Payload R2](https://payloadcms.com/docs/upload/storage-adapters).

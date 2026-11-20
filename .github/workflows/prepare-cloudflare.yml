@@ -48,6 +48,7 @@ jobs:
       - run: bun run test
       - run: bun run typecheck
       - run: bun run db:migrate
+      - run: bunx tsx scripts/ci-pool-smoke.ts
       - run: bun run db:seed
       - run: bunx tsx scripts/ci-fixture.ts
       - run: bun run build
