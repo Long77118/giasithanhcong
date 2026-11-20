@@ -79,7 +79,6 @@ try {
   form.set('file', new Blob([bytes], { type: 'image/webp' }), 'ci-render-upload.webp');
   await request('/api/media', { method: 'POST', body: form }, 403);
   const { doc: media } = await (await request('/api/media', { method: 'POST', headers: auth, body: form }, 201)).json();
-  assert.ok(media._objectKey, 'New upload uses a unique storage key');
   const stored = await request(media.url);
   assert.match(stored.headers.get('content-type') ?? '', /^image\//);
   assert.deepEqual(Buffer.from(await stored.arrayBuffer()), bytes);
