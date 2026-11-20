@@ -8,6 +8,17 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: ci_only
+          POSTGRES_PASSWORD: ci_only
+          POSTGRES_DB: ci_only
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U ci_only -d ci_only"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       SQL_HOST: 127.0.0.1
       SQL_DB_NAME: ci_only
@@ -32,6 +43,8 @@ jobs:
           name: deployment-lock
           path: bun.lock
       - run: bun install --frozen-lockfile
+      - name: Generate isolated CI secret
+        run: node -e "require('fs').appendFileSync(process.env.GITHUB_ENV, 'PAYLOAD_SECRET='+require('crypto').randomBytes(32).toString('hex')+'\n')"
       - run: bun run payload:types
       - uses: actions/upload-artifact@v4
         with:
@@ -39,6 +52,8 @@ jobs:
           path: src/payload-types.ts
       - run: bun run test
       - run: bun run typecheck
+      - run: bun run db:migrate
+      - run: bun run db:seed
       - run: bun run cf:build
       - name: Package Worker without deploying
         run: bunx wrangler deploy --dry-run --outdir artifacts/worker
@@ -47,3 +62,10 @@ jobs:
         with:
           name: worker-preview-build
           path: artifacts/worker
+      - run: bunx tsx scripts/ci-fixture.ts
+      - run: node scripts/ci-worker-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: cloudflare-test-evidence
+          path: .ci/results.json

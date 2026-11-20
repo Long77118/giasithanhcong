@@ -39,6 +39,7 @@ const validateCanonicalUrl: TextFieldSingleValidation = (value, { previousValue 
 };
 
 export default buildConfig({
+  ...(cloudflare ? { serverURL: getSiteUrl(), csrf: [getSiteUrl()], cors: [getSiteUrl()] } : {}),
   logger: cloudflare ? createWorkersLogger() : undefined,
   onInit: async (payload) => {
     if (!cloudflare) return;

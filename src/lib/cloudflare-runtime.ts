@@ -1,10 +1,10 @@
-import type { R2Bucket } from '@cloudflare/workers-types';
+import type { R2StorageOptions } from '@payloadcms/storage-r2';
 import type { PayloadLogger } from 'payload';
 import { isCloudflareRuntime } from './deployment';
 
 export interface CloudflareBindings {
   HYPERDRIVE: { host: string; port: number; user: string; password: string; database: string };
-  MEDIA_BUCKET: R2Bucket;
+  MEDIA_BUCKET: R2StorageOptions['bucket'];
   DEPLOYMENT_STAGE?: string;
   QUOTE_TRUSTED_PROXY_TOKEN?: string;
 }

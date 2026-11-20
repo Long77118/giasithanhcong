@@ -239,6 +239,7 @@ export interface ProductCategory {
  */
 export interface Media {
   id: number;
+  _objectKey?: string | null;
   alt: string;
   caption?: string | null;
   updatedAt: string;
@@ -612,6 +613,7 @@ export interface QuoteRequestsSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  _objectKey?: T;
   alt?: T;
   caption?: T;
   updatedAt?: T;
