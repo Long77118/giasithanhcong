@@ -1,7 +1,7 @@
 name: Verify Node and Cloudflare staging
 on:
   push:
-    branches: [main, codex/cloudflare-staging]
+    branches: [main, codex/cloudflare-staging, codex/render-staging]
   pull_request:
 permissions:
   contents: read
@@ -53,7 +53,50 @@ jobs:
       - run: bun run db:seed
       - run: bunx tsx scripts/ci-fixture.ts
       - run: bun run build
+        if: github.ref_name != 'codex/render-staging' && github.head_ref != 'codex/render-staging'
       - run: node scripts/ci-node-smoke.mjs
+        if: github.ref_name != 'codex/render-staging' && github.head_ref != 'codex/render-staging'
+      - name: Verify Render build, admin and private S3 storage
+        if: github.ref_name == 'codex/render-staging' || github.head_ref == 'codex/render-staging'
+        env:
+          RENDER: 'true'
+          RENDER_EXTERNAL_URL: https://ci-render.onrender.com
+          DEPLOYMENT_STAGE: staging
+          ALLOW_INDEXING: 'true'
+          SQL_USER: ci_app
+          SQL_PASSWORD: ci_app_only
+          PORT: '10000'
+          R2_BUCKET: ci-render-private
+          R2_ENDPOINT: http://127.0.0.1:5000
+          R2_ACCESS_KEY_ID: ci_only
+          R2_SECRET_ACCESS_KEY: ci_only
+        run: |
+          set -euo pipefail
+          python3 -m venv .ci/s3-venv
+          .ci/s3-venv/bin/pip -q install 'moto[server]==5.1.22'
+          .ci/s3-venv/bin/moto_server -H 127.0.0.1 -p 5000 > .ci/s3.log 2>&1 &
+          s3_pid=$!
+          trap 'kill "$s3_pid"' EXIT
+          curl --silent --show-error --retry 15 --retry-delay 1 --retry-connrefused "$R2_ENDPOINT" >/dev/null
+          .ci/s3-venv/bin/python - <<'PY'
+          import mimetypes
+          import os
+          from pathlib import Path
+          import boto3
+
+          s3 = boto3.client('s3', endpoint_url=os.environ['R2_ENDPOINT'], region_name='us-east-1',
+                            aws_access_key_id=os.environ['R2_ACCESS_KEY_ID'],
+                            aws_secret_access_key=os.environ['R2_SECRET_ACCESS_KEY'])
+          bucket = os.environ['R2_BUCKET']
+          s3.create_bucket(Bucket=bucket)
+          for image in Path('media').iterdir():
+              if image.is_file():
+                  s3.upload_file(str(image), bucket, image.name,
+                                 ExtraArgs={'ContentType': mimetypes.guess_type(image)[0] or 'application/octet-stream'})
+          PY
+          mv media .ci/seed-media
+          bun run build
+          node scripts/ci-render-smoke.mjs
       - run: bun run cf:build
       - name: Exercise OpenNext deployment preflight without deploying
         # Use the real deploy command and project config, not the smoke-test

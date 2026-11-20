@@ -22,8 +22,13 @@ import { normalizeCanonicalPath } from './lib/canonical';
 import { richTextCollections } from './lib/rich-text';
 import { isPublicContentCollection, publicContentPath } from './lib/slug';
 import { getRuntimeBindings, createWorkersLogger } from './lib/cloudflare-runtime';
+import { isRenderStaging } from './lib/deployment';
 
 const cloudflare = await getRuntimeBindings();
+const renderStaging = process.env.CLOUDFLARE_BUILD_TARGET !== 'true' && isRenderStaging();
+const renderMediaStorage = renderStaging
+  ? (await import('./lib/render-media-storage')).getRenderMediaStorage()
+  : null;
 // The build-time constant removes Sharp's native binaries from the Worker bundle.
 const sharp = process.env.CLOUDFLARE_BUILD_TARGET === 'true'
   ? undefined
@@ -39,13 +44,13 @@ const validateCanonicalUrl: TextFieldSingleValidation = (value, { previousValue 
 };
 
 export default buildConfig({
-  ...(cloudflare ? { serverURL: getSiteUrl(), csrf: [getSiteUrl()], cors: [getSiteUrl()] } : {}),
+  ...(cloudflare || renderStaging ? { serverURL: getSiteUrl(), csrf: [getSiteUrl()], cors: [getSiteUrl()] } : {}),
   logger: cloudflare ? createWorkersLogger() : undefined,
   onInit: async (payload) => {
-    if (!cloudflare) return;
+    if (!cloudflare && !renderStaging) return;
     const admins = await payload.count({ collection: 'users', where: { role: { equals: 'admin' } }, overrideAccess: true });
     if (!admins.totalDocs) {
-      throw new Error('Initialize or import an Admin through a local Node process before deploying the public Worker.');
+      throw new Error('Initialize or import an Admin through a local Node process before deploying public staging.');
     }
   },
   i18n: {
@@ -118,6 +123,7 @@ export default buildConfig({
   sharp,
   plugins: [
     ...(cloudflare ? [r2Storage({ bucket: cloudflare.MEDIA_BUCKET, collections: { media: true } })] : []),
+    ...(renderMediaStorage ? [renderMediaStorage] : []),
     seoPlugin({
       collections: ['products', 'product-categories', 'posts'],
       uploadsCollection: 'media',

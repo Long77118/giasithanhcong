@@ -1,5 +1,7 @@
 export interface SeoEnv {
   APP_URL?: string;
+  RENDER?: string;
+  RENDER_EXTERNAL_URL?: string;
   NEXT_PUBLIC_SITE_URL?: string;
   ALLOW_INDEXING?: string;
   NODE_ENV?: string;
@@ -7,7 +9,7 @@ export interface SeoEnv {
 }
 
 export function getSiteUrl(env: SeoEnv = process.env): string {
-  const raw = env.APP_URL || env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const raw = env.APP_URL || env.RENDER_EXTERNAL_URL || env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   return raw.replace(/\/+$/, '');
 }
 
@@ -16,7 +18,7 @@ export function getSiteUrl(env: SeoEnv = process.env): string {
  * Only allows indexing when ALLOW_INDEXING === 'true' and host is not a preview/local domain.
  */
 export function isIndexingAllowed(env: SeoEnv = process.env): boolean {
-  if (env.DEPLOYMENT_STAGE === 'staging') return false;
+  if (env.RENDER === 'true' || env.DEPLOYMENT_STAGE === 'staging') return false;
   if (env.ALLOW_INDEXING !== 'true') {
     return false;
   }

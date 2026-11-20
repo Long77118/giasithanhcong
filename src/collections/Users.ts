@@ -1,6 +1,6 @@
 import { AuthenticationError, type CollectionConfig } from 'payload';
 import { isAdmin, isAdminUser } from './access';
-import { isCloudflareTarget } from '../lib/deployment';
+import { isCloudflareTarget, isRenderStaging } from '../lib/deployment';
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -8,7 +8,7 @@ export const Users: CollectionConfig = {
     singular: 'Tài khoản quản trị',
     plural: 'Tài khoản quản trị',
   },
-  auth: { cookies: { secure: isCloudflareTarget(), sameSite: 'Lax' } },
+  auth: { cookies: { secure: isCloudflareTarget() || isRenderStaging(), sameSite: 'Lax' } },
   admin: {
     group: 'Hệ thống',
     description: 'Quản lý các tài khoản có quyền truy cập bảng quản trị.',

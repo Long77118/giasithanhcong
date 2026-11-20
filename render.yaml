@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: giasithanhcong-staging
+    runtime: node
+    region: singapore
+    plan: free
+    branch: codex/render-staging
+    buildCommand: bun install --frozen-lockfile && bun run build
+    startCommand: node node_modules/next/dist/bin/next start -H 0.0.0.0
+    healthCheckPath: /api/health
+    autoDeployTrigger: 'off'
+    envVars:
+      - key: NODE_VERSION
+        value: 22.23.5
+      - key: BUN_VERSION
+        value: 1.4.3
+      - key: SKIP_INSTALL_DEPS
+        value: "true"
+      - key: DEPLOYMENT_STAGE
+        value: staging
+      - key: ALLOW_INDEXING
+        value: "false"
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+      - key: SQL_DB_NAME
+        value: giasithanhcong_staging
+      - key: SQL_USER
+        value: giasithanhcong_app
+      - key: SQL_SSL
+        value: "true"
+      - key: SQL_HOST
+        sync: false
+      - key: SQL_PASSWORD
+        sync: false
+      - key: R2_BUCKET
+        value: giasithanhcong-staging-media
+      - key: R2_ENDPOINT
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: PAYLOAD_SECRET
+        generateValue: true
