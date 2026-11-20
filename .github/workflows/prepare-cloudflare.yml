@@ -1,9 +1,13 @@
-name: Verify Cloudflare preparation
+name: Verify Node and Cloudflare staging
 on:
   push:
-    branches: [codex/cloudflare-staging]
+    branches: [main, codex/cloudflare-staging]
+  pull_request:
 permissions:
   contents: read
+concurrency:
+  group: staging-checks-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -36,20 +40,11 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.3
-      - name: Resolve lock on the supported Linux build environment
-        run: bun install --lockfile-only
-      - uses: actions/upload-artifact@v4
-        with:
-          name: deployment-lock
-          path: bun.lock
       - run: bun install --frozen-lockfile
       - name: Generate isolated CI secret
         run: node -e "const s=require('crypto').randomBytes(32).toString('hex');console.log('::add-mask::'+s);require('fs').appendFileSync(process.env.GITHUB_ENV, 'PAYLOAD_SECRET='+s+'\n')"
       - run: bun run payload:types
-      - uses: actions/upload-artifact@v4
-        with:
-          name: payload-types
-          path: src/payload-types.ts
+      - run: git diff --exit-code -- src/payload-types.ts
       - run: bun run test
       - run: bun run typecheck
       - run: bun run db:migrate
@@ -65,9 +60,11 @@ jobs:
         with:
           name: worker-preview-build
           path: artifacts/worker
+          retention-days: 7
       - run: node scripts/ci-worker-smoke.mjs
       - uses: actions/upload-artifact@v4
         if: success()
         with:
           name: cloudflare-test-evidence
           path: .ci/results.json
+          retention-days: 7

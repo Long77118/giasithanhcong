@@ -11,17 +11,19 @@ const payload = await getPayload({ config });
 const password = crypto.randomBytes(24).toString('hex');
 const email = 'ci-admin@example.invalid';
 await payload.create({ collection: 'users', overrideAccess: true, data: { name: 'CI Admin', role: 'admin', email, password } });
-const products = await payload.find({ collection: 'products', limit: 1, overrideAccess: true });
+const products = await payload.find({ collection: 'products', where: { status: { equals: 'published' } }, limit: 1, overrideAccess: true });
 const posts = await payload.find({ collection: 'posts', limit: 1, overrideAccess: true });
 const { parse } = await import('jsonc-parser');
 const wrangler = parse(fs.readFileSync('wrangler.jsonc', 'utf8'));
 const base = 'http://127.0.0.1:8787';
+const proxyToken = crypto.randomBytes(32).toString('hex');
+console.log('::add-mask::' + proxyToken);
 wrangler.main = path.resolve('cloudflare/worker.ts');
 wrangler.assets.directory = path.resolve('.open-next/assets');
 wrangler.vars = {
   ...wrangler.vars, APP_URL: base, NEXT_PUBLIC_SITE_URL: base,
   PAYLOAD_SECRET: process.env.PAYLOAD_SECRET,
-  QUOTE_TRUSTED_PROXY_TOKEN: crypto.randomBytes(32).toString('hex'),
+  QUOTE_TRUSTED_PROXY_TOKEN: proxyToken,
 };
 wrangler.hyperdrive[0].localConnectionString = 'postgres://ci_only:ci_only@127.0.0.1:5432/ci_only?sslmode=disable';
 fs.mkdirSync('.ci', { recursive: true });

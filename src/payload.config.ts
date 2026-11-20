@@ -93,7 +93,7 @@ export default buildConfig({
       UploadFeature({ enabledCollections: ['media'] }),
     ],
   }),
-  secret: getPayloadSecret(),
+  secret: cloudflare?.PAYLOAD_SECRET || getPayloadSecret(),
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },

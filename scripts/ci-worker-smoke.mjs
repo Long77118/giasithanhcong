@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
+assert.equal(process.env.CI, 'true');
 const session = JSON.parse(fs.readFileSync('.ci/session.json'));
 const config = JSON.parse(fs.readFileSync('.ci/wrangler.json'));
 const base = 'http://127.0.0.1:8787';
@@ -55,6 +56,7 @@ try {
   assert.match(login.headers.get('set-cookie') ?? '', /Secure/i);
   const { token } = await login.json();
   assert.ok(token);
+  console.log('::add-mask::' + token);
   const auth = { authorization: 'JWT ' + token };
   const cookie = { Cookie: 'payload-token=' + token };
   const editPage = await request('/admin/collections/products/' + session.productId, { headers: cookie });
