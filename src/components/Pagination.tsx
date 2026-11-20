@@ -36,7 +36,7 @@ export function Pagination({
   return (
     <nav
       aria-label="Phân trang"
-      className="mt-10 flex items-center justify-center gap-2"
+      className="mt-10 flex flex-wrap items-center justify-center gap-2"
     >
       {currentPage > 1 ? (
         <Link
@@ -53,7 +53,7 @@ export function Pagination({
         </span>
       )}
 
-      <div className="flex items-center gap-1">
+      <div className="flex min-w-0 flex-wrap items-center justify-center gap-1">
         {pages.map((p) =>
           p === currentPage ? (
             <span

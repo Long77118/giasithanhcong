@@ -22,15 +22,13 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: '/',
+        // Media is public even though its original files share the API prefix.
+        allow: ['/', '/api/media/file/', '/_next/image'],
         disallow: [
           '/admin',
           '/admin/*',
           '/api/',
-          '/*?*q=',
-          '/*?*category=',
-          '/*?*sort=',
-          '/*?*page=',
+          // Public parameter URLs must be crawlable to expose their noindex/canonical.
         ],
       },
     ],

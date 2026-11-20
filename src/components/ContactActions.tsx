@@ -7,19 +7,23 @@ interface ContactActionsProps {
   contact: ResolvedContactConfig;
   quoteHref?: string;
   compact?: boolean;
+  tone?: 'default' | 'secondary';
 }
 
 export function ContactActions({
   contact,
   quoteHref = '/lien-he#bao-gia',
   compact = false,
+  tone = 'default',
 }: ContactActionsProps) {
   return (
     <div className="flex flex-wrap items-center gap-3">
       {contact.isHotlineConfigured && contact.telHref ? (
         <a
           href={contact.telHref}
-          className="inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-[#0C2340] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#163861] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0C2340]"
+          className={`inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0C2340] ${tone === 'secondary'
+            ? 'border border-slate-300 bg-white text-[#0C2340] hover:bg-slate-50'
+            : 'bg-[#0C2340] text-white hover:bg-[#163861]'}`}
         >
           <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span className="tabular-nums">Gọi {contact.hotline}</span>

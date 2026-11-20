@@ -18,6 +18,7 @@ export function getPayloadSecret(): string {
 
   if (
     process.env.NODE_ENV === 'production' &&
+    process.env.CLOUDFLARE_BUILD !== 'true' &&
     process.env.NEXT_PHASE !== 'phase-production-build' &&
     process.env.ALLOW_EPHEMERAL_SECRET !== 'true'
   ) {

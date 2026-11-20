@@ -1,7 +1,8 @@
 import type { CollectionConfig } from 'payload';
 import { toVietnameseSlug } from '../lib/slug';
 import { safeRevalidateTags } from '../lib/revalidate';
-import { isAuthenticated, publishedOrAuthenticated } from './access';
+import { isAdmin, publishedOrAdmin } from './access';
+import { guardPostCategoryDelete } from '../lib/category-guards';
 
 export const PostCategories: CollectionConfig = {
   slug: 'post-categories',
@@ -10,16 +11,18 @@ export const PostCategories: CollectionConfig = {
     plural: 'Chuyên mục bài viết',
   },
   admin: {
+    group: 'Nội dung',
     useAsTitle: 'name',
     defaultColumns: ['name', 'slug', 'status'],
   },
   access: {
-    read: publishedOrAuthenticated,
-    create: isAuthenticated,
-    update: isAuthenticated,
-    delete: isAuthenticated,
+    read: publishedOrAdmin,
+    create: isAdmin,
+    update: isAdmin,
+    delete: isAdmin,
   },
   hooks: {
+    beforeDelete: [guardPostCategoryDelete],
     beforeValidate: [
       ({ data }) => {
         if (data && !data.slug && typeof data.name === 'string') {

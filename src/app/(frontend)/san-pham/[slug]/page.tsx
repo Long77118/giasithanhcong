@@ -1,36 +1,46 @@
 import React from 'react';
+import { ArrowRight } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import type { Product, ProductCategory } from '@/payload-types';
 import {
   getPublishedProductBySlug,
+  getPublishedCategoriesCached,
+  getPublishedSlugRedirect,
   getSiteSettingsCached,
+  resolvePublishedCanonicalUrl,
 } from '@/lib/queries';
 import {
   buildProductJsonLd,
-  formatPriceVnd,
   getSiteUrl,
   isIndexingAllowed,
 } from '@/lib/seo';
+import { resolveOpenGraphImages, resolvePublicImageUrl } from '@/lib/seo-images';
+import { categoryAncestors } from '@/lib/category-tree';
+import { decodePublicSlugParam, publicContentPath, withPublicSearchParams, type PublicSearchParams } from '@/lib/slug';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { ContactActions } from '@/components/ContactActions';
 import { LexicalContent } from '@/components/LexicalContent';
 import { resolveMediaUrl } from '@/components/MediaImage';
 import { ProductCard } from '@/components/ProductCard';
+import { compactCatalogCardSizes } from '@/lib/storefront-image-sizes';
 import { ProductGallery, type GalleryImageItem } from '@/components/ProductGallery';
 import { QuoteRequestForm } from '@/components/QuoteRequestForm';
+import { JsonLd } from '@/components/JsonLd';
 
 export const dynamic = 'force-dynamic';
 
 interface ProductDetailProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<PublicSearchParams>;
 }
 
 export async function generateMetadata({
   params,
 }: ProductDetailProps): Promise<Metadata> {
-  const { slug } = await params;
+  const slug = decodePublicSlugParam((await params).slug);
+  if (slug === null) notFound();
   const product = await getPublishedProductBySlug(slug);
 
   if (!product) {
@@ -42,23 +52,12 @@ export async function generateMetadata({
 
   const siteUrl = getSiteUrl();
   const indexingAllowed = isIndexingAllowed();
-  const { contact } = await getSiteSettingsCached();
+  const { settings, contact } = await getSiteSettingsCached();
 
-  const meta = product.meta as
-    | {
-        title?: string | null;
-        description?: string | null;
-        canonicalUrl?: string | null;
-        image?: unknown;
-      }
-    | undefined;
-
-  const canonical = meta?.canonicalUrl || `${siteUrl}/san-pham/${product.slug}`;
+  const meta = product.meta;
+  const canonical = await resolvePublishedCanonicalUrl(siteUrl, publicContentPath('products', product.slug), meta?.canonicalUrl);
   const title = meta?.title || `${product.name} | ${contact.brandName}`;
   const description = meta?.description || product.shortDescription;
-
-  const primaryMedia = resolveMediaUrl(product.images?.[0]?.image ?? null, 'card');
-  const ogImages = primaryMedia.url ? [{ url: `${siteUrl}${primaryMedia.url}` }] : undefined;
 
   return {
     title,
@@ -73,13 +72,19 @@ export async function generateMetadata({
       url: canonical,
       title,
       description,
-      images: ogImages,
+      images: resolveOpenGraphImages(
+        siteUrl,
+        meta?.image,
+        ...(product.images ?? []).map(({ image }) => image),
+        settings?.defaultOgImage,
+      ),
     },
   };
 }
 
-export default async function ProductDetailPage({ params }: ProductDetailProps) {
-  const { slug } = await params;
+export default async function ProductDetailPage({ params, searchParams }: ProductDetailProps) {
+  const slug = decodePublicSlugParam((await params).slug);
+  if (slug === null) notFound();
   const siteUrl = getSiteUrl();
 
   const [product, { contact }] = await Promise.all([
@@ -88,6 +93,10 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
   ]);
 
   if (!product) {
+    const currentSlug = await getPublishedSlugRedirect('products', slug);
+    if (currentSlug) {
+      permanentRedirect(withPublicSearchParams(publicContentPath('products', currentSlug), await searchParams));
+    }
     notFound();
   }
 
@@ -104,127 +113,125 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
     };
   });
 
-  const priceDisplay = formatPriceVnd(product.price, product.showPrice);
-
+  const brandName = product.brandName?.trim();
   const productJsonLd = buildProductJsonLd({
     name: product.name,
     sku: product.sku,
     description: product.shortDescription,
-    url: `${siteUrl}/san-pham/${product.slug}`,
-    brandName: contact.brandName,
+    url: `${siteUrl}${publicContentPath('products', product.slug)}`,
+    brandName,
     categoryName: categoryObj?.name,
     images: galleryItems
-      .map((i) => (i.url ? `${siteUrl}${i.url}` : null))
+      .map((i) => resolvePublicImageUrl(siteUrl, i.url))
       .filter((u): u is string => Boolean(u)),
-    price: product.price,
-    showPrice: product.showPrice,
   });
 
   const relatedList = (product.relatedProducts ?? [])
     .filter((item): item is Product => Boolean(item && typeof item === 'object'))
     .filter((item) => item.status === 'published' && item.id !== product.id);
 
+  const breadcrumbCategories = categoryObj?.status === 'published'
+    ? [...categoryAncestors(categoryObj, await getPublishedCategoriesCached()), categoryObj]
+    : [];
   const breadcrumbItems = [
     { label: 'Trang chủ', href: '/' },
     { label: 'Sản phẩm', href: '/san-pham' },
-    ...(categoryObj && categoryObj.status === 'published'
-      ? [{ label: categoryObj.name, href: `/danh-muc/${categoryObj.slug}` }]
-      : []),
-    { label: product.name },
+    ...breadcrumbCategories.map(category => ({
+      label: category.name,
+      href: publicContentPath('product-categories', category.slug),
+    })),
+    { label: product.name, href: publicContentPath('products', product.slug) },
   ];
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
-      />
+      <JsonLd data={productJsonLd} />
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+      <div className="site-shell product-page py-4 sm:py-7 lg:py-8">
         <Breadcrumbs siteUrl={siteUrl} items={breadcrumbItems} />
 
-        {/* Contiguous Product Showcase & Wholesale Purchase/Quote Module */}
-        <section className="grid gap-8 rounded-xl border border-slate-200 bg-white p-6 sm:p-8 lg:grid-cols-12 lg:gap-12">
-          <div className="lg:col-span-6">
+        <section className="product-overview rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-6 lg:p-8">
+          <header className="product-heading min-w-0 [overflow-wrap:anywhere]">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs font-medium text-slate-600">
+              {categoryObj?.status === 'published' && (
+                <Link
+                  href={publicContentPath('product-categories', categoryObj.slug)}
+                  className="font-semibold text-[#294762] underline-offset-4 hover:underline"
+                >
+                  {categoryObj.name}
+                </Link>
+              )}
+              <span className="font-mono tabular-nums text-slate-600">SKU {product.sku}</span>
+            </div>
+            <h1 className="mt-2 max-w-[36rem] font-display text-[1.65rem] font-bold leading-tight tracking-tight text-[#0C2340] text-pretty sm:text-3xl lg:text-[2.5rem]">
+              {product.name}
+            </h1>
+          </header>
+
+          <div className="product-gallery min-w-0">
             <ProductGallery items={galleryItems} productName={product.name} />
           </div>
 
-          <div className="flex flex-col lg:col-span-6">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              {categoryObj && categoryObj.status === 'published' && (
-                <>
-                  <Link
-                    href={`/danh-muc/${categoryObj.slug}`}
-                    className="font-medium text-[#0C2340] hover:underline"
-                  >
-                    {categoryObj.name}
-                  </Link>
-                  <span aria-hidden="true">·</span>
-                </>
-              )}
-              <span className="font-mono tabular-nums text-slate-700">
-                SKU: {product.sku}
-              </span>
-            </div>
-
-            <h1 className="mt-2.5 font-display text-2xl font-bold leading-snug text-[#0C2340] sm:text-3xl">
-              {product.name}
-            </h1>
-
-            <p className="mt-3 text-base leading-relaxed text-slate-600">
-              {product.shortDescription}
-            </p>
-
-            <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-5">
-              <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-200 pb-4">
-                <span className="text-xs font-medium text-slate-500">
-                  Giá bán sỉ tham khảo
-                </span>
-                <span className="font-mono text-2xl font-bold tabular-nums text-[#0C2340]">
-                  {priceDisplay}
-                </span>
-              </div>
-
-              <dl className="mt-4 space-y-2.5 text-sm">
-                <div className="flex items-start justify-between gap-4">
-                  <dt className="text-slate-500">Quy cách đóng gói</dt>
-                  <dd className="text-right font-medium text-slate-900">
-                    {product.packagingSpec}
-                  </dd>
-                </div>
-                <div className="flex items-start justify-between gap-4">
-                  <dt className="text-slate-500">Số lượng đặt tối thiểu (MOQ)</dt>
-                  <dd className="font-mono font-semibold tabular-nums text-slate-900">
+          <div className="product-order flex min-w-0 flex-col [overflow-wrap:anywhere]">
+            <div className="rounded-xl bg-[#eef3f7] p-3.5 sm:p-5">
+              <dl className="grid grid-cols-2 gap-x-3 gap-y-2 sm:gap-x-6">
+                <div className="min-w-0">
+                  <dt className="text-xs font-medium text-[#405670]">Đặt tối thiểu (MOQ)</dt>
+                  <dd className="mt-1 font-display text-base font-bold tabular-nums text-[#0C2340] sm:text-lg">
                     {product.minOrderQty
                       ? `${product.minOrderQty} ${product.minOrderUnit || 'thùng'}`
                       : 'Theo thỏa thuận'}
                   </dd>
                 </div>
+                <div className="min-w-0 border-s border-[#ccd9e4] ps-3 sm:ps-5">
+                  <dt className="text-xs font-medium text-[#405670]">Quy cách đóng gói</dt>
+                  <dd className="mt-1 text-sm font-semibold text-[#0C2340]">{product.packagingSpec}</dd>
+                </div>
+                {brandName && (
+                  <div className="col-span-2 flex flex-wrap gap-x-2 border-t border-[#ccd9e4] pt-2 text-xs">
+                    <dt className="text-[#405670]">Thương hiệu</dt>
+                    <dd className="font-semibold text-[#0C2340]">{brandName}</dd>
+                  </div>
+                )}
               </dl>
+
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t border-[#ccd9e4] pt-3">
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  <span className="text-xs font-medium text-slate-600">Báo giá sỉ</span>
+                  <span className="font-display text-base font-bold text-[#0C2340]">Liên hệ</span>
+                </div>
+                <a
+                  href="#bao-gia"
+                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#9a470b] px-4 text-sm font-semibold text-white hover:bg-[#7c3608] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9a470b] sm:w-auto"
+                >
+                  Yêu cầu báo giá
+                  <ArrowRight size={16} aria-hidden="true" />
+                </a>
+              </div>
             </div>
 
-            <div className="mt-6">
-              <p className="mb-3 text-xs font-semibold tracking-wide text-slate-600">
-                Liên hệ nhận báo giá nhanh
-              </p>
-              <ContactActions contact={contact} quoteHref="#bao-gia" />
+            <div className="mt-3">
+              <ContactActions contact={contact} compact tone="secondary" />
             </div>
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600 lg:order-first lg:mt-0 lg:mb-4">
+              {product.shortDescription}
+            </p>
           </div>
         </section>
 
         {/* Technical Specs & Rich Description */}
-        <div className="mt-10 grid gap-8 lg:grid-cols-12">
-          <div className="space-y-8 lg:col-span-7">
+        <div className="mt-6 grid grid-cols-1 gap-5 lg:mt-9 lg:grid-cols-12 lg:gap-8">
+          <div className="min-w-0 space-y-5 lg:col-span-7 lg:space-y-8">
             {product.specs && product.specs.length > 0 && (
-              <section className="rounded-xl border border-slate-200 bg-white p-6 sm:p-8">
+              <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-7">
                 <h2 className="font-display text-xl font-bold text-[#0C2340]">
                   Thông số kỹ thuật
                 </h2>
                 <div className="mt-4 overflow-hidden rounded-lg border border-slate-200">
-                  <table className="w-full border-collapse text-left text-sm">
+                  <table className="w-full table-fixed border-collapse text-left text-sm [overflow-wrap:anywhere]">
                     <tbody className="divide-y divide-slate-200">
                       <tr className="bg-slate-50">
-                        <th className="w-2/5 px-4 py-3 font-medium text-slate-600">
+                        <th scope="row" className="w-2/5 px-3 py-3 font-medium text-slate-600 sm:px-4">
                           Mã sản phẩm (SKU)
                         </th>
                         <td className="px-4 py-3 font-mono font-semibold tabular-nums text-slate-900">
@@ -232,7 +239,7 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
                         </td>
                       </tr>
                       <tr>
-                        <th className="px-4 py-3 font-medium text-slate-600">
+                        <th scope="row" className="px-3 py-3 font-medium text-slate-600 sm:px-4">
                           Quy cách đóng gói
                         </th>
                         <td className="px-4 py-3 text-slate-900">
@@ -244,7 +251,7 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
                           key={spec.id || `${spec.label}-${idx}`}
                           className={idx % 2 === 0 ? 'bg-slate-50/70' : 'bg-white'}
                         >
-                          <th className="px-4 py-3 font-medium text-slate-600">
+                          <th scope="row" className="px-3 py-3 font-medium text-slate-600 sm:px-4">
                             {spec.label}
                           </th>
                           <td className="px-4 py-3 tabular-nums text-slate-900">
@@ -258,7 +265,7 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
               </section>
             )}
 
-            <section className="rounded-xl border border-slate-200 bg-white p-6 sm:p-8">
+            <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-7">
               <h2 className="font-display text-xl font-bold text-[#0C2340]">
                 Thông tin chi tiết sản phẩm
               </h2>
@@ -274,7 +281,7 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
             </section>
           </div>
 
-          <div className="lg:col-span-5">
+          <div className="min-w-0 lg:col-span-5">
             <QuoteRequestForm
               productId={product.id}
               productName={`${product.name} (${product.sku})`}
@@ -293,9 +300,9 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
             <h2 className="font-display text-2xl font-bold text-[#0C2340]">
               Sản phẩm liên quan
             </h2>
-            <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="catalog-grid mt-6">
               {relatedList.map((rel) => (
-                <ProductCard key={rel.id} product={rel} />
+                <ProductCard key={rel.id} product={rel} sizes={compactCatalogCardSizes} variant="catalog" />
               ))}
             </div>
           </section>

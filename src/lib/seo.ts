@@ -3,6 +3,7 @@ export interface SeoEnv {
   NEXT_PUBLIC_SITE_URL?: string;
   ALLOW_INDEXING?: string;
   NODE_ENV?: string;
+  DEPLOYMENT_STAGE?: string;
 }
 
 export function getSiteUrl(env: SeoEnv = process.env): string {
@@ -15,15 +16,25 @@ export function getSiteUrl(env: SeoEnv = process.env): string {
  * Only allows indexing when ALLOW_INDEXING === 'true' and host is not a preview/local domain.
  */
 export function isIndexingAllowed(env: SeoEnv = process.env): boolean {
+  if (env.DEPLOYMENT_STAGE === 'staging') return false;
   if (env.ALLOW_INDEXING !== 'true') {
     return false;
   }
-  const siteUrl = getSiteUrl(env).toLowerCase();
+  if (env.NODE_ENV === 'development' || env.NODE_ENV === 'test') return false;
+  let hostname: string;
+  try {
+    const url = new URL(getSiteUrl(env));
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
+    hostname = url.hostname.toLowerCase().replace(/\.$/, '');
+  } catch {
+    return false;
+  }
   if (
-    siteUrl.includes('localhost') ||
-    siteUrl.includes('127.0.0.1') ||
-    siteUrl.includes('ais-dev-') ||
-    siteUrl.includes('ais-pre-')
+    hostname === 'localhost' || hostname.endsWith('.localhost') ||
+    /^127\./.test(hostname) || hostname === '0.0.0.0' || hostname === '[::1]' ||
+    hostname.includes('ais-dev-') ||
+    hostname.includes('ais-pre-')
+    || hostname.endsWith('.workers.dev')
   ) {
     return false;
   }
@@ -35,6 +46,7 @@ export interface CatalogSeoInput {
   page?: number;
   query?: string;
   categorySlug?: string;
+  sort?: string;
   siteUrl: string;
   indexingAllowed: boolean;
 }
@@ -49,7 +61,7 @@ export interface CatalogSeoDecision {
 
 /**
  * Deterministic SEO policy for search, filter, and pagination URLs:
- * 1. Search (?q=) or filter (?category=) URLs: noindex, follow; canonical points to clean basePath.
+ * 1. Search (?q=), filter (?category=) or sort URLs: noindex, follow; canonical points to clean basePath.
  * 2. Page >= 2 without search/filter: noindex, follow; canonical points to self (?page=N) to preserve pagination crawl path without index bloat.
  * 3. Clean page 1: follows site-wide indexingAllowed; canonical points to basePath without ?page=1.
  */
@@ -64,14 +76,15 @@ export function buildCatalogSeoDecision(
   const hasCategory = Boolean(
     input.categorySlug && input.categorySlug.trim().length > 0,
   );
-  const isFilteredOrSearch = hasQuery || hasCategory;
+  const hasSort = Boolean(input.sort && input.sort.trim().length > 0);
+  const isFilteredOrSearch = hasQuery || hasCategory || hasSort;
   const isPaginatedSubpage = page > 1 && !isFilteredOrSearch;
 
   if (isFilteredOrSearch) {
     return {
       canonical: `${input.siteUrl}${cleanBase}`,
       robotsIndex: false,
-      robotsFollow: true,
+      robotsFollow: input.indexingAllowed,
       isFilteredOrSearch: true,
       isPaginatedSubpage: false,
     };
@@ -81,7 +94,7 @@ export function buildCatalogSeoDecision(
     return {
       canonical: `${input.siteUrl}${cleanBase}?page=${page}`,
       robotsIndex: false,
-      robotsFollow: true,
+      robotsFollow: input.indexingAllowed,
       isFilteredOrSearch: false,
       isPaginatedSubpage: true,
     };
@@ -94,16 +107,6 @@ export function buildCatalogSeoDecision(
     isFilteredOrSearch: false,
     isPaginatedSubpage: false,
   };
-}
-
-export function formatPriceVnd(
-  price?: number | null,
-  showPrice?: boolean | null,
-): string {
-  if (!showPrice || typeof price !== 'number' || !Number.isFinite(price) || price <= 0) {
-    return 'Liên hệ báo giá';
-  }
-  return `${new Intl.NumberFormat('vi-VN').format(Math.round(price))} đ`;
 }
 
 export interface BreadcrumbItem {
@@ -129,11 +132,9 @@ export interface ProductJsonLdInput {
   sku: string;
   description: string;
   url: string;
-  brandName: string;
+  brandName?: string | null;
   categoryName?: string;
   images: string[];
-  price?: number | null;
-  showPrice?: boolean | null;
 }
 
 export function buildProductJsonLd(input: ProductJsonLdInput) {
@@ -144,11 +145,15 @@ export function buildProductJsonLd(input: ProductJsonLdInput) {
     sku: input.sku,
     description: input.description,
     url: input.url,
-    brand: {
-      '@type': 'Brand',
-      name: input.brandName,
-    },
   };
+
+  const brandName = input.brandName?.trim();
+  if (brandName) {
+    schema.brand = {
+      '@type': 'Brand',
+      name: brandName,
+    };
+  }
 
   if (input.images.length > 0) {
     schema.image = input.images;
@@ -157,22 +162,7 @@ export function buildProductJsonLd(input: ProductJsonLdInput) {
     schema.category = input.categoryName;
   }
 
-  // Only emit Offer when a real wholesale unit price is explicitly published
-  if (
-    input.showPrice &&
-    typeof input.price === 'number' &&
-    Number.isFinite(input.price) &&
-    input.price > 0
-  ) {
-    schema.offers = {
-      '@type': 'Offer',
-      price: Math.round(input.price),
-      priceCurrency: 'VND',
-      availability: 'https://schema.org/InStock',
-      url: input.url,
-    };
-  }
-
+  // This catalog accepts quote requests; it does not publish prices or offers.
   return schema;
 }
 

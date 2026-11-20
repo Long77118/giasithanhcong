@@ -1,0 +1,3 @@
+# Copy to .dev.vars only for Wrangler preview. Runtime secrets go in Cloudflare settings.
+PAYLOAD_SECRET="replace-with-a-generated-64-character-secret"
+QUOTE_TRUSTED_PROXY_TOKEN="replace-with-a-separate-generated-64-character-secret"

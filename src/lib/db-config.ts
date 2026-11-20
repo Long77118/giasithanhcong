@@ -2,6 +2,7 @@ import type { PoolConfig } from 'pg';
 
 export interface PostgresPoolOptions {
   useAdminCredentials?: boolean;
+  hyperdrive?: { host: string; port: number; user: string; password: string; database: string };
 }
 
 /**
@@ -10,6 +11,19 @@ export interface PostgresPoolOptions {
  * Unix domain socket or host). Never uses DATABASE_URL strings.
  */
 export function getPostgresPoolConfig(options: PostgresPoolOptions = {}): PoolConfig {
+  if (options.hyperdrive) {
+    return {
+      ...options.hyperdrive,
+      max: 4,
+      // Do not reuse a TCP client across Workers request contexts. Hyperdrive pools upstream.
+      maxUses: 1,
+      connectionTimeoutMillis: 15000,
+    };
+  }
+  if (process.env.CLOUDFLARE_BUILD === 'true') {
+    // All database-backed routes are dynamic; a build must not need live credentials.
+    return { host: '127.0.0.1', database: 'build_only', user: 'build_only', password: 'build_only' };
+  }
   const useAdmin =
     options.useAdminCredentials ?? process.env.PAYLOAD_MIGRATING === 'true';
 
@@ -28,9 +42,11 @@ export function getPostgresPoolConfig(options: PostgresPoolOptions = {}): PoolCo
 
   return {
     host,
+    port: Number(process.env.SQL_PORT || 5432),
     database,
     user,
     password,
+    ...(process.env.SQL_SSL === 'true' ? { ssl: { rejectUnauthorized: true } } : {}),
     max: 10,
     connectionTimeoutMillis: 15000,
   };

@@ -7,7 +7,17 @@ coverage/
 *.log
 .env*
 !.env.example
+!.env.staging.example
 .playwright-cli/
 public/media/
 media/
 tsconfig.tsbuildinfo
+.open-next/
+.wrangler/
+.dev.vars*
+!.dev.vars.example
+wrangler.local.jsonc
+*.dump
+*.sql.gz
+artifacts/
+*.hm

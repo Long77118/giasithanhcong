@@ -1,5 +1,11 @@
-import React from 'react';
+'use client';
+
+import { useEffect, useRef, useState, type FormEventHandler, type Ref } from 'react';
+import Form from 'next/form';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { ArrowRight, ChevronDown, LayoutGrid, Search, X } from 'lucide-react';
+import { CategoryIcon, type CategoryMenuItem } from './ProductCategoryMenu';
 import { MobileNav } from './MobileNav';
 
 const NAV_LINKS = [
@@ -10,45 +16,184 @@ const NAV_LINKS = [
   { label: 'Liên hệ', href: '/lien-he' },
 ];
 
-export function SiteHeader({ brandName }: { brandName: string }) {
+function HeaderSearch({
+  className,
+  inputRef,
+  onSubmit,
+}: {
+  className?: string;
+  inputRef?: Ref<HTMLInputElement>;
+  onSubmit?: FormEventHandler<HTMLFormElement>;
+}) {
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
-      <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-8 px-4 py-3.5 sm:px-6 lg:px-8">
-        {/* Zone 1: Single text element wordmark */}
-        <Link
-          href="/"
-          className="whitespace-nowrap shrink-0 font-display text-xl font-bold tracking-tight text-[#0C2340] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0C2340]"
-        >
-          {brandName}
-        </Link>
+    <Form action="/san-pham" prefetch={false} onSubmit={onSubmit} role="search" aria-label="Tìm sản phẩm" className={`site-header-search ${className ?? ''}`}>
+      <input
+        ref={inputRef}
+        type="search"
+        name="q"
+        required
+        aria-label="Tìm theo tên sản phẩm hoặc mã SKU"
+        placeholder="Tên sản phẩm hoặc SKU"
+      />
+      <button type="submit" aria-label="Tìm kiếm">
+        <Search size={21} aria-hidden="true" />
+      </button>
+    </Form>
+  );
+}
 
-        {/* Zone 2: Clean single-line navigation links */}
-        <nav
-          aria-label="Điều hướng chính"
-          className="hidden items-center gap-7 md:flex"
-        >
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="whitespace-nowrap shrink-0 text-sm font-medium text-slate-600 transition-colors hover:text-[#0C2340] hover:underline hover:underline-offset-8"
-            >
-              {link.label}
-            </Link>
+function HeaderCategories({ items }: { items: CategoryMenuItem[] }) {
+  const [open, setOpen] = useState(false);
+  const wrapper = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const groups: CategoryMenuItem[][] = [];
+
+  for (const item of items) {
+    if (item.depth === 0) groups.push([item]);
+    else groups.at(-1)?.push(item);
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    function onOutsidePointer(event: PointerEvent) {
+      if (event.target instanceof Node && !wrapper.current?.contains(event.target)) setOpen(false);
+    }
+    document.addEventListener('pointerdown', onOutsidePointer);
+    return () => document.removeEventListener('pointerdown', onOutsidePointer);
+  }, [open]);
+
+  return (
+    <div
+      ref={wrapper}
+      className="site-header-categories"
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && open) {
+          event.stopPropagation();
+          setOpen(false);
+          trigger.current?.focus();
+        }
+      }}
+    >
+      <button
+        ref={trigger}
+        type="button"
+        className="site-header-category-trigger"
+        aria-expanded={open}
+        aria-controls="site-header-category-list"
+        onClick={() => setOpen((current) => !current)}
+      >
+        <LayoutGrid size={18} aria-hidden="true" />
+        <span>Danh mục<span className="site-header-category-long"> sản phẩm</span></span>
+        <ChevronDown size={15} className="site-header-chevron" aria-hidden="true" />
+      </button>
+      <nav
+        id="site-header-category-list"
+        aria-label="Danh mục sản phẩm"
+        className="site-header-category-panel"
+        data-open={open}
+        inert={!open}
+      >
+        <ul className="site-header-category-grid">
+          {groups.map(([root, ...descendants]) => (
+            <li key={root.id}>
+              <Link href={root.href} prefetch={false} className="site-header-category-root" onNavigate={() => setOpen(false)}>
+                <CategoryIcon href={root.href} />
+                <span>{root.name}</span>
+              </Link>
+              {descendants.length > 0 && (
+                <ul className="site-header-category-children">
+                  {descendants.map((category) => (
+                    <li key={category.id} data-nested={category.depth > 1}>
+                      <Link href={category.href} prefetch={false} onNavigate={() => setOpen(false)}>{category.name}</Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
           ))}
-        </nav>
+        </ul>
+        <Link href="/san-pham" className="site-header-all-products" onNavigate={() => setOpen(false)}>
+          Tất cả sản phẩm <ArrowRight size={16} aria-hidden="true" />
+        </Link>
+      </nav>
+    </div>
+  );
+}
 
-        {/* Zone 3: Single primary action + mobile menu toggle */}
-        <div className="flex items-center gap-3 shrink-0">
-          <Link
-            href="/lien-he#bao-gia"
-            className="hidden min-h-[40px] items-center justify-center whitespace-nowrap shrink-0 rounded-lg bg-[#B45309] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#92400E] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B45309] sm:inline-flex"
-          >
-            Yêu cầu báo giá
+export function SiteHeader({ brandName, categories }: { brandName: string; categories: CategoryMenuItem[] }) {
+  const pathname = usePathname();
+  const topRow = useRef<HTMLDivElement>(null);
+  const searchDialog = useRef<HTMLDialogElement>(null);
+  const searchInput = useRef<HTMLInputElement>(null);
+  const [pinned, setPinned] = useState(false);
+
+  useEffect(() => {
+    if (!topRow.current || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(([entry]) => {
+      setPinned(entry.boundingClientRect.bottom <= 1);
+    }, { threshold: [0, 0.01, 1] });
+    observer.observe(topRow.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const closeSearch = () => searchDialog.current?.close();
+
+  return (
+    <header className="site-header" data-pinned={pinned}>
+      <div ref={topRow} className="site-header-top">
+        <div className="site-shell site-header-top-inner">
+          <Link href="/" className="site-wordmark">{brandName}</Link>
+          <HeaderSearch className="site-header-desktop-search" />
+          <Link href="/lien-he#bao-gia" className="site-header-quote">
+            <span className="site-header-quote-long">Yêu cầu báo giá</span>
+            <span className="site-header-quote-short">Báo giá</span>
           </Link>
-          <MobileNav links={NAV_LINKS} />
         </div>
       </div>
+
+      <div className="site-header-bar">
+        <div className="site-shell site-header-bar-inner">
+          {categories.length > 0 && <HeaderCategories items={categories} />}
+          <nav aria-label="Điều hướng chính" className="site-header-nav">
+            {NAV_LINKS.map(({ href, label }) => (
+              <Link key={href} href={href} aria-current={pathname === href ? 'page' : undefined}>{label}</Link>
+            ))}
+          </nav>
+          <button
+            type="button"
+            className="site-header-search-trigger"
+            aria-label="Tìm theo tên sản phẩm hoặc SKU"
+            aria-haspopup="dialog"
+            aria-controls="site-header-search-dialog"
+            onClick={() => {
+              searchDialog.current?.showModal();
+              searchInput.current?.focus();
+            }}
+          >
+            <Search size={20} aria-hidden="true" />
+            <span>Tìm hàng</span>
+          </button>
+          <MobileNav brandName={brandName} links={NAV_LINKS} currentPath={pathname} />
+        </div>
+      </div>
+
+      <dialog
+        id="site-header-search-dialog"
+        ref={searchDialog}
+        className="site-header-dialog site-search-dialog"
+        aria-labelledby="site-header-search-title"
+      >
+        <button type="button" className="site-dialog-close" aria-label="Đóng tìm kiếm" onClick={closeSearch}>
+          <X size={23} aria-hidden="true" />
+        </button>
+        <div className="site-search-dialog-content">
+          <h2 id="site-header-search-title">Tìm sản phẩm</h2>
+          <HeaderSearch inputRef={searchInput} onSubmit={closeSearch} />
+        </div>
+      </dialog>
     </header>
   );
 }

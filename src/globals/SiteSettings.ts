@@ -1,13 +1,16 @@
 import type { GlobalConfig } from 'payload';
 import { safeRevalidateTags } from '../lib/revalidate';
-import { isAuthenticated } from '../collections/access';
+import { isAdmin } from '../collections/access';
+import { normalizeFacebookPageUrl } from '../lib/facebook-page';
+import { normalizeHomePromotionHref } from '../lib/home-promotions';
 
 export const SiteSettings: GlobalConfig = {
   slug: 'site-settings',
   label: 'Cấu hình website & Liên hệ',
+  admin: { group: 'Hệ thống' },
   access: {
     read: () => true,
-    update: isAuthenticated,
+    update: isAdmin,
   },
   hooks: {
     afterChange: [
@@ -20,6 +23,59 @@ export const SiteSettings: GlobalConfig = {
     ],
   },
   fields: [
+    {
+      label: 'Trang chủ · Banner theo nhu cầu',
+      type: 'collapsible',
+      fields: [
+        {
+          name: 'homePromotions',
+          label: 'Banner theo nhu cầu',
+          labels: { singular: 'Banner', plural: 'Banner' },
+          type: 'array',
+          maxRows: 4,
+          admin: {
+            initCollapsed: true,
+            components: { RowLabel: '/admin/HomePromotionLabel' },
+            description: 'Tối đa 4 ô bên dưới dải danh mục. Kéo các ô để đổi thứ tự hiển thị.',
+          },
+          fields: [
+            {
+              type: 'row',
+              fields: [
+                { name: 'enabled', label: 'Hiển thị trên trang chủ', type: 'checkbox', defaultValue: true, admin: { width: '50%' } },
+                {
+                  name: 'tone', label: 'Màu nền', type: 'select', defaultValue: 'mint', required: true,
+                  options: [
+                    { label: 'Xanh bạc hà', value: 'mint' },
+                    { label: 'Xanh nhạt', value: 'ice' },
+                    { label: 'Cam đào nhạt', value: 'peach' },
+                    { label: 'Kem cát', value: 'sand' },
+                  ],
+                  admin: { width: '50%' },
+                },
+              ],
+            },
+            { name: 'title', label: 'Tiêu đề', type: 'text', required: true, maxLength: 90 },
+            { name: 'description', label: 'Mô tả ngắn (tùy chọn)', type: 'text', maxLength: 120 },
+            {
+              name: 'image', label: 'Ảnh bao bì', type: 'upload', relationTo: 'media', required: true,
+              admin: { description: 'Chọn từ thư viện hoặc tải ảnh mới. Ưu tiên ảnh tách nền PNG/WebP.' },
+            },
+            { name: 'buttonLabel', label: 'Chữ trên nút', type: 'text', required: true, defaultValue: 'Xem sản phẩm', maxLength: 40 },
+            {
+              name: 'url', label: 'Trang mở khi bấm', type: 'text', required: true,
+              validate: (value: unknown) => !!normalizeHomePromotionHref(value)
+                || 'Nhập đường dẫn bắt đầu bằng / hoặc URL http(s) hợp lệ.',
+              hooks: { beforeChange: [({ value }) => normalizeHomePromotionHref(value) ?? value] },
+              admin: {
+                placeholder: '/danh-muc/ly-coc-dung-mot-lan',
+                description: 'Dẫn tới danh mục, trang đã lọc như /san-pham?q=Ly+Giấy, hoặc URL đầy đủ.',
+              },
+            },
+          ],
+        },
+      ],
+    },
     {
       name: 'brandName',
       label: 'Tên thương hiệu',
@@ -114,6 +170,28 @@ export const SiteSettings: GlobalConfig = {
       label: 'Ảnh Open Graph mặc định',
       type: 'upload',
       relationTo: 'media',
+    },
+    {
+      name: 'facebookPages',
+      label: 'Fanpage Facebook',
+      labels: { singular: 'Fanpage Facebook', plural: 'Fanpage Facebook' },
+      type: 'array',
+      admin: {
+        description: 'Các fanpage công khai hiển thị theo thứ tự dưới đây ở cột trái trang chủ.',
+        initCollapsed: true,
+      },
+      fields: [
+        { name: 'name', label: 'Tên hiển thị', type: 'text', required: true, maxLength: 100 },
+        {
+          name: 'url',
+          label: 'Đường dẫn fanpage',
+          type: 'text',
+          required: true,
+          admin: { placeholder: 'https://www.facebook.com/tenfanpage' },
+          validate: (value: unknown) => normalizeFacebookPageUrl(value) !== null
+            || 'Nhập URL HTTPS của trang Facebook công khai, ví dụ https://www.facebook.com/tenfanpage.',
+        },
+      ],
     },
   ],
 };

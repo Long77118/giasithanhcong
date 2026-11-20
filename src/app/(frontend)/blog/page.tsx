@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { Search } from 'lucide-react';
 import {
   getPublishedPostCategoriesCached,
@@ -12,7 +13,8 @@ import {
   getSiteUrl,
   isIndexingAllowed,
 } from '@/lib/seo';
-import { parsePositivePage } from '@/lib/slug';
+import { resolveOpenGraphImages } from '@/lib/seo-images';
+import { parsePositivePage, withPublicSearchParams } from '@/lib/slug';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { PostCard } from '@/components/PostCard';
 import { Pagination } from '@/components/Pagination';
@@ -38,9 +40,10 @@ export async function generateMetadata({
   const q = readSingle(sp.q).trim();
   const category = readSingle(sp.category).trim();
   const page = parsePositivePage(sp.page);
+  if (page === null) notFound();
   const siteUrl = getSiteUrl();
   const indexingAllowed = isIndexingAllowed();
-  const { contact } = await getSiteSettingsCached();
+  const { settings, contact } = await getSiteSettingsCached();
 
   const seo = buildCatalogSeoDecision({
     basePath: '/blog',
@@ -67,6 +70,7 @@ export async function generateMetadata({
       follow: seo.robotsFollow,
     },
     openGraph: {
+      images: resolveOpenGraphImages(siteUrl, settings?.defaultOgImage),
       type: 'website',
       url: seo.canonical,
       title,
@@ -80,6 +84,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   const q = readSingle(sp.q).trim();
   const category = readSingle(sp.category).trim();
   const page = parsePositivePage(sp.page);
+  if (page === null) notFound();
   const siteUrl = getSiteUrl();
 
   const [postCategories, postsResult] = await Promise.all([
@@ -92,13 +97,16 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
     }),
   ]);
 
+  if (page > 1 && page > postsResult.totalPages) notFound();
+
+  const filters = { q: q || undefined, category: category || undefined };
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+    <div className="site-shell py-8 lg:py-12">
       <Breadcrumbs
         siteUrl={siteUrl}
         items={[
           { label: 'Trang chủ', href: '/' },
-          { label: 'Blog' },
+          { label: 'Blog', href: withPublicSearchParams('/blog', { ...filters, page: page > 1 ? String(page) : undefined }) },
         ]}
       />
 
@@ -179,7 +187,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
           </Link>
         </div>
       ) : (
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {postsResult.docs.map((post) => (
             <PostCard key={post.id} post={post} />
           ))}
@@ -190,10 +198,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
         currentPage={postsResult.page}
         totalPages={postsResult.totalPages}
         basePath="/blog"
-        queryParams={{
-          q: q || undefined,
-          category: category || undefined,
-        }}
+        queryParams={filters}
       />
     </div>
   );

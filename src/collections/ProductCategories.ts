@@ -1,7 +1,9 @@
 import type { CollectionConfig } from 'payload';
-import { toVietnameseSlug } from '../lib/slug';
+import { generateInitialSlug, guardPublicSlug, publicSlugField } from '../lib/public-slug-hooks';
+import { publicContentPath } from '../lib/slug';
 import { safeRevalidateTags } from '../lib/revalidate';
-import { isAuthenticated, publishedOrAuthenticated } from './access';
+import { isAdmin, publishedOrAdmin } from './access';
+import { guardProductCategoryDelete, validateCategoryParent } from '../lib/category-guards';
 
 export const ProductCategories: CollectionConfig = {
   slug: 'product-categories',
@@ -10,29 +12,29 @@ export const ProductCategories: CollectionConfig = {
     plural: 'Danh mục sản phẩm',
   },
   admin: {
+    group: 'Danh mục hàng',
     useAsTitle: 'name',
     defaultColumns: ['name', 'slug', 'parent', 'status', 'displayOrder'],
   },
   access: {
-    read: publishedOrAuthenticated,
-    create: isAuthenticated,
-    update: isAuthenticated,
-    delete: isAuthenticated,
+    read: publishedOrAdmin,
+    create: isAdmin,
+    update: isAdmin,
+    delete: isAdmin,
   },
   hooks: {
-    beforeValidate: [
-      ({ data }) => {
-        if (data && !data.slug && typeof data.name === 'string') {
-          data.slug = toVietnameseSlug(data.name);
-        }
-        return data;
-      },
-    ],
+    beforeChange: [validateCategoryParent, guardPublicSlug],
+    beforeDelete: [guardProductCategoryDelete],
+    beforeValidate: [generateInitialSlug('name')],
     afterChange: [
-      ({ doc }) => {
+      ({ doc, previousDoc }) => {
+        const currentPath = publicContentPath('product-categories', doc.slug);
+        const changedPaths = previousDoc && previousDoc.slug !== doc.slug
+          ? [publicContentPath('product-categories', previousDoc.slug), currentPath]
+          : [currentPath];
         safeRevalidateTags(
           ['catalog', 'categories', 'sitemap'],
-          ['/', '/san-pham', `/danh-muc/${doc.slug}`, '/sitemap.xml'],
+          ['/', '/san-pham', ...changedPaths, '/sitemap.xml'],
         );
       },
     ],
@@ -40,7 +42,7 @@ export const ProductCategories: CollectionConfig = {
       ({ doc }) => {
         safeRevalidateTags(
           ['catalog', 'categories', 'sitemap'],
-          ['/', '/san-pham', `/danh-muc/${doc.slug}`, '/sitemap.xml'],
+          ['/', '/san-pham', publicContentPath('product-categories', doc.slug), '/sitemap.xml'],
         );
       },
     ],
@@ -52,14 +54,7 @@ export const ProductCategories: CollectionConfig = {
       type: 'text',
       required: true,
     },
-    {
-      name: 'slug',
-      label: 'Đường dẫn (Slug)',
-      type: 'text',
-      required: true,
-      unique: true,
-      index: true,
-    },
+    publicSlugField,
     {
       name: 'description',
       label: 'Mô tả danh mục',
@@ -76,6 +71,9 @@ export const ProductCategories: CollectionConfig = {
       label: 'Danh mục cha',
       type: 'relationship',
       relationTo: 'product-categories',
+      admin: {
+        description: 'Để trống nếu đây là danh mục gốc. Không chọn chính danh mục này hoặc danh mục cấp dưới.',
+      },
     },
     {
       name: 'displayOrder',

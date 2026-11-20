@@ -1,5 +1,5 @@
-import type { CollectionConfig } from 'payload';
-import { isAdmin, isAuthenticated } from './access';
+import { AuthenticationError, type CollectionConfig } from 'payload';
+import { isAdmin, isAdminUser } from './access';
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -9,18 +9,27 @@ export const Users: CollectionConfig = {
   },
   auth: true,
   admin: {
+    group: 'Hệ thống',
+    description: 'Quản lý các tài khoản có quyền truy cập bảng quản trị.',
     useAsTitle: 'email',
     defaultColumns: ['name', 'email', 'role', 'updatedAt'],
   },
   access: {
-    read: isAuthenticated,
+    admin: isAdmin,
+    read: isAdmin,
     create: isAdmin,
-    update: ({ req: { user }, id }) => {
-      if (!user) return false;
-      if ('role' in user && user.role === 'admin') return true;
-      return user.id === id;
-    },
+    update: isAdmin,
     delete: isAdmin,
+    unlock: isAdmin,
+  },
+  hooks: {
+    beforeLogin: [({ user, req }) => {
+      if (!isAdminUser(user)) throw new AuthenticationError(req.t);
+      return user;
+    }],
+    refresh: [({ user, args: { req } }) => {
+      if (!isAdminUser(user)) throw new AuthenticationError(req.t);
+    }],
   },
   fields: [
     {
@@ -36,12 +45,10 @@ export const Users: CollectionConfig = {
       required: true,
       defaultValue: 'admin',
       options: [
-        { label: 'Quản trị viên (Admin)', value: 'admin' },
-        { label: 'Biên tập viên (Editor)', value: 'editor' },
+        { label: 'Quản trị viên', value: 'admin' },
       ],
       access: {
-        update: ({ req: { user } }) =>
-          Boolean(user && 'role' in user && user.role === 'admin'),
+        update: ({ req: { user } }) => isAdminUser(user),
       },
     },
   ],

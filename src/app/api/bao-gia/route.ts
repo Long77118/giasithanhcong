@@ -1,33 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getPayload } from 'payload';
 import config from '@payload-config';
-import {
-  checkSlidingWindowRateLimit,
-  validateQuoteSubmission,
-  type RateLimitEntry,
-} from '@/lib/quote-validation';
-
-declare global {
-  var _quoteRateLimitStore: Map<string, RateLimitEntry> | undefined;
-}
-
-function getRateLimitStore() {
-  if (!global._quoteRateLimitStore) {
-    global._quoteRateLimitStore = new Map<string, RateLimitEntry>();
-  }
-  return global._quoteRateLimitStore;
-}
-
-function extractClientKey(req: NextRequest): string {
-  const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) {
-    const firstIp = forwarded.split(',')[0]?.trim();
-    if (firstIp) return firstIp;
-  }
-  const realIp = req.headers.get('x-real-ip');
-  if (realIp) return realIp.trim();
-  return 'local-client';
-}
+import { getSqlExecutor } from '@/lib/db-transaction';
+import { readQuoteJson } from '@/lib/quote-body';
+import { getQuoteClient } from '@/lib/quote-client';
+import { consumeQuoteSubmission } from '@/lib/quote-rate-limit';
+import { validateQuoteSubmission } from '@/lib/quote-validation';
 
 export async function GET() {
   return NextResponse.json(
@@ -39,39 +17,29 @@ export async function GET() {
   );
 }
 
-export async function POST(req: NextRequest) {
-  let rawBody: unknown;
-  try {
-    rawBody = await req.json();
-  } catch {
+export async function POST(req: Request) {
+  const client = getQuoteClient(req.headers, process.env.QUOTE_TRUSTED_PROXY_TOKEN);
+  if (client.kind === 'unverified') {
     return NextResponse.json(
-      { ok: false, message: 'Dữ liệu gửi lên không đúng định dạng JSON.' },
-      { status: 400 },
+      { ok: false, message: 'Tạm thời chưa thể gửi yêu cầu. Vui lòng thử lại hoặc liên hệ qua Hotline/Zalo.' },
+      { status: 503 },
     );
   }
 
-  const clientKey = extractClientKey(req);
-  const rateCheck = checkSlidingWindowRateLimit(getRateLimitStore(), clientKey, {
-    maxRequests: 5,
-    windowMs: 10 * 60 * 1000,
-  });
-
-  if (!rateCheck.allowed) {
+  const body = await readQuoteJson(req);
+  if (body.status !== 200) {
     return NextResponse.json(
       {
         ok: false,
-        message: `Bạn đã gửi quá nhiều yêu cầu liên tiếp. Vui lòng thử lại sau ${rateCheck.retryAfterSeconds} giây hoặc liên hệ qua Hotline/Zalo.`,
+        message: body.status === 413
+          ? 'Yêu cầu báo giá quá lớn. Vui lòng rút ngắn nội dung và gửi lại.'
+          : 'Dữ liệu gửi lên không đúng định dạng JSON.',
       },
-      {
-        status: 429,
-        headers: {
-          'Retry-After': String(rateCheck.retryAfterSeconds),
-        },
-      },
+      { status: body.status },
     );
   }
 
-  const validation = validateQuoteSubmission(rawBody);
+  const validation = validateQuoteSubmission(body.data);
   if (!validation.ok || !validation.data) {
     return NextResponse.json(
       {
@@ -87,6 +55,17 @@ export async function POST(req: NextRequest) {
 
   try {
     const payload = await getPayload({ config });
+    const db = getSqlExecutor('drizzle' in payload.db ? payload.db.drizzle : undefined);
+    const rate = await consumeQuoteSubmission(db, client, payload.secret);
+    if (!rate.allowed) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: `Đã đạt giới hạn gửi báo giá. Vui lòng thử lại sau ${rate.retryAfterSeconds} giây hoặc liên hệ qua Hotline/Zalo.`,
+        },
+        { status: 429, headers: { 'Retry-After': String(rate.retryAfterSeconds) } },
+      );
+    }
 
     let resolvedProductId: number | undefined;
     let productNameSnapshot = input.productNameSnapshot || undefined;

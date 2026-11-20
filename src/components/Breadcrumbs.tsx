@@ -2,10 +2,11 @@ import React from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { buildBreadcrumbJsonLd } from '@/lib/seo';
+import { JsonLd } from './JsonLd';
 
 export interface BreadcrumbTrailItem {
   label: string;
-  href?: string;
+  href: string;
 }
 
 interface BreadcrumbsProps {
@@ -16,17 +17,14 @@ interface BreadcrumbsProps {
 export function Breadcrumbs({ items, siteUrl }: BreadcrumbsProps) {
   const jsonLdItems = items.map((item) => ({
     name: item.label,
-    url: item.href ? `${siteUrl}${item.href}` : siteUrl,
+    url: new URL(item.href, siteUrl).href,
   }));
 
   const jsonLd = buildBreadcrumbJsonLd(jsonLdItems);
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={jsonLd} />
       <nav aria-label="Breadcrumb" className="mb-6">
         <ol className="flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
           {items.map((item, idx) => {
@@ -36,7 +34,7 @@ export function Breadcrumbs({ items, siteUrl }: BreadcrumbsProps) {
                 {idx > 0 && (
                   <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
                 )}
-                {!isLast && item.href ? (
+                {!isLast ? (
                   <Link
                     href={item.href}
                     className="transition-colors hover:text-[#0C2340] hover:underline"
@@ -45,8 +43,8 @@ export function Breadcrumbs({ items, siteUrl }: BreadcrumbsProps) {
                   </Link>
                 ) : (
                   <span
-                    className={isLast ? 'font-medium text-slate-900' : 'text-slate-600'}
-                    aria-current={isLast ? 'page' : undefined}
+                    className="font-medium text-slate-900"
+                    aria-current="page"
                   >
                     {item.label}
                   </span>

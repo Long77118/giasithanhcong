@@ -3,14 +3,10 @@ import assert from 'node:assert/strict';
 import {
   buildCatalogSeoDecision,
   buildProductJsonLd,
-  formatPriceVnd,
   getSiteUrl,
   isIndexingAllowed,
 } from './seo';
-import {
-  checkSlidingWindowRateLimit,
-  validateQuoteSubmission,
-} from './quote-validation';
+import { validateQuoteSubmission } from './quote-validation';
 import { resolveContactConfig } from './contact';
 import { parsePositivePage, toVietnameseSlug } from './slug';
 
@@ -73,37 +69,41 @@ test('buildCatalogSeoDecision sets noindex,follow on search/filter and paginated
   assert.equal(page2.robotsFollow, true);
 });
 
-test('formatPriceVnd displays Liên hệ báo giá when price is hidden or empty', () => {
-  assert.equal(formatPriceVnd(null, false), 'Liên hệ báo giá');
-  assert.equal(formatPriceVnd(150000, false), 'Liên hệ báo giá');
-  assert.equal(formatPriceVnd(0, true), 'Liên hệ báo giá');
-  assert.match(formatPriceVnd(420000, true), /420\.000 đ/);
-});
-
-test('buildProductJsonLd omits offers when price is hidden', () => {
-  const hiddenPriceLd = buildProductJsonLd({
+test('quote-only product schema never publishes legacy prices or stock claims', () => {
+  // Existing cached records or older API clients may still include legacy fields.
+  const legacyProduct = {
     name: 'Ly PET 500ml',
     sku: 'LY-PET-500',
     description: 'Ly nhựa PET trong suốt',
     url: 'https://baobianphat.vn/san-pham/ly-pet-500ml',
-    brandName: 'Bao Bì An Phát',
-    images: [],
-    price: 500000,
-    showPrice: false,
-  });
-  assert.equal('offers' in hiddenPriceLd, false);
-
-  const shownPriceLd = buildProductJsonLd({
-    name: 'Ly PET 500ml',
-    sku: 'LY-PET-500',
-    description: 'Ly nhựa PET trong suốt',
-    url: 'https://baobianphat.vn/san-pham/ly-pet-500ml',
-    brandName: 'Bao Bì An Phát',
+    brandName: '  Nhãn hiệu Bao Bì Việt  ',
     images: [],
     price: 500000,
     showPrice: true,
-  });
-  assert.equal((shownPriceLd.offers as { price: number }).price, 500000);
+    availability: 'https://schema.org/InStock',
+  };
+  const schema = buildProductJsonLd(legacyProduct);
+  assert.equal(schema['@type'], 'Product');
+  assert.equal(schema.sku, legacyProduct.sku);
+  assert.deepEqual(schema.brand, { '@type': 'Brand', name: 'Nhãn hiệu Bao Bì Việt' });
+  assert.equal('offers' in schema, false);
+  assert.equal('price' in schema, false);
+  assert.equal('availability' in schema, false);
+  assert.doesNotMatch(JSON.stringify(schema), /500000|InStock/);
+});
+
+test('product schema omits brand when the CMS field has no confirmed name', () => {
+  for (const brandName of [undefined, null, '', '   ']) {
+    const schema = buildProductJsonLd({
+      name: 'Ly PET 500ml',
+      sku: 'LY-PET-500',
+      description: 'Ly nhựa PET trong suốt',
+      url: 'https://baobianphat.vn/san-pham/ly-pet-500ml',
+      brandName,
+      images: [],
+    });
+    assert.equal('brand' in schema, false);
+  }
 });
 
 test('validateQuoteSubmission validates fields, rejects invalid phone, and catches spam', () => {
@@ -150,26 +150,6 @@ test('validateQuoteSubmission validates fields, rejects invalid phone, and catch
   assert.equal(valid.data?.phone, '0901234567');
 });
 
-test('checkSlidingWindowRateLimit enforces request cap', () => {
-  const store = new Map();
-  const base = 1_700_000_000_000;
-  for (let i = 0; i < 3; i++) {
-    const res = checkSlidingWindowRateLimit(store, 'ip-1', {
-      maxRequests: 3,
-      windowMs: 60_000,
-      nowMs: base + i * 1000,
-    });
-    assert.equal(res.allowed, true);
-  }
-  const blocked = checkSlidingWindowRateLimit(store, 'ip-1', {
-    maxRequests: 3,
-    windowMs: 60_000,
-    nowMs: base + 5000,
-  });
-  assert.equal(blocked.allowed, false);
-  assert.ok(blocked.retryAfterSeconds > 0);
-});
-
 test('resolveContactConfig handles unconfigured states without falling back to third-party links', () => {
   const empty = resolveContactConfig({});
   assert.equal(empty.isHotlineConfigured, false);
@@ -187,12 +167,19 @@ test('resolveContactConfig handles unconfigured states without falling back to t
   assert.equal(configured.zaloUrl, 'https://zalo.me/0900111222');
 });
 
-test('Vietnamese slugifier and pagination parser behave deterministically', () => {
+test('Vietnamese slugifier removes accents and separates words with hyphens', () => {
   assert.equal(
     toVietnameseSlug('Ly Nhựa PET & Nắp Cầu Đựng Trà Sữa'),
     'ly-nhua-pet-nap-cau-dung-tra-sua',
   );
-  assert.equal(parsePositivePage('3'), 3);
-  assert.equal(parsePositivePage('-1'), 1);
-  assert.equal(parsePositivePage('abc'), 1);
+});
+
+test('pagination accepts positive integers without clamping and rejects malformed page parameters', () => {
+  assert.equal(parsePositivePage(), 1);
+  assert.equal(parsePositivePage('1'), 1);
+  assert.equal(parsePositivePage('03'), 3);
+  assert.equal(parsePositivePage('501'), 501);
+  for (const value of ['0', '-1', 'abc', '2x', '2.5', '1e2', '', ' 2', '2\n', '9007199254740992', ['2', '3']]) {
+    assert.equal(parsePositivePage(value), null, JSON.stringify(value));
+  }
 });

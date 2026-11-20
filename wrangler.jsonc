@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "giasithanhcong-staging",
+  "main": "cloudflare/worker.ts",
+  "compatibility_date": "2026-11-20",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "vars": {
+    "DEPLOY_TARGET": "cloudflare",
+    "DEPLOYMENT_STAGE": "staging",
+    "ALLOW_INDEXING": "false",
+    "APP_URL": "https://giasithanhcong-staging.YOUR_SUBDOMAIN.workers.dev",
+    "NEXT_PUBLIC_SITE_URL": "https://giasithanhcong-staging.YOUR_SUBDOMAIN.workers.dev"
+  },
+  "hyperdrive": [{
+    "binding": "HYPERDRIVE",
+    // Replace with the configuration ID created against Neon's DIRECT endpoint.
+    "id": "00000000000000000000000000000000"
+  }],
+  "r2_buckets": [{ "binding": "MEDIA_BUCKET", "bucket_name": "giasithanhcong-staging-media" }],
+  "observability": { "enabled": true }
+}

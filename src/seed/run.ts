@@ -186,8 +186,6 @@ export async function runSeed() {
       packagingSpec: prod.packagingSpec,
       minOrderQty: prod.minOrderQty,
       minOrderUnit: prod.minOrderUnit,
-      price: prod.price ?? null,
-      showPrice: prod.showPrice,
       featured: prod.featured,
       status: prod.status,
       meta: {

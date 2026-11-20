@@ -1,0 +1,49 @@
+name: Verify Cloudflare preparation
+on:
+  push:
+    branches: [codex/cloudflare-staging]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SQL_HOST: 127.0.0.1
+      SQL_DB_NAME: ci_only
+      SQL_USER: ci_only
+      SQL_PASSWORD: ci_only
+      SQL_ADMIN_USER: ci_only
+      SQL_ADMIN_PASSWORD: ci_only
+      ALLOW_INDEXING: 'false'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+      - name: Resolve lock on the supported Linux build environment
+        run: bun install --lockfile-only
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deployment-lock
+          path: bun.lock
+      - run: bun install --frozen-lockfile
+      - run: bun run payload:types
+      - uses: actions/upload-artifact@v4
+        with:
+          name: payload-types
+          path: src/payload-types.ts
+      - run: bun run test
+      - run: bun run typecheck
+      - run: bun run cf:build
+      - name: Package Worker without deploying
+        run: bunx wrangler deploy --dry-run --outdir artifacts/worker
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: worker-preview-build
+          path: artifacts/worker

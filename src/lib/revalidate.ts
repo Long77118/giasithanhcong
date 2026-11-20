@@ -8,7 +8,8 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 export function safeRevalidateTags(tags: string[], paths: string[] = []) {
   for (const tag of tags) {
     try {
-      revalidateTag(tag);
+      // Preserve immediate invalidation for both CMS Server Actions and REST hooks.
+      revalidateTag(tag, { expire: 0 });
     } catch {
       // Ignore outside Next.js server context (e.g. CLI seed/migrate scripts)
     }

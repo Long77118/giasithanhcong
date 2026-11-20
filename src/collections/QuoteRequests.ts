@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload';
-import { isAuthenticated } from './access';
+import { isAdmin } from './access';
 
 export const QuoteRequests: CollectionConfig = {
   slug: 'quote-requests',
@@ -8,6 +8,7 @@ export const QuoteRequests: CollectionConfig = {
     plural: 'Yêu cầu báo giá',
   },
   admin: {
+    group: 'Kinh doanh',
     useAsTitle: 'customerName',
     defaultColumns: [
       'customerName',
@@ -20,11 +21,11 @@ export const QuoteRequests: CollectionConfig = {
   },
   access: {
     // Public visitors submit via POST /api/bao-gia (validated + anti-spam + Local API).
-    // Direct collection read/list/update/delete/create via Payload REST API requires authentication.
-    read: isAuthenticated,
-    create: isAuthenticated,
-    update: isAuthenticated,
-    delete: isAuthenticated,
+    // Direct collection read/list/update/delete/create via Payload REST API requires an admin account.
+    read: isAdmin,
+    create: isAdmin,
+    update: isAdmin,
+    delete: isAdmin,
   },
   fields: [
     {

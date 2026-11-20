@@ -1,5 +1,85 @@
 @import "tailwindcss";
 
+@layer components {
+  .site-shell {
+    width: 100%;
+    min-width: 0;
+    padding-inline: var(--site-gutter);
+  }
+
+  .catalog-grid {
+    --catalog-columns: 1;
+    display: grid;
+    grid-template-columns: repeat(var(--catalog-columns), minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+
+  .catalog-masthead {
+    background: radial-gradient(ellipse at 84% 18%, #244965 0%, transparent 58%), #0c2340;
+  }
+
+  .catalog-page > nav,
+  .product-page > nav {
+    margin-block-end: .75rem;
+    overflow-wrap: anywhere;
+  }
+
+  .product-overview {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .quote-request,
+  .quote-request [aria-invalid="true"],
+  .quote-request [role="alert"],
+  .quote-request [role="status"] {
+    scroll-margin-block-start: 5.75rem;
+  }
+
+  @media (min-width: 64rem) {
+    .product-overview {
+      grid-template:
+        "gallery heading" auto
+        "gallery order" 1fr
+        / minmax(0, 1.15fr) minmax(0, 1fr);
+      align-items: start;
+      gap: 1.25rem 3rem;
+    }
+    .product-heading { grid-area: heading; }
+    .product-gallery { grid-area: gallery; }
+    .product-order { grid-area: order; }
+  }
+
+  @media (min-width: 40rem) { .catalog-grid { --catalog-columns: 2; } }
+  @media (min-width: 64rem) { .catalog-grid { --catalog-columns: 3; } }
+  @media (min-width: 80rem) { .catalog-grid { --catalog-columns: 4; } }
+  @media (min-width: 108rem) { .catalog-grid { --catalog-columns: 5; } }
+  @media (min-width: 144rem) { .catalog-grid { --catalog-columns: 6; } }
+
+  .lexical-content { color: #334155; font-size: 1rem; line-height: 1.75; overflow-wrap: anywhere; }
+  .lexical-content p { margin: 0.875rem 0; }
+  .lexical-content :is(h1, h2, h3, h4, h5, h6) { margin: 1.5rem 0 0.75rem; color: #0f172a; font-family: var(--font-display); font-weight: 600; line-height: 1.35; }
+  .lexical-content :is(h1, h2) { font-size: 1.5rem; }
+  .lexical-content h3 { font-size: 1.25rem; }
+  .lexical-content :is(h4, h5, h6) { font-size: 1.125rem; }
+  .lexical-content strong { color: #0f172a; font-weight: 600; }
+  .lexical-content a { color: #0c2340; font-weight: 500; text-decoration: underline; text-underline-offset: 0.25rem; }
+  .lexical-content a:hover { color: #b45309; }
+  .lexical-content :is(ul, ol) { margin: 1rem 0; padding-left: 1.5rem; }
+  .lexical-content ul { list-style-type: disc; }
+  .lexical-content ol { list-style-type: decimal; }
+  .lexical-content li { margin: 0.375rem 0; }
+  .lexical-content .list-check { list-style: none; padding-left: 0; }
+  .lexical-content input[type="checkbox"] { margin-right: 0.5rem; }
+  .lexical-content blockquote { margin: 1.25rem 0; padding: 1rem 1.25rem; border-left: 3px solid #cbd5e1; background: #f8fafc; font-style: italic; }
+  .lexical-content code { border-radius: 0.25rem; padding: 0.125rem 0.375rem; background: #f1f5f9; font-family: var(--font-mono); font-size: 0.9em; }
+  .lexical-content hr { margin: 1.5rem 0; border-color: #cbd5e1; }
+  .lexical-content figure { margin: 1.5rem 0; }
+  .lexical-content img { display: block; max-width: 100%; height: auto; margin-inline: auto; border-radius: 0.5rem; }
+  .lexical-content figcaption { margin-top: 0.5rem; text-align: center; color: #64748b; font-size: 0.875rem; }
+  .lexical-content .rich-text-unavailable { color: #64748b; font-style: italic; }
+}
+
 @theme inline {
   --font-sans: var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
@@ -8,8 +88,13 @@
 
 @layer base {
   html {
+    --site-gutter: 1rem;
     scroll-behavior: smooth;
   }
+
+  @media (min-width: 40rem) { html { --site-gutter: 1.5rem; } }
+  @media (min-width: 100rem) { html { --site-gutter: 2rem; } }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
   body {
     background-color: #f8fafc;

@@ -1,38 +1,46 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import {
   getCategoryBySlug,
   getProductsCatalog,
   getPublishedCategoriesCached,
+  getPublishedSlugRedirect,
   getSiteSettingsCached,
+  resolvePublishedCanonicalUrl,
 } from '@/lib/queries';
 import {
   buildCatalogSeoDecision,
   getSiteUrl,
   isIndexingAllowed,
 } from '@/lib/seo';
-import { parsePositivePage } from '@/lib/slug';
+import { resolveOpenGraphImages } from '@/lib/seo-images';
+import { categoryAncestors } from '@/lib/category-tree';
+import { decodePublicSlugParam, parsePositivePage, publicContentPath, withPublicSearchParams, type PublicSearchParams } from '@/lib/slug';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { MediaImage } from '@/components/MediaImage';
 import { ProductCard } from '@/components/ProductCard';
+import { catalogCardSizes } from '@/lib/storefront-image-sizes';
 import { Pagination } from '@/components/Pagination';
 
 export const dynamic = 'force-dynamic';
 
 interface CategoryPageProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ page?: string | string[]; sort?: string | string[] }>;
+  searchParams: Promise<PublicSearchParams>;
 }
 
 export async function generateMetadata({
   params,
   searchParams,
 }: CategoryPageProps): Promise<Metadata> {
-  const { slug } = await params;
+  const slug = decodePublicSlugParam((await params).slug);
+  if (slug === null) notFound();
   const sp = await searchParams;
   const page = parsePositivePage(sp.page);
+  if (page === null) notFound();
+  const sort = (Array.isArray(sp.sort) ? sp.sort[0] : sp.sort)?.trim();
   const category = await getCategoryBySlug(slug);
 
   if (!category) {
@@ -44,18 +52,20 @@ export async function generateMetadata({
 
   const siteUrl = getSiteUrl();
   const indexingAllowed = isIndexingAllowed();
-  const { contact } = await getSiteSettingsCached();
+  const { settings, contact } = await getSiteSettingsCached();
 
+  const basePath = publicContentPath('product-categories', category.slug);
   const seo = buildCatalogSeoDecision({
-    basePath: `/danh-muc/${category.slug}`,
+    basePath,
     page,
+    sort,
     siteUrl,
     indexingAllowed,
   });
 
-  const meta = category.meta as
-    | { title?: string | null; description?: string | null; canonicalUrl?: string | null }
-    | undefined;
+  const meta = category.meta;
+  const baseCanonical = await resolvePublishedCanonicalUrl(siteUrl, basePath, meta?.canonicalUrl);
+  const canonical = baseCanonical === siteUrl + basePath ? seo.canonical : baseCanonical;
 
   const title = meta?.title || `${category.name} | ${contact.brandName}`;
   const description =
@@ -67,7 +77,7 @@ export async function generateMetadata({
     title,
     description,
     alternates: {
-      canonical: meta?.canonicalUrl || seo.canonical,
+      canonical,
     },
     robots: {
       index: seo.robotsIndex,
@@ -76,8 +86,9 @@ export async function generateMetadata({
     openGraph: {
       title,
       description,
-      url: meta?.canonicalUrl || seo.canonical,
+      url: canonical,
       type: 'website',
+      images: resolveOpenGraphImages(siteUrl, meta?.image, category.image, settings?.defaultOgImage),
     },
   };
 }
@@ -86,15 +97,21 @@ export default async function CategoryPage({
   params,
   searchParams,
 }: CategoryPageProps) {
-  const { slug } = await params;
+  const slug = decodePublicSlugParam((await params).slug);
+  if (slug === null) notFound();
   const sp = await searchParams;
   const page = parsePositivePage(sp.page);
+  if (page === null) notFound();
   const sort =
     (Array.isArray(sp.sort) ? sp.sort[0] : sp.sort)?.trim() || 'newest';
   const siteUrl = getSiteUrl();
 
   const category = await getCategoryBySlug(slug);
   if (!category) {
+    const currentSlug = await getPublishedSlugRedirect('product-categories', slug);
+    if (currentSlug) {
+      permanentRedirect(withPublicSearchParams(publicContentPath('product-categories', currentSlug), sp));
+    }
     notFound();
   }
 
@@ -108,6 +125,11 @@ export default async function CategoryPage({
     }),
   ]);
 
+  if (page > 1 && page > catalog.totalPages) notFound();
+
+  const categoryPath = publicContentPath('product-categories', category.slug);
+  const filters = { sort: sort !== 'newest' ? sort : undefined };
+  const ancestors = categoryAncestors(category, allCategories);
   const childCategories = allCategories.filter((c) => {
     const parentId =
       c.parent && typeof c.parent === 'object' ? c.parent.id : c.parent;
@@ -115,17 +137,24 @@ export default async function CategoryPage({
   });
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+    <div className="site-shell py-8 lg:py-12">
       <Breadcrumbs
         siteUrl={siteUrl}
         items={[
           { label: 'Trang chủ', href: '/' },
           { label: 'Sản phẩm', href: '/san-pham' },
-          { label: category.name },
+          ...ancestors.map(ancestor => ({
+            label: ancestor.name,
+            href: publicContentPath('product-categories', ancestor.slug),
+          })),
+          {
+            label: category.name,
+            href: withPublicSearchParams(categoryPath, { ...filters, page: page > 1 ? String(page) : undefined }),
+          },
         ]}
       />
 
-      <section className="grid items-center gap-8 rounded-xl border border-slate-200 bg-white p-6 sm:p-8 lg:grid-cols-12">
+      <section className="grid grid-cols-1 items-center gap-8 rounded-xl border border-slate-200 bg-white p-4 sm:p-8 lg:grid-cols-12">
         <div className="lg:col-span-8">
           <p className="text-xs font-semibold tracking-wide text-[#B45309]">
             Danh mục sản phẩm bán sỉ
@@ -155,6 +184,7 @@ export default async function CategoryPage({
             <MediaImage
               media={category.image}
               prefer="card"
+              sizes="(min-width: 64rem) calc(33.333vw - 65px), (min-width: 40rem) calc(100vw - 116px), calc(100vw - 66px)"
               fallbackTitle={category.name}
             />
           </div>
@@ -167,7 +197,7 @@ export default async function CategoryPage({
           {childCategories.map((child) => (
             <Link
               key={child.id}
-              href={`/danh-muc/${child.slug}`}
+              href={publicContentPath('product-categories', child.slug)}
               className="inline-flex min-h-[36px] items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-[#0C2340] hover:text-[#0C2340]"
             >
               {child.name}
@@ -192,9 +222,9 @@ export default async function CategoryPage({
           </Link>
         </div>
       ) : (
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="catalog-grid mt-8">
           {catalog.docs.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} sizes={catalogCardSizes} />
           ))}
         </div>
       )}
@@ -202,7 +232,8 @@ export default async function CategoryPage({
       <Pagination
         currentPage={catalog.page}
         totalPages={catalog.totalPages}
-        basePath={`/danh-muc/${category.slug}`}
+        basePath={categoryPath}
+        queryParams={filters}
       />
     </div>
   );

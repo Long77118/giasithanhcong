@@ -1,6 +1,8 @@
 import path from 'node:path';
 import type { CollectionConfig } from 'payload';
-import { isAuthenticated } from './access';
+import { isAdmin } from './access';
+import { safeRevalidateTags } from '../lib/revalidate';
+import { isCloudflareTarget } from '../lib/deployment';
 
 export const Media: CollectionConfig = {
   slug: 'media',
@@ -8,16 +10,23 @@ export const Media: CollectionConfig = {
     singular: 'Thư viện ảnh',
     plural: 'Thư viện ảnh',
   },
+  admin: { group: 'Nội dung' },
   access: {
     read: () => true,
-    create: isAuthenticated,
-    update: isAuthenticated,
-    delete: isAuthenticated,
+    create: isAdmin,
+    update: isAdmin,
+    delete: isAdmin,
+  },
+  hooks: {
+    afterChange: [() => safeRevalidateTags(['site-settings'])],
+    afterDelete: [() => safeRevalidateTags(['site-settings'])],
   },
   upload: {
     staticDir: path.resolve(process.cwd(), 'media'),
     mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
-    adminThumbnail: 'thumbnail',
+    adminThumbnail: isCloudflareTarget() ? undefined : 'thumbnail',
+    crop: !isCloudflareTarget(),
+    focalPoint: !isCloudflareTarget(),
     imageSizes: [
       {
         name: 'thumbnail',
@@ -40,6 +49,8 @@ export const Media: CollectionConfig = {
     ],
   },
   fields: [
+    // R2 injects this same optional field. Keep the Node and Workers database schemas equal.
+    { name: '_objectKey', type: 'text', admin: { hidden: true, readOnly: true } },
     {
       name: 'alt',
       label: 'Văn bản thay thế (Alt SEO)',

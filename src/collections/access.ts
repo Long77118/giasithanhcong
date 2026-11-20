@@ -1,13 +1,17 @@
 import type { Access } from 'payload';
 
-export const isAuthenticated: Access = ({ req: { user } }) => Boolean(user);
+export function isAdminUser(user: unknown): boolean {
+  return Boolean(
+    user && typeof user === 'object' &&
+    'collection' in user && user.collection === 'users' &&
+    'role' in user && user.role === 'admin',
+  );
+}
 
-export const isAdmin: Access = ({ req: { user } }) => {
-  return Boolean(user && 'role' in user && user.role === 'admin');
-};
+export const isAdmin = (({ req: { user } }) => isAdminUser(user)) satisfies Access;
 
-export const publishedOrAuthenticated: Access = ({ req: { user } }) => {
-  if (user) return true;
+export const publishedOrAdmin: Access = ({ req: { user } }) => {
+  if (isAdminUser(user)) return true;
   return {
     status: {
       equals: 'published',

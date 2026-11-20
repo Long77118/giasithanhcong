@@ -138,6 +138,13 @@ export interface UserAuthOperations {
 export interface Product {
   id: number;
   name: string;
+  /**
+   * Điền thương hiệu của sản phẩm. Để trống nếu chưa xác định được.
+   */
+  brandName?: string | null;
+  /**
+   * Ví dụ: ly-nhua-pet-500ml. Đổi slug sẽ chuyển hướng đường dẫn cũ.
+   */
   slug: string;
   sku: string;
   category: number | ProductCategory;
@@ -174,11 +181,6 @@ export interface Product {
   packagingSpec: string;
   minOrderQty?: number | null;
   minOrderUnit?: string | null;
-  /**
-   * Để trống hoặc tắt "Hiển thị giá" để hiển thị "Liên hệ báo giá".
-   */
-  price?: number | null;
-  showPrice?: boolean | null;
   relatedProducts?: (number | Product)[] | null;
   featured?: boolean | null;
   status: 'draft' | 'published';
@@ -190,7 +192,7 @@ export interface Product {
      */
     image?: (number | null) | Media;
     /**
-     * Để trống để tự động sinh canonical chuẩn theo APP_URL và slug.
+     * Ví dụ /san-pham/ly-nhua-pet. Dùng đường dẫn của một trang công khai trên website. Để trống để dùng URL hiện tại.
      */
     canonicalUrl?: string | null;
   };
@@ -204,9 +206,15 @@ export interface Product {
 export interface ProductCategory {
   id: number;
   name: string;
+  /**
+   * Ví dụ: ly-nhua-pet-500ml. Đổi slug sẽ chuyển hướng đường dẫn cũ.
+   */
   slug: string;
   description?: string | null;
   image?: (number | null) | Media;
+  /**
+   * Để trống nếu đây là danh mục gốc. Không chọn chính danh mục này hoặc danh mục cấp dưới.
+   */
   parent?: (number | null) | ProductCategory;
   displayOrder?: number | null;
   status: 'draft' | 'published';
@@ -218,7 +226,7 @@ export interface ProductCategory {
      */
     image?: (number | null) | Media;
     /**
-     * Để trống để tự động sinh canonical chuẩn theo APP_URL và slug.
+     * Ví dụ /san-pham/ly-nhua-pet. Dùng đường dẫn của một trang công khai trên website. Để trống để dùng URL hiện tại.
      */
     canonicalUrl?: string | null;
   };
@@ -278,6 +286,9 @@ export interface Media {
 export interface Post {
   id: number;
   title: string;
+  /**
+   * Ví dụ: ly-nhua-pet-500ml. Đổi slug sẽ chuyển hướng đường dẫn cũ.
+   */
   slug: string;
   excerpt: string;
   coverImage?: (number | null) | Media;
@@ -310,7 +321,7 @@ export interface Post {
      */
     image?: (number | null) | Media;
     /**
-     * Để trống để tự động sinh canonical chuẩn theo APP_URL và slug.
+     * Ví dụ /san-pham/ly-nhua-pet. Dùng đường dẫn của một trang công khai trên website. Để trống để dùng URL hiện tại.
      */
     canonicalUrl?: string | null;
   };
@@ -331,13 +342,15 @@ export interface PostCategory {
   createdAt: string;
 }
 /**
+ * Quản lý các tài khoản có quyền truy cập bảng quản trị.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
   id: number;
   name: string;
-  role: 'admin' | 'editor';
+  role: 'admin';
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -477,6 +490,7 @@ export interface PayloadMigration {
  */
 export interface ProductsSelect<T extends boolean = true> {
   name?: T;
+  brandName?: T;
   slug?: T;
   sku?: T;
   category?: T;
@@ -499,8 +513,6 @@ export interface ProductsSelect<T extends boolean = true> {
   packagingSpec?: T;
   minOrderQty?: T;
   minOrderUnit?: T;
-  price?: T;
-  showPrice?: T;
   relatedProducts?: T;
   featured?: T;
   status?: T;
@@ -719,6 +731,27 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
  */
 export interface SiteSetting {
   id: number;
+  /**
+   * Tối đa 4 ô bên dưới dải danh mục. Kéo các ô để đổi thứ tự hiển thị.
+   */
+  homePromotions?:
+    | {
+        enabled?: boolean | null;
+        tone: 'mint' | 'ice' | 'peach' | 'sand';
+        title: string;
+        description?: string | null;
+        /**
+         * Chọn từ thư viện hoặc tải ảnh mới. Ưu tiên ảnh tách nền PNG/WebP.
+         */
+        image: number | Media;
+        buttonLabel: string;
+        /**
+         * Dẫn tới danh mục, trang đã lọc như /san-pham?q=Ly+Giấy, hoặc URL đầy đủ.
+         */
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
   brandName: string;
   tagline?: string | null;
   logo?: (number | null) | Media;
@@ -737,6 +770,16 @@ export interface SiteSetting {
   defaultSeoTitle?: string | null;
   defaultSeoDescription?: string | null;
   defaultOgImage?: (number | null) | Media;
+  /**
+   * Các fanpage công khai hiển thị theo thứ tự dưới đây ở cột trái trang chủ.
+   */
+  facebookPages?:
+    | {
+        name: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -745,6 +788,18 @@ export interface SiteSetting {
  * via the `definition` "site-settings_select".
  */
 export interface SiteSettingsSelect<T extends boolean = true> {
+  homePromotions?:
+    | T
+    | {
+        enabled?: T;
+        tone?: T;
+        title?: T;
+        description?: T;
+        image?: T;
+        buttonLabel?: T;
+        url?: T;
+        id?: T;
+      };
   brandName?: T;
   tagline?: T;
   logo?: T;
@@ -757,6 +812,13 @@ export interface SiteSettingsSelect<T extends boolean = true> {
   defaultSeoTitle?: T;
   defaultSeoDescription?: T;
   defaultOgImage?: T;
+  facebookPages?:
+    | T
+    | {
+        name?: T;
+        url?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

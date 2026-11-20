@@ -3,14 +3,16 @@ import { fileURLToPath } from 'node:url';
 import { withPayload } from '@payloadcms/next/withPayload';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
+const workersBuild = process.env.DEPLOY_TARGET === 'cloudflare';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  ...(workersBuild ? { output: 'standalone' } : {}),
+  env: { CLOUDFLARE_BUILD_TARGET: workersBuild ? 'true' : 'false' },
+  serverExternalPackages: ['jose', 'pg-cloudflare'],
   images: {
-    unoptimized: false,
+    // Sharp is native Node code. Trial Workers serve originals through the R2 adapter.
+    unoptimized: workersBuild,
     localPatterns: [
       {
         pathname: '/api/media/file/**',
@@ -20,6 +22,10 @@ const nextConfig = {
       },
     ],
   },
+  headers: async () => workersBuild ? [{
+    source: '/:path*',
+    headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' }],
+  }] : [],
   webpack: (config) => {
     config.resolve = config.resolve || {};
     config.resolve.alias = {
@@ -31,4 +37,4 @@ const nextConfig = {
   },
 };
 
-export default withPayload(nextConfig);
+export default withPayload(nextConfig, { devBundleServerPackages: false });

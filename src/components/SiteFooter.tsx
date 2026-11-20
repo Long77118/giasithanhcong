@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { publicContentPath } from '@/lib/slug';
 import type { ProductCategory } from '@/payload-types';
 import type { ResolvedContactConfig } from '@/lib/contact';
 
@@ -10,8 +11,8 @@ interface SiteFooterProps {
 
 export function SiteFooter({ contact, categories }: SiteFooterProps) {
   return (
-    <footer className="border-t border-slate-200 bg-[#0C2340] text-slate-200">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <footer className="site-footer border-t border-slate-200 bg-[#0C2340] text-slate-200">
+      <div className="site-shell py-12">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-2">
             <h2 className="font-display text-lg font-bold text-white">
@@ -33,7 +34,7 @@ export function SiteFooter({ contact, categories }: SiteFooterProps) {
               {categories.map((cat) => (
                 <li key={cat.id}>
                   <Link
-                    href={`/danh-muc/${cat.slug}`}
+                    href={publicContentPath('product-categories', cat.slug)}
                     className="transition-colors hover:text-white hover:underline"
                   >
                     {cat.name}

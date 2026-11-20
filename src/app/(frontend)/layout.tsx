@@ -2,17 +2,21 @@ import React from 'react';
 import type { Metadata } from 'next';
 import {
   Be_Vietnam_Pro,
+  Inter,
   JetBrains_Mono,
   Plus_Jakarta_Sans,
 } from 'next/font/google';
 import './globals.css';
+import './header.css';
 import {
   getPublishedCategoriesCached,
   getSiteSettingsCached,
 } from '@/lib/queries';
 import { getSiteUrl, isIndexingAllowed } from '@/lib/seo';
+import { resolveOpenGraphImages } from '@/lib/seo-images';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
+import { categoryMenuItems } from '@/components/ProductCategoryMenu';
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin', 'vietnamese'],
@@ -25,6 +29,12 @@ const beVietnam = Be_Vietnam_Pro({
   subsets: ['latin', 'vietnamese'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-be-vietnam',
+  display: 'swap',
+});
+
+const headerFont = Inter({
+  subsets: ['latin', 'vietnamese'],
+  variable: '--font-header',
   display: 'swap',
 });
 
@@ -58,6 +68,7 @@ export async function generateMetadata(): Promise<Metadata> {
       follow: indexingAllowed,
     },
     openGraph: {
+      images: resolveOpenGraphImages(siteUrl, settings?.defaultOgImage),
       type: 'website',
       locale: 'vi_VN',
       siteName: contact.brandName,
@@ -83,7 +94,7 @@ export default async function FrontendLayout({
   return (
     <html
       lang="vi"
-      className={`${plusJakarta.variable} ${beVietnam.variable} ${jetbrainsMono.variable}`}
+      className={`${plusJakarta.variable} ${beVietnam.variable} ${headerFont.variable} ${jetbrainsMono.variable}`}
     >
       <body className="flex min-h-screen flex-col bg-[#F8FAFC] text-slate-900">
         <a
@@ -92,7 +103,7 @@ export default async function FrontendLayout({
         >
           Chuyển tới nội dung chính
         </a>
-        <SiteHeader brandName={contact.brandName} />
+        <SiteHeader brandName={contact.brandName} categories={categoryMenuItems(categories)} />
         <main id="main-content" className="flex-1">
           {children}
         </main>

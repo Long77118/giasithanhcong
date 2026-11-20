@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, AlertCircle, Send } from 'lucide-react';
+
+const quoteControlClass = 'min-h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-900 placeholder:text-slate-500 aria-invalid:border-red-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0C2340] sm:text-sm';
 
 interface QuoteRequestFormProps {
   productId?: number | null;
@@ -33,10 +35,24 @@ export function QuoteRequestForm({
     requestId: number | string;
     message: string;
   } | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setFormLoadedAt(Date.now());
+    const section = sectionRef.current;
+    if (window.location.hash === '#bao-gia' && section && !section.contains(document.activeElement)) {
+      section.focus({ preventScroll: true });
+    }
   }, []);
+
+  useEffect(() => {
+    if (!serverError && !successInfo) return;
+    const section = sectionRef.current;
+    const target = section?.querySelector<HTMLElement>('[aria-invalid="true"]')
+      ?? section?.querySelector<HTMLElement>('[role="status"], [role="alert"]');
+    target?.focus({ preventScroll: true });
+    target?.scrollIntoView({ block: 'nearest' });
+  }, [fieldErrors, serverError, successInfo]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -99,15 +115,18 @@ export function QuoteRequestForm({
   }
 
   return (
-    <div
+    <section
+      ref={sectionRef}
       id="bao-gia"
-      className="rounded-xl border border-slate-200 bg-white p-6 sm:p-8"
+      tabIndex={-1}
+      aria-labelledby="quote-heading"
+      className="quote-request min-w-0 rounded-xl border border-slate-200 bg-white p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0C2340] sm:p-8"
     >
       <div className="mb-6">
-        <h2 className="font-display text-xl font-bold text-[#0C2340] sm:text-2xl">
+        <h2 id="quote-heading" className="font-display text-xl font-bold text-[#0C2340] sm:text-2xl">
           Gửi yêu cầu báo giá sỉ
         </h2>
-        <p className="mt-1.5 text-sm text-slate-600">
+        <p className="mt-1.5 text-sm [overflow-wrap:anywhere] text-slate-600">
           {productName
             ? `Sản phẩm đang chọn: ${productName}`
             : 'Điền quy cách, số lượng dự kiến và số điện thoại để nhận bảng giá sỉ theo thùng.'}
@@ -117,6 +136,7 @@ export function QuoteRequestForm({
       {successInfo ? (
         <div
           role="status"
+          tabIndex={-1}
           className="rounded-lg border border-emerald-200 bg-emerald-50 p-5 text-emerald-950"
         >
           <div className="flex items-start gap-3">
@@ -142,6 +162,7 @@ export function QuoteRequestForm({
           {serverError && (
             <div
               role="alert"
+              tabIndex={-1}
               className="flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900"
             >
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-700" aria-hidden="true" />
@@ -175,15 +196,17 @@ export function QuoteRequestForm({
                 id="quote-customer-name"
                 name="customerName"
                 type="text"
+                autoComplete="name"
                 required
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="Nguyễn Văn A"
                 aria-invalid={Boolean(fieldErrors.customerName)}
-                className="min-h-[44px] w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0C2340] focus:outline-none focus:ring-2 focus:ring-[#0C2340]/15"
+                aria-describedby={fieldErrors.customerName ? 'quote-customer-name-error' : undefined}
+                className={quoteControlClass}
               />
               {fieldErrors.customerName && (
-                <p className="mt-1 text-xs text-red-700">{fieldErrors.customerName}</p>
+                <p id="quote-customer-name-error" className="mt-1 text-xs text-red-700">{fieldErrors.customerName}</p>
               )}
             </div>
 
@@ -198,15 +221,17 @@ export function QuoteRequestForm({
                 id="quote-phone"
                 name="phone"
                 type="tel"
+                autoComplete="tel"
                 required
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="0901234567"
                 aria-invalid={Boolean(fieldErrors.phone)}
-                className="min-h-[44px] w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0C2340] focus:outline-none focus:ring-2 focus:ring-[#0C2340]/15"
+                aria-describedby={fieldErrors.phone ? 'quote-phone-error' : undefined}
+                className={quoteControlClass}
               />
               {fieldErrors.phone && (
-                <p className="mt-1 text-xs text-red-700">{fieldErrors.phone}</p>
+                <p id="quote-phone-error" className="mt-1 text-xs text-red-700">{fieldErrors.phone}</p>
               )}
             </div>
           </div>
@@ -228,10 +253,11 @@ export function QuoteRequestForm({
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder="Ví dụ: 10 thùng"
                 aria-invalid={Boolean(fieldErrors.quantity)}
-                className="min-h-[44px] w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0C2340] focus:outline-none focus:ring-2 focus:ring-[#0C2340]/15"
+                aria-describedby={fieldErrors.quantity ? 'quote-quantity-error' : undefined}
+                className={quoteControlClass}
               />
               {fieldErrors.quantity && (
-                <p className="mt-1 text-xs text-red-700">{fieldErrors.quantity}</p>
+                <p id="quote-quantity-error" className="mt-1 text-xs text-red-700">{fieldErrors.quantity}</p>
               )}
             </div>
 
@@ -246,14 +272,16 @@ export function QuoteRequestForm({
                 id="quote-email"
                 name="email"
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="banhang@example.com"
                 aria-invalid={Boolean(fieldErrors.email)}
-                className="min-h-[44px] w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0C2340] focus:outline-none focus:ring-2 focus:ring-[#0C2340]/15"
+                aria-describedby={fieldErrors.email ? 'quote-email-error' : undefined}
+                className={quoteControlClass}
               />
               {fieldErrors.email && (
-                <p className="mt-1 text-xs text-red-700">{fieldErrors.email}</p>
+                <p id="quote-email-error" className="mt-1 text-xs text-red-700">{fieldErrors.email}</p>
               )}
             </div>
           </div>
@@ -269,11 +297,17 @@ export function QuoteRequestForm({
               id="quote-company"
               name="companyName"
               type="text"
+              autoComplete="organization"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               placeholder="Cửa hàng cà phê / Nhà hàng / Đại lý"
-              className="min-h-[44px] w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0C2340] focus:outline-none focus:ring-2 focus:ring-[#0C2340]/15"
+              aria-invalid={Boolean(fieldErrors.companyName)}
+              aria-describedby={fieldErrors.companyName ? 'quote-company-error' : undefined}
+              className={quoteControlClass}
             />
+            {fieldErrors.companyName && (
+              <p id="quote-company-error" className="mt-1 text-xs text-red-700">{fieldErrors.companyName}</p>
+            )}
           </div>
 
           <div>
@@ -292,10 +326,11 @@ export function QuoteRequestForm({
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Ghi rõ dung tích, loại nắp đi kèm hoặc khu vực nhận hàng..."
               aria-invalid={Boolean(fieldErrors.message)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0C2340] focus:outline-none focus:ring-2 focus:ring-[#0C2340]/15"
+              aria-describedby={fieldErrors.message ? 'quote-message-error' : undefined}
+              className={quoteControlClass}
             />
             {fieldErrors.message && (
-              <p className="mt-1 text-xs text-red-700">{fieldErrors.message}</p>
+              <p id="quote-message-error" className="mt-1 text-xs text-red-700">{fieldErrors.message}</p>
             )}
           </div>
 
@@ -309,6 +344,6 @@ export function QuoteRequestForm({
           </button>
         </form>
       )}
-    </div>
+    </section>
   );
 }

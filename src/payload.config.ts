@@ -1,10 +1,11 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildConfig } from 'payload';
+import { buildConfig, type TextFieldSingleValidation } from 'payload';
 import { postgresAdapter } from '@payloadcms/db-postgres';
-import { lexicalEditor } from '@payloadcms/richtext-lexical';
+import { lexicalEditor, LinkFeature, RelationshipFeature, UploadFeature } from '@payloadcms/richtext-lexical';
 import { seoPlugin } from '@payloadcms/plugin-seo';
-import sharp from 'sharp';
+import { vi } from '@payloadcms/translations/languages/vi';
+import { r2Storage } from '@payloadcms/storage-r2';
 
 import { Users } from './collections/Users';
 import { Media } from './collections/Media';
@@ -17,15 +18,57 @@ import { SiteSettings } from './globals/SiteSettings';
 import { getPostgresPoolConfig } from './lib/db-config';
 import { getPayloadSecret } from './lib/env';
 import { getSiteUrl } from './lib/seo';
+import { normalizeCanonicalPath } from './lib/canonical';
+import { richTextCollections } from './lib/rich-text';
+import { isPublicContentCollection, publicContentPath } from './lib/slug';
+import { getRuntimeBindings, createWorkersLogger } from './lib/cloudflare-runtime';
+
+const cloudflare = await getRuntimeBindings();
+// The build-time constant removes Sharp's native binaries from the Worker bundle.
+const sharp = process.env.CLOUDFLARE_BUILD_TARGET === 'true'
+  ? undefined
+  : (await import('sharp')).default;
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
+const validateCanonicalUrl: TextFieldSingleValidation = (value, { previousValue }) => {
+  if (value == null || value === previousValue || (typeof value === 'string' && !value.trim())) return true;
+  return normalizeCanonicalPath(value, getSiteUrl()) !== null
+    || 'Nhập đường dẫn bắt đầu bằng / hoặc URL cùng tên miền, không kèm tham số hay #.';
+};
+
 export default buildConfig({
+  logger: cloudflare ? createWorkersLogger() : undefined,
+  onInit: async (payload) => {
+    if (!cloudflare) return;
+    const admins = await payload.count({ collection: 'users', where: { role: { equals: 'admin' } }, overrideAccess: true });
+    if (!admins.totalDocs) {
+      throw new Error('Initialize or import an Admin through a local Node process before deploying the public Worker.');
+    }
+  },
+  i18n: {
+    fallbackLanguage: 'vi',
+    supportedLanguages: { vi },
+  },
   admin: {
     user: Users.slug,
     meta: {
-      titleSuffix: ' – Quản trị Bao Bì An Phát',
+      titleSuffix: ' – Quản trị website',
+      icons: [{ url: '/admin-assets/mark.png', type: 'image/png' }],
+    },
+    dateFormat: 'dd/MM/yyyy HH:mm',
+    components: {
+      graphics: {
+        Icon: '/admin/Brand#WorkspaceIcon',
+        Logo: '/admin/Brand#WorkspaceLogo',
+      },
+      beforeNavLinks: ['/admin/Brand#WorkspaceNavigation'],
+      beforeLogin: ['/admin/Brand#LoginIntroduction'],
+      afterLogin: ['/admin/Brand#LoginFooter'],
+      views: {
+        dashboard: { Component: '/admin/Dashboard' },
+      },
     },
     importMap: {
       baseDir: path.resolve(dirname),
@@ -41,18 +84,39 @@ export default buildConfig({
     Users,
   ],
   globals: [SiteSettings],
-  editor: lexicalEditor(),
+  editor: lexicalEditor({
+    features: ({ defaultFeatures }) => [
+      ...defaultFeatures.filter((feature) => !['link', 'relationship', 'upload'].includes(feature.key)),
+      LinkFeature({ enabledCollections: [...richTextCollections] }),
+      RelationshipFeature({ enabledCollections: [...richTextCollections] }),
+      UploadFeature({ enabledCollections: ['media'] }),
+    ],
+  }),
   secret: getPayloadSecret(),
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
   db: postgresAdapter({
-    pool: getPostgresPoolConfig(),
+    // Keep the generated schema aligned with the category deletion policy and its migration.
+    beforeSchemaInit: [({ adapter, schema }) => {
+      for (const [table, field] of [
+        ['products', 'category'],
+        ['posts', 'category'],
+        ['product_categories', 'parent'],
+      ]) {
+        const reference = adapter.rawTables[table]?.columns[field]?.reference;
+        if (!reference) throw new Error(`Missing category foreign key: ${table}.${field}`);
+        reference.onDelete = 'restrict';
+      }
+      return schema;
+    }],
+    pool: getPostgresPoolConfig({ hyperdrive: cloudflare?.HYPERDRIVE }),
     push: false,
     migrationDir: path.resolve(dirname, 'migrations'),
   }),
   sharp,
   plugins: [
+    ...(cloudflare ? [r2Storage({ bucket: cloudflare.MEDIA_BUCKET, collections: { media: true } })] : []),
     seoPlugin({
       collections: ['products', 'product-categories', 'posts'],
       uploadsCollection: 'media',
@@ -82,11 +146,9 @@ export default buildConfig({
         const siteUrl = getSiteUrl();
         const record = doc as Record<string, unknown> | undefined;
         const slug = typeof record?.slug === 'string' ? record.slug : '';
-        if (!slug) return siteUrl;
-        if (collectionSlug === 'products') return `${siteUrl}/san-pham/${slug}`;
-        if (collectionSlug === 'product-categories') return `${siteUrl}/danh-muc/${slug}`;
-        if (collectionSlug === 'posts') return `${siteUrl}/blog/${slug}`;
-        return siteUrl;
+        return slug && isPublicContentCollection(collectionSlug)
+          ? `${siteUrl}${publicContentPath(collectionSlug, slug)}`
+          : siteUrl;
       },
       fields: ({ defaultFields }) => [
         ...defaultFields,
@@ -94,9 +156,10 @@ export default buildConfig({
           name: 'canonicalUrl',
           label: 'Canonical URL tùy chỉnh (tùy chọn)',
           type: 'text',
+          validate: validateCanonicalUrl,
           admin: {
             description:
-              'Để trống để tự động sinh canonical chuẩn theo APP_URL và slug.',
+              'Ví dụ /san-pham/ly-nhua-pet. Dùng đường dẫn của một trang công khai trên website. Để trống để dùng URL hiện tại.',
           },
         },
       ],

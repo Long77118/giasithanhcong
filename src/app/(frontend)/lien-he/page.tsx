@@ -2,6 +2,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 import { getSiteSettingsCached } from '@/lib/queries';
 import { getSiteUrl, isIndexingAllowed } from '@/lib/seo';
+import { resolveOpenGraphImages } from '@/lib/seo-images';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { ContactActions } from '@/components/ContactActions';
 import { QuoteRequestForm } from '@/components/QuoteRequestForm';
@@ -11,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata(): Promise<Metadata> {
   const siteUrl = getSiteUrl();
   const indexingAllowed = isIndexingAllowed();
-  const { contact } = await getSiteSettingsCached();
+  const { settings, contact } = await getSiteSettingsCached();
 
   const title = `Liên hệ & Yêu cầu báo giá sỉ | ${contact.brandName}`;
   const description = `Gửi yêu cầu báo giá sỉ ly nhựa, hộp thực phẩm, chai PET và bao bì giấy hoặc liên hệ qua Hotline/Zalo ${contact.brandName}.`;
@@ -25,6 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
       follow: indexingAllowed,
     },
     openGraph: {
+      images: resolveOpenGraphImages(siteUrl, settings?.defaultOgImage),
       type: 'website',
       url: `${siteUrl}/lien-he`,
       title,
@@ -38,12 +40,12 @@ export default async function ContactPage() {
   const { contact } = await getSiteSettingsCached();
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+    <div className="site-shell py-8 lg:py-12">
       <Breadcrumbs
         siteUrl={siteUrl}
         items={[
           { label: 'Trang chủ', href: '/' },
-          { label: 'Liên hệ & Báo giá' },
+          { label: 'Liên hệ & Báo giá', href: '/lien-he' },
         ]}
       />
 
@@ -56,7 +58,7 @@ export default async function ContactPage() {
         </p>
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-12">
+      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-12">
         <aside className="space-y-6 lg:col-span-5">
           <div className="rounded-xl border border-slate-200 bg-white p-6">
             <h2 className="font-display text-lg font-bold text-[#0C2340]">
@@ -73,7 +75,7 @@ export default async function ContactPage() {
               {contact.email && (
                 <div>
                   <dt className="text-xs text-slate-500">Email nhận đơn sỉ</dt>
-                  <dd className="font-medium text-slate-900">{contact.email}</dd>
+                  <dd className="font-medium [overflow-wrap:anywhere] text-slate-900">{contact.email}</dd>
                 </div>
               )}
               {contact.address && (

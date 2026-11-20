@@ -1,5 +1,6 @@
-import { unstable_cache } from 'next/cache';
-import { getPayload, type Where } from 'payload';
+import { unstable_cache as nextCache } from 'next/cache';
+import { sql } from '@payloadcms/db-postgres';
+import { getPayload, type Payload, type Where } from 'payload';
 import config from '@payload-config';
 import type {
   Post,
@@ -9,9 +10,80 @@ import type {
   SiteSetting,
 } from '@/payload-types';
 import { resolveContactConfig, type ResolvedContactConfig } from './contact';
+import { categorySubtreeIDs } from './category-tree';
+import { getSqlExecutor } from './db-transaction';
+import { createCanonicalResolver, type CanonicalDocument } from './canonical';
+import { parsePublicContentPath, publicContentPath, type PublicContentCollection } from './slug';
+import { isCloudflareTarget } from './deployment';
+
+// Trial Workers always read current CMS data. Node retains its tag-invalidated cache.
+// A production shared cache can be added after choosing cache storage and revalidation bindings.
+const unstable_cache: typeof nextCache = (fn, keys, options) =>
+  isCloudflareTarget() ? fn : nextCache(fn, keys, options);
+
+const publicContentTables = {
+  products: 'products',
+  'product-categories': 'product_categories',
+  posts: 'posts',
+} as const;
 
 async function getClient() {
   return getPayload({ config });
+}
+
+export async function getPublishedSlugRedirect(
+  collection: PublicContentCollection,
+  slug: string,
+): Promise<string | null> {
+  const payload = await getClient();
+  const db = getSqlExecutor('drizzle' in payload.db ? payload.db.drizzle : undefined);
+  const { rows: [target] } = await db.execute<{ slug: string }>(sql`
+    SELECT target.slug
+    FROM public.content_slug_history AS history
+    JOIN public.${sql.identifier(publicContentTables[collection])} AS target ON target.id = history.document_id
+    WHERE history.namespace = ${collection}
+      AND history.slug = ${slug}
+      AND target.slug <> history.slug
+      AND target.status = 'published'
+  `);
+  return target?.slug ?? null;
+}
+
+async function findPublishedCanonicalDocument(path: string): Promise<CanonicalDocument | undefined> {
+  const route = parsePublicContentPath(path);
+  if (!route) return undefined;
+  const { collection, slug } = route;
+  const payload = await getClient();
+  const find = async (targetSlug: string) => {
+    const { docs: [doc] } = await payload.find({
+      collection,
+      where: { slug: { equals: targetSlug }, status: { equals: 'published' } },
+      limit: 1,
+      pagination: false,
+      depth: 0,
+      select: { slug: true, meta: { canonicalUrl: true } },
+      overrideAccess: false,
+    });
+    return doc;
+  };
+  let doc = await find(slug);
+  if (!doc) {
+    const redirectedSlug = await getPublishedSlugRedirect(collection, slug);
+    if (redirectedSlug) doc = await find(redirectedSlug);
+  }
+  return doc && {
+    path: publicContentPath(collection, doc.slug),
+    canonicalUrl: doc.meta?.canonicalUrl,
+  };
+}
+
+export async function resolvePublishedCanonicalUrl(
+  siteUrl: string,
+  path: string,
+  canonicalUrl: string | null | undefined,
+): Promise<string> {
+  const resolve = createCanonicalResolver(siteUrl, findPublishedCanonicalDocument);
+  return siteUrl + await resolve({ path, canonicalUrl });
 }
 
 export const getSiteSettingsCached = unstable_cache(
@@ -43,17 +115,23 @@ export const getSiteSettingsCached = unstable_cache(
 export const getPublishedCategoriesCached = unstable_cache(
   async (): Promise<ProductCategory[]> => {
     const payload = await getClient();
-    const res = await payload.find({
-      collection: 'product-categories',
-      where: {
-        status: { equals: 'published' },
-      },
-      sort: 'displayOrder',
-      limit: 50,
-      depth: 2,
-      overrideAccess: false,
-    });
-    return res.docs;
+    const categories: ProductCategory[] = [];
+    let page = 1;
+    while (true) {
+      const res = await payload.find({
+        collection: 'product-categories',
+        where: { status: { equals: 'published' } },
+        sort: ['displayOrder', 'name', 'id'],
+        limit: 200,
+        page,
+        depth: 1,
+        overrideAccess: false,
+      });
+      categories.push(...res.docs);
+      if (!res.hasNextPage) break;
+      page++;
+    }
+    return categories;
   },
   ['published-categories'],
   { tags: ['catalog', 'categories'], revalidate: 300 },
@@ -143,18 +221,10 @@ export async function getProductsCatalog(filter: ProductCatalogFilter) {
       };
     }
 
-    const childCats = await payload.find({
-      collection: 'product-categories',
-      where: {
-        and: [
-          { parent: { equals: activeCategory.id } },
-          { status: { equals: 'published' } },
-        ],
-      },
-      limit: 50,
-      overrideAccess: false,
-    });
-    const catIds = [activeCategory.id, ...childCats.docs.map((c) => c.id)];
+    const categories = await getPublishedCategoriesCached();
+    const catIds = categorySubtreeIDs(activeCategory.id, categories);
+    // The active category may have just been published before a cache refresh.
+    if (!catIds.includes(activeCategory.id)) catIds.push(activeCategory.id);
     conditions.push({ category: { in: catIds } });
   }
 
@@ -170,9 +240,9 @@ export async function getProductsCatalog(filter: ProductCatalogFilter) {
     });
   }
 
-  let sort = '-createdAt';
-  if (filter.sort === 'name-asc') sort = 'name';
-  if (filter.sort === 'moq-asc') sort = 'minOrderQty';
+  let sort = ['-createdAt', '-id'];
+  if (filter.sort === 'name-asc') sort = ['name', 'id'];
+  if (filter.sort === 'moq-asc') sort = ['minOrderQty', 'id'];
 
   const result = await payload.find({
     collection: 'products',
@@ -194,6 +264,15 @@ export async function getProductsCatalog(filter: ProductCatalogFilter) {
     activeCategory,
   };
 }
+
+export const getHomeShortcutProductCountCached = unstable_cache(
+  async (filter: Pick<ProductCatalogFilter, 'q' | 'categorySlug'>) => {
+    const result = await getProductsCatalog({ ...filter, limit: 1 });
+    return result.totalDocs;
+  },
+  ['home-shortcut-product-count'],
+  { tags: ['catalog', 'products', 'categories'], revalidate: 300 },
+);
 
 export async function getPublishedProductBySlug(slug: string): Promise<Product | null> {
   const payload = await getClient();
@@ -280,7 +359,7 @@ export async function getPublishedPosts(filter: BlogFilter = {}) {
   const res = await payload.find({
     collection: 'posts',
     where: { and: conditions },
-    sort: '-publishedAt',
+    sort: ['-publishedAt', '-id'],
     page,
     limit,
     depth: 2,
@@ -315,39 +394,65 @@ export async function getPublishedPostBySlug(slug: string): Promise<Post | null>
   return res.docs[0] ?? null;
 }
 
+export async function getRelatedPublishedPosts(categoryId: number, currentPostId: number): Promise<Post[]> {
+  const payload = await getClient();
+  const { docs } = await payload.find({
+    collection: 'posts',
+    where: {
+      status: { equals: 'published' },
+      category: { equals: categoryId },
+      id: { not_equals: currentPostId },
+    },
+    sort: ['-publishedAt', '-id'],
+    limit: 3,
+    pagination: false,
+    depth: 1,
+    overrideAccess: false,
+  });
+  return docs;
+}
+
+const sitemapBatchSize = 200;
+type SitemapDocument = Pick<Product, 'slug' | 'updatedAt'> & {
+  meta?: Pick<NonNullable<Product['meta']>, 'canonicalUrl'>;
+};
+
+async function getPublishedSitemapDocuments(payload: Payload, collection: PublicContentCollection) {
+  const documents: SitemapDocument[] = [];
+  let lastID: number | undefined;
+
+  while (true) {
+    const { docs } = await payload.find({
+      collection,
+      where: {
+        status: { equals: 'published' },
+        ...(lastID === undefined ? {} : { id: { greater_than: lastID } }),
+      },
+      // Scan by immutable IDs so earlier deletions do not shift subsequent batches.
+      sort: 'id',
+      limit: sitemapBatchSize,
+      pagination: false,
+      depth: 0,
+      select: { slug: true, updatedAt: true, meta: { canonicalUrl: true } },
+      overrideAccess: false,
+    });
+    documents.push(...docs);
+    lastID = docs.at(-1)?.id;
+    if (docs.length < sitemapBatchSize || lastID === undefined) return documents;
+  }
+}
+
 export const getSitemapDataCached = unstable_cache(
   async () => {
     const payload = await getClient();
     const [categories, products, posts] = await Promise.all([
-      payload.find({
-        collection: 'product-categories',
-        where: { status: { equals: 'published' } },
-        limit: 200,
-        depth: 0,
-        overrideAccess: false,
-      }),
-      payload.find({
-        collection: 'products',
-        where: { status: { equals: 'published' } },
-        limit: 1000,
-        depth: 0,
-        overrideAccess: false,
-      }),
-      payload.find({
-        collection: 'posts',
-        where: { status: { equals: 'published' } },
-        limit: 1000,
-        depth: 0,
-        overrideAccess: false,
-      }),
+      getPublishedSitemapDocuments(payload, 'product-categories'),
+      getPublishedSitemapDocuments(payload, 'products'),
+      getPublishedSitemapDocuments(payload, 'posts'),
     ]);
 
-    return {
-      categories: categories.docs,
-      products: products.docs,
-      posts: posts.docs,
-    };
+    return { categories, products, posts };
   },
-  ['sitemap-data'],
+  ['sitemap-documents-with-canonical'],
   { tags: ['sitemap', 'catalog', 'blog'], revalidate: 300 },
 );

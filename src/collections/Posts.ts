@@ -1,7 +1,8 @@
 import type { CollectionConfig } from 'payload';
-import { toVietnameseSlug } from '../lib/slug';
+import { generateInitialSlug, guardPublicSlug, publicSlugField } from '../lib/public-slug-hooks';
+import { publicContentPath } from '../lib/slug';
 import { safeRevalidateTags } from '../lib/revalidate';
-import { isAuthenticated, publishedOrAuthenticated } from './access';
+import { isAdmin, publishedOrAdmin } from './access';
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
@@ -10,29 +11,28 @@ export const Posts: CollectionConfig = {
     plural: 'Bài viết Blog',
   },
   admin: {
+    group: 'Nội dung',
     useAsTitle: 'title',
     defaultColumns: ['title', 'category', 'authorName', 'publishedAt', 'status'],
   },
   access: {
-    read: publishedOrAuthenticated,
-    create: isAuthenticated,
-    update: isAuthenticated,
-    delete: isAuthenticated,
+    read: publishedOrAdmin,
+    create: isAdmin,
+    update: isAdmin,
+    delete: isAdmin,
   },
   hooks: {
-    beforeValidate: [
-      ({ data }) => {
-        if (data && !data.slug && typeof data.title === 'string') {
-          data.slug = toVietnameseSlug(data.title);
-        }
-        return data;
-      },
-    ],
+    beforeChange: [guardPublicSlug],
+    beforeValidate: [generateInitialSlug('title')],
     afterChange: [
-      ({ doc }) => {
+      ({ doc, previousDoc }) => {
+        const currentPath = publicContentPath('posts', doc.slug);
+        const changedPaths = previousDoc && previousDoc.slug !== doc.slug
+          ? [publicContentPath('posts', previousDoc.slug), currentPath]
+          : [currentPath];
         safeRevalidateTags(
           ['blog', 'posts', 'sitemap'],
-          ['/', '/blog', `/blog/${doc.slug}`, '/sitemap.xml'],
+          ['/', '/blog', ...changedPaths, '/sitemap.xml'],
         );
       },
     ],
@@ -40,7 +40,7 @@ export const Posts: CollectionConfig = {
       ({ doc }) => {
         safeRevalidateTags(
           ['blog', 'posts', 'sitemap'],
-          ['/', '/blog', `/blog/${doc.slug}`, '/sitemap.xml'],
+          ['/', '/blog', publicContentPath('posts', doc.slug), '/sitemap.xml'],
         );
       },
     ],
@@ -52,14 +52,7 @@ export const Posts: CollectionConfig = {
       type: 'text',
       required: true,
     },
-    {
-      name: 'slug',
-      label: 'Đường dẫn (Slug)',
-      type: 'text',
-      required: true,
-      unique: true,
-      index: true,
-    },
+    publicSlugField,
     {
       name: 'excerpt',
       label: 'Tóm tắt bài viết',

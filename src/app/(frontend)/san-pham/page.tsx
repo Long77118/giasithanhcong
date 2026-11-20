@@ -1,10 +1,12 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Search } from 'lucide-react';
+import { notFound, permanentRedirect } from 'next/navigation';
+import { Search, X } from 'lucide-react';
 import {
   getProductsCatalog,
   getPublishedCategoriesCached,
+  getPublishedSlugRedirect,
   getSiteSettingsCached,
 } from '@/lib/queries';
 import {
@@ -12,20 +14,25 @@ import {
   getSiteUrl,
   isIndexingAllowed,
 } from '@/lib/seo';
-import { parsePositivePage } from '@/lib/slug';
+import { resolveOpenGraphImages } from '@/lib/seo-images';
+import { parsePositivePage, withPublicSearchParams, type PublicSearchParams } from '@/lib/slug';
+import { categoryTreeOptions } from '@/lib/category-tree';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { ProductCard } from '@/components/ProductCard';
+import { compactCatalogCardSizes } from '@/lib/storefront-image-sizes';
+import { CatalogFilters } from '@/components/CatalogFilters';
 import { Pagination } from '@/components/Pagination';
 
 export const dynamic = 'force-dynamic';
 
+const catalogSorts = [
+  { value: '', label: 'Mới thêm' },
+  { value: 'name-asc', label: 'Tên A – Z' },
+  { value: 'moq-asc', label: 'MOQ thấp đến cao' },
+];
+
 interface SearchParamsProp {
-  searchParams: Promise<{
-    q?: string | string[];
-    category?: string | string[];
-    sort?: string | string[];
-    page?: string | string[];
-  }>;
+  searchParams: Promise<PublicSearchParams>;
 }
 
 function readSingle(val?: string | string[]): string {
@@ -38,16 +45,19 @@ export async function generateMetadata({
   const sp = await searchParams;
   const q = readSingle(sp.q).trim();
   const category = readSingle(sp.category).trim();
+  const sort = readSingle(sp.sort).trim();
   const page = parsePositivePage(sp.page);
+  if (page === null) notFound();
   const siteUrl = getSiteUrl();
   const indexingAllowed = isIndexingAllowed();
-  const { contact } = await getSiteSettingsCached();
+  const { settings, contact } = await getSiteSettingsCached();
 
   const seo = buildCatalogSeoDecision({
     basePath: '/san-pham',
     page,
     query: q,
     categorySlug: category,
+    sort,
     siteUrl,
     indexingAllowed,
   });
@@ -72,6 +82,7 @@ export async function generateMetadata({
       follow: seo.robotsFollow,
     },
     openGraph: {
+      images: resolveOpenGraphImages(siteUrl, settings?.defaultOgImage),
       title,
       description,
       url: seo.canonical,
@@ -86,6 +97,7 @@ export default async function ProductsPage({ searchParams }: SearchParamsProp) {
   const category = readSingle(sp.category).trim();
   const sort = readSingle(sp.sort).trim() || 'newest';
   const page = parsePositivePage(sp.page);
+  if (page === null) notFound();
   const siteUrl = getSiteUrl();
 
   const [categories, catalog] = await Promise.all([
@@ -99,177 +111,143 @@ export default async function ProductsPage({ searchParams }: SearchParamsProp) {
     }),
   ]);
 
-  const topCategories = categories.filter((c) => !c.parent);
+  if (category && !catalog.activeCategory) {
+    const currentSlug = await getPublishedSlugRedirect('product-categories', category);
+    if (currentSlug) permanentRedirect(withPublicSearchParams('/san-pham', { ...sp, category: currentSlug }));
+  }
+  if (page > 1 && page > catalog.totalPages) notFound();
+
+  const topCategories = categories.filter((cat) => !cat.parent);
+  const categoryOptions = categoryTreeOptions(categories).map(({ category: cat, depth }) => ({
+    slug: cat.slug,
+    name: cat.name,
+    depth,
+  }));
+  const activeSort = catalogSorts.find(option => option.value === sort) ?? catalogSorts[0];
+  const filters = {
+    q: q || undefined,
+    category: category || undefined,
+    sort: activeSort.value || undefined,
+  };
+  const appliedFilters = [
+    { key: 'q', label: q ? `“${q}”` : '' },
+    { key: 'category', label: catalog.activeCategory?.name ?? category },
+    { key: 'sort', label: activeSort.value ? activeSort.label : '' },
+  ].filter(filter => filter.label);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+    <div className="site-shell catalog-page py-4 sm:py-7 lg:py-8">
       <Breadcrumbs
         siteUrl={siteUrl}
         items={[
           { label: 'Trang chủ', href: '/' },
-          { label: 'Sản phẩm' },
+          { label: 'Sản phẩm', href: withPublicSearchParams('/san-pham', { ...filters, page: page > 1 ? String(page) : undefined }) },
         ]}
       />
 
-      <div className="border-b border-slate-200 pb-6">
-        <h1 className="font-display text-3xl font-bold text-[#0C2340]">
+      <header className="catalog-masthead rounded-2xl px-4 py-4 text-white sm:px-7 sm:py-6 lg:px-9 lg:py-8">
+        <h1 className="font-display text-[1.6rem] font-bold leading-tight tracking-tight sm:text-4xl lg:text-[2.75rem]">
           Danh mục sản phẩm bán sỉ
         </h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-600">
-          Tìm kiếm theo tên sản phẩm, mã SKU hoặc lọc theo nhóm ngành hàng. Chọn sản phẩm để xem thông số chi tiết và gửi yêu cầu báo giá.
+        <p className="mt-2 hidden max-w-xl text-sm text-slate-200 sm:block">
+          Tra theo mã hàng, đối chiếu quy cách đóng gói và số lượng đặt tối thiểu.
         </p>
+      </header>
+
+      <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3 sm:mt-4 sm:p-4">
+        <CatalogFilters
+          key={JSON.stringify([q, category, activeSort.value, page])}
+          query={q}
+          category={category}
+          sort={activeSort.value}
+          categories={categoryOptions}
+          sorts={catalogSorts}
+        />
+        {topCategories.length > 0 && (
+          <nav aria-label="Lọc nhanh theo nhóm hàng" className="mt-2.5 flex gap-2 overflow-x-auto py-1 sm:mt-3 lg:flex-wrap">
+            {[{ slug: '', name: 'Tất cả nhóm' }, ...topCategories].map(({ slug, name }) => (
+              <Link
+                key={slug}
+                href={withPublicSearchParams('/san-pham', { ...filters, category: slug || undefined })}
+                aria-current={category === slug ? 'true' : undefined}
+                className={`inline-flex min-h-11 shrink-0 items-center rounded-lg px-3 text-xs font-semibold focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#0C2340] ${category === slug
+                  ? 'bg-[#e6eef6] text-[#0C2340]'
+                  : 'bg-slate-50 text-slate-700 hover:bg-slate-100'}`}
+              >
+                {name}
+              </Link>
+            ))}
+          </nav>
+        )}
       </div>
 
-      {/* Working Search, Category Filter & Sort Controls */}
-      <form
-        action="/san-pham"
-        method="GET"
-        className="mt-6 grid gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-12"
-      >
-        <div className="relative md:col-span-5">
-          <Search
-            className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400"
-            aria-hidden="true"
-          />
-          <input
-            type="search"
-            name="q"
-            defaultValue={q}
-            aria-label="Từ khóa hoặc mã SKU"
-            placeholder="Tìm tên sản phẩm, mã SKU..."
-            className="min-h-[44px] w-full rounded-lg border border-slate-300 bg-white pr-3 pl-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0C2340] focus:outline-none focus:ring-2 focus:ring-[#0C2340]/15"
-          />
-        </div>
-
-        <div className="md:col-span-3">
-          <select
-            name="category"
-            defaultValue={category}
-            aria-label="Lọc theo danh mục"
-            className="min-h-[44px] w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:border-[#0C2340] focus:outline-none focus:ring-2 focus:ring-[#0C2340]/15"
-          >
-            <option value="">Tất cả danh mục</option>
-            {topCategories.map((cat) => (
-              <option key={cat.id} value={cat.slug}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="md:col-span-2">
-          <select
-            name="sort"
-            defaultValue={sort}
-            aria-label="Sắp xếp kết quả"
-            className="min-h-[44px] w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:border-[#0C2340] focus:outline-none focus:ring-2 focus:ring-[#0C2340]/15"
-          >
-            <option value="newest">Mới cập nhật</option>
-            <option value="name-asc">Tên A – Z</option>
-            <option value="moq-asc">MOQ thấp đến cao</option>
-          </select>
-        </div>
-
-        <div className="flex items-center gap-2 md:col-span-2">
-          <button
-            type="submit"
-            className="min-h-[44px] flex-1 rounded-lg bg-[#0C2340] px-4 py-2 text-sm font-semibold text-white hover:bg-[#163861]"
-          >
-            Lọc
-          </button>
-          {(q || category || sort !== 'newest') && (
-            <Link
-              href="/san-pham"
-              className="inline-flex min-h-[44px] items-center rounded-lg border border-slate-300 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Xóa
-            </Link>
+      <section aria-label="Kết quả sản phẩm" className="mt-4 sm:mt-6">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
+          <h2 className="font-display text-base font-bold text-[#0C2340] sm:text-lg">
+            {new Intl.NumberFormat('vi-VN').format(catalog.totalDocs)} sản phẩm
+          </h2>
+          {catalog.totalPages > 1 && (
+            <span className="text-xs font-medium tabular-nums text-slate-600">
+              Trang {catalog.page} / {catalog.totalPages}
+            </span>
           )}
         </div>
-      </form>
 
-      {/* Quick Category Tabs */}
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <Link
-          href="/san-pham"
-          className={`inline-flex min-h-[38px] items-center rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-            !category
-              ? 'bg-[#0C2340] text-white'
-              : 'border border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-          }`}
-        >
-          Tất cả
-        </Link>
-        {topCategories.map((cat) => {
-          const active = category === cat.slug;
-          return (
-            <Link
-              key={cat.id}
-              href={`/san-pham?category=${encodeURIComponent(cat.slug)}`}
-              className={`inline-flex min-h-[38px] items-center rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                active
-                  ? 'bg-[#0C2340] text-white'
-                  : 'border border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-              }`}
-            >
-              {cat.name}
-            </Link>
-          );
-        })}
-      </div>
+        {appliedFilters.length > 0 && (
+          <ul aria-label="Bộ lọc đang áp dụng" className="mt-2 flex min-w-0 flex-wrap gap-2">
+            {appliedFilters.map(({ key, label }) => (
+              <li key={key} className="min-w-0 max-w-full">
+                <Link
+                  href={withPublicSearchParams('/san-pham', { ...filters, [key]: undefined })}
+                  aria-label={`Bỏ lọc ${label}`}
+                  className="inline-flex min-h-11 max-w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-[#294762] hover:border-slate-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0C2340]"
+                >
+                  <span className="min-w-0 [overflow-wrap:anywhere]">{label}</span>
+                  <X size={13} className="shrink-0" aria-hidden="true" />
+                </Link>
+              </li>
+            ))}
+            {appliedFilters.length > 1 && (
+              <li>
+                <Link href="/san-pham" className="inline-flex min-h-11 items-center px-1 text-xs font-semibold text-[#294762] underline underline-offset-4">
+                  Xóa tất cả
+                </Link>
+              </li>
+            )}
+          </ul>
+        )}
 
-      {/* Results Count */}
-      <div className="mt-6 flex items-center justify-between text-xs text-slate-500">
-        <p className="tabular-nums">
-          Hiển thị <strong className="text-slate-800">{catalog.docs.length}</strong> /{' '}
-          <strong className="text-slate-800">{catalog.totalDocs}</strong> sản phẩm đã xuất bản
-          {q ? ` cho từ khóa "${q}"` : ''}
-          {catalog.activeCategory ? ` trong "${catalog.activeCategory.name}"` : ''}
-        </p>
-      </div>
-
-      {/* Product Grid or Empty State */}
-      {catalog.docs.length === 0 ? (
-        <div className="mt-6 rounded-xl border border-slate-200 bg-white p-10 text-center">
-          <h2 className="font-display text-lg font-semibold text-slate-900">
-            Không tìm thấy sản phẩm phù hợp
-          </h2>
-          <p className="mt-2 text-sm text-slate-600">
-            Hãy thử tìm bằng từ khóa ngắn hơn (ví dụ: PET, PP, kraft, 500ml) hoặc đặt lại bộ lọc.
-          </p>
-          <div className="mt-5 flex justify-center gap-3">
-            <Link
-              href="/san-pham"
-              className="inline-flex min-h-[44px] items-center rounded-lg bg-[#0C2340] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#163861]"
-            >
-              Xem tất cả sản phẩm
-            </Link>
-            <Link
-              href="/lien-he#bao-gia"
-              className="inline-flex min-h-[44px] items-center rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-            >
-              Yêu cầu tìm nguồn hàng
-            </Link>
+        {catalog.docs.length === 0 ? (
+          <div className="mt-3 rounded-2xl border border-slate-200 bg-white px-4 py-8 text-center sm:p-10">
+            <Search size={24} className="mx-auto text-[#6b8197]" aria-hidden="true" />
+            <h3 className="mt-3 font-display text-lg font-bold text-[#0C2340]">Không tìm thấy sản phẩm phù hợp</h3>
+            <p className="mt-2 text-sm text-slate-600">
+              Thử mã hàng, từ khóa ngắn hơn hoặc bỏ bớt bộ lọc.
+            </p>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <Link href="/san-pham" className="inline-flex min-h-11 items-center rounded-lg bg-[#0C2340] px-4 text-sm font-semibold text-white hover:bg-[#163861]">
+                Xem tất cả sản phẩm
+              </Link>
+              <Link href="/lien-he#bao-gia" className="inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-4 text-sm font-semibold text-[#0C2340] hover:bg-slate-50">
+                Nhờ tư vấn tìm hàng
+              </Link>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {catalog.docs.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      )}
+        ) : (
+          <div className="catalog-grid mt-3 max-sm:gap-2.5">
+            {catalog.docs.map((product) => (
+              <ProductCard key={product.id} product={product} sizes={compactCatalogCardSizes} variant="catalog" />
+            ))}
+          </div>
+        )}
 
-      <Pagination
-        currentPage={catalog.page}
-        totalPages={catalog.totalPages}
-        basePath="/san-pham"
-        queryParams={{
-          q: q || undefined,
-          category: category || undefined,
-          sort: sort !== 'newest' ? sort : undefined,
-        }}
-      />
+        <Pagination
+          currentPage={catalog.page}
+          totalPages={catalog.totalPages}
+          basePath="/san-pham"
+          queryParams={filters}
+        />
+      </section>
     </div>
   );
 }

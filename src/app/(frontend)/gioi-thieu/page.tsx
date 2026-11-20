@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getSiteSettingsCached } from '@/lib/queries';
 import { getSiteUrl, isIndexingAllowed } from '@/lib/seo';
+import { resolveOpenGraphImages } from '@/lib/seo-images';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { ContactActions } from '@/components/ContactActions';
 import { QuoteRequestForm } from '@/components/QuoteRequestForm';
@@ -12,7 +13,7 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata(): Promise<Metadata> {
   const siteUrl = getSiteUrl();
   const indexingAllowed = isIndexingAllowed();
-  const { contact } = await getSiteSettingsCached();
+  const { settings, contact } = await getSiteSettingsCached();
 
   const title = `Giới thiệu & Liên hệ | ${contact.brandName}`;
   const description = `Thông tin giới thiệu năng lực cung ứng bao bì bán sỉ và kênh liên hệ báo giá của ${contact.brandName} (dữ liệu minh họa).`;
@@ -26,6 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
       follow: indexingAllowed,
     },
     openGraph: {
+      images: resolveOpenGraphImages(siteUrl, settings?.defaultOgImage),
       type: 'website',
       url: `${siteUrl}/gioi-thieu`,
       title,
@@ -39,12 +41,12 @@ export default async function AboutPage() {
   const { contact } = await getSiteSettingsCached();
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+    <div className="site-shell py-8 lg:py-12">
       <Breadcrumbs
         siteUrl={siteUrl}
         items={[
           { label: 'Trang chủ', href: '/' },
-          { label: 'Giới thiệu & Liên hệ' },
+          { label: 'Giới thiệu & Liên hệ', href: '/gioi-thieu' },
         ]}
       />
 

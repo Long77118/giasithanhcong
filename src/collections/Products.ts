@@ -1,7 +1,8 @@
 import type { CollectionConfig } from 'payload';
-import { toVietnameseSlug } from '../lib/slug';
+import { generateInitialSlug, guardPublicSlug, publicSlugField } from '../lib/public-slug-hooks';
+import { publicContentPath } from '../lib/slug';
 import { safeRevalidateTags } from '../lib/revalidate';
-import { isAuthenticated, publishedOrAuthenticated } from './access';
+import { isAdmin, publishedOrAdmin } from './access';
 
 export const Products: CollectionConfig = {
   slug: 'products',
@@ -10,29 +11,28 @@ export const Products: CollectionConfig = {
     plural: 'Sản phẩm bán sỉ',
   },
   admin: {
+    group: 'Danh mục hàng',
     useAsTitle: 'name',
     defaultColumns: ['sku', 'name', 'category', 'minOrderQty', 'status', 'updatedAt'],
   },
   access: {
-    read: publishedOrAuthenticated,
-    create: isAuthenticated,
-    update: isAuthenticated,
-    delete: isAuthenticated,
+    read: publishedOrAdmin,
+    create: isAdmin,
+    update: isAdmin,
+    delete: isAdmin,
   },
   hooks: {
-    beforeValidate: [
-      ({ data }) => {
-        if (data && !data.slug && typeof data.name === 'string') {
-          data.slug = toVietnameseSlug(data.name);
-        }
-        return data;
-      },
-    ],
+    beforeChange: [guardPublicSlug],
+    beforeValidate: [generateInitialSlug('name')],
     afterChange: [
-      ({ doc }) => {
+      ({ doc, previousDoc }) => {
+        const currentPath = publicContentPath('products', doc.slug);
+        const changedPaths = previousDoc && previousDoc.slug !== doc.slug
+          ? [publicContentPath('products', previousDoc.slug), currentPath]
+          : [currentPath];
         safeRevalidateTags(
           ['catalog', 'products', 'sitemap'],
-          ['/', '/san-pham', `/san-pham/${doc.slug}`, '/sitemap.xml'],
+          ['/', '/san-pham', ...changedPaths, '/sitemap.xml'],
         );
       },
     ],
@@ -40,7 +40,7 @@ export const Products: CollectionConfig = {
       ({ doc }) => {
         safeRevalidateTags(
           ['catalog', 'products', 'sitemap'],
-          ['/', '/san-pham', `/san-pham/${doc.slug}`, '/sitemap.xml'],
+          ['/', '/san-pham', publicContentPath('products', doc.slug), '/sitemap.xml'],
         );
       },
     ],
@@ -53,16 +53,20 @@ export const Products: CollectionConfig = {
       required: true,
     },
     {
+      name: 'brandName',
+      label: 'Thương hiệu sản phẩm',
+      type: 'text',
+      admin: {
+        description: 'Điền thương hiệu của sản phẩm. Để trống nếu chưa xác định được.',
+      },
+    },
+    {
       type: 'row',
       fields: [
         {
-          name: 'slug',
-          label: 'Đường dẫn (Slug)',
-          type: 'text',
-          required: true,
-          unique: true,
-          index: true,
+          ...publicSlugField,
           admin: {
+            ...publicSlugField.admin,
             width: '50%',
           },
         },
@@ -166,30 +170,6 @@ export const Products: CollectionConfig = {
           defaultValue: 'thùng',
           admin: {
             width: '25%',
-          },
-        },
-      ],
-    },
-    {
-      type: 'row',
-      fields: [
-        {
-          name: 'price',
-          label: 'Giá sỉ tham khảo (VNĐ)',
-          type: 'number',
-          min: 0,
-          admin: {
-            width: '50%',
-            description: 'Để trống hoặc tắt "Hiển thị giá" để hiển thị "Liên hệ báo giá".',
-          },
-        },
-        {
-          name: 'showPrice',
-          label: 'Công bố giá tham khảo',
-          type: 'checkbox',
-          defaultValue: false,
-          admin: {
-            width: '50%',
           },
         },
       ],
