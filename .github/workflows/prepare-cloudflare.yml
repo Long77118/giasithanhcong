@@ -97,6 +97,9 @@ jobs:
           mv media .ci/seed-media
           bun run build
           node scripts/ci-render-smoke.mjs
+          # Restore the input for the separate Workers emulator smoke test.
+          mkdir -p media
+          cp -a .ci/seed-media/. media/
       - run: bun run cf:build
       - name: Exercise OpenNext deployment preflight without deploying
         # Use the real deploy command and project config, not the smoke-test
