@@ -1749,8 +1749,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "_object_key": {
-          "name": "_object_key",
+        "_objectkey": {
+          "name": "_objectkey",
           "type": "varchar",
           "primaryKey": false,
           "notNull": false
