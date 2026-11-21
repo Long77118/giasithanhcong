@@ -154,6 +154,7 @@ export const Products: CollectionConfig = {
             {
               name: 'images',
               label: 'Bộ ảnh sản phẩm',
+              labels: { singular: 'Ảnh', plural: 'Ảnh' },
               type: 'array',
               minRows: 1,
               admin: {
@@ -196,6 +197,7 @@ export const Products: CollectionConfig = {
             {
               name: 'specs',
               label: 'Thông số kỹ thuật',
+              labels: { singular: 'Thông số', plural: 'Thông số' },
               type: 'array',
               admin: {
                 initCollapsed: true,
@@ -291,6 +293,7 @@ export const Products: CollectionConfig = {
             {
               name: 'faq',
               label: 'Câu hỏi thường gặp',
+              labels: { singular: 'Câu hỏi', plural: 'Câu hỏi' },
               type: 'array',
               admin: {
                 initCollapsed: true,
@@ -304,6 +307,7 @@ export const Products: CollectionConfig = {
             {
               name: 'videos',
               label: 'Video sản phẩm',
+              labels: { singular: 'Video', plural: 'Video' },
               type: 'array',
               admin: {
                 initCollapsed: true,
