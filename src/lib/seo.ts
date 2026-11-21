@@ -1,3 +1,6 @@
+import { getYouTubeID, youTubeEmbedUrl, youTubeThumbnailUrl } from './youtube';
+import { resolvePublicImageUrl } from './seo-images';
+
 export interface SeoEnv {
   APP_URL?: string;
   NEXT_PUBLIC_SITE_URL?: string;
@@ -164,6 +167,32 @@ export function buildProductJsonLd(input: ProductJsonLdInput) {
 
   // This catalog accepts quote requests; it does not publish prices or offers.
   return schema;
+}
+
+export interface VideoJsonLdInput {
+  youtubeUrl: string;
+  title: string;
+  description: string;
+  pageUrl: string;
+  thumbnailUrl?: string | null;
+}
+
+export function buildVideoJsonLd(input: VideoJsonLdInput) {
+  const id = getYouTubeID(input.youtubeUrl);
+  const name = input.title.trim();
+  const description = input.description.trim();
+  if (!id || !name || !description) return null;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'VideoObject',
+    '@id': `${input.pageUrl}#video-${id}`,
+    name,
+    description,
+    thumbnailUrl: resolvePublicImageUrl(input.pageUrl, input.thumbnailUrl) || youTubeThumbnailUrl(id),
+    embedUrl: youTubeEmbedUrl(id),
+    url: `https://www.youtube.com/watch?v=${id}`,
+    // An upload date is not collected: do not invent one from the product's publication date.
+  };
 }
 
 export interface ArticleJsonLdInput {

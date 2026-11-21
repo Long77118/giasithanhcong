@@ -11,7 +11,7 @@ import {
   getSiteSettingsCached,
   resolvePublishedCanonicalUrl,
 } from '@/lib/queries';
-import { buildProductJsonLd, getSiteUrl, isIndexingAllowed } from '@/lib/seo';
+import { buildProductJsonLd, buildVideoJsonLd, getSiteUrl, isIndexingAllowed } from '@/lib/seo';
 import { resolveOpenGraphImages, resolvePublicImageUrl } from '@/lib/seo-images';
 import { categoryAncestors } from '@/lib/category-tree';
 import { decodePublicSlugParam, publicContentPath, withPublicSearchParams, type PublicSearchParams } from '@/lib/slug';
@@ -113,6 +113,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
   return (
     <article className="site-shell product-page product-detail">
       <JsonLd data={productJsonLd} />
+      {videos.map((video) => <JsonLd key={video.id} data={buildVideoJsonLd({ youtubeUrl: `https://www.youtube.com/watch?v=${video.videoId}`, title: video.title, description: video.description, thumbnailUrl: video.thumbnail, pageUrl: canonical })!} />)}
       <Breadcrumbs siteUrl={siteUrl} items={breadcrumbItems} />
       <div className="product-detail-top" data-gallery={gallery.length > 0}>
         {gallery.length > 0 && <ProductGallery items={gallery} productName={product.name} />}

@@ -25,6 +25,7 @@ export function ProductVideo({ videoId, title, thumbnail, thumbnailAlt }: Produc
           allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin"
           tabIndex={0}
+          ref={(frame) => { frame?.focus(); }}
         />
       ) : (
         <button type="button" onClick={() => setLoaded(true)} aria-label={`Nạp trình phát video: ${title}`}>
