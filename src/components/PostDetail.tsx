@@ -63,6 +63,7 @@ export async function PostDetail({ post, contact, siteUrl, preview = false }: {
       <article className="site-shell py-8 lg:py-12">
         <Breadcrumbs
           siteUrl={siteUrl}
+          structuredData={!preview}
           items={[
             { label: 'Trang chủ', href: '/' },
             { label: 'Blog', href: '/blog' },

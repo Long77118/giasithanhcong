@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { Breadcrumbs } from '../components/Breadcrumbs';
 import { canPreview, parsePreviewID, previewUrl } from './preview';
 
 test('preview IDs accept only positive PostgreSQL integer IDs without coercion', () => {
@@ -24,4 +27,13 @@ test('admin preview URLs require saved IDs and use an absolute HTTP site origin'
   for (const base of ['', 'invalid', 'javascript:alert(1)', 'file:///example']) {
     assert.equal(previewUrl('products', 15, base), 'http://localhost:3000/xem-truoc/san-pham/15');
   }
+});
+
+test('preview breadcrumbs keep their visible trail without structured data', () => {
+  const props = { siteUrl: 'https://demo.example', items: [{ label: 'Bài viết nháp', href: '/blog/nhap' }] };
+  const publicHtml = renderToStaticMarkup(createElement(Breadcrumbs, props));
+  const previewHtml = renderToStaticMarkup(createElement(Breadcrumbs, { ...props, structuredData: false }));
+  assert.match(publicHtml, /application\/ld\+json/);
+  assert.doesNotMatch(previewHtml, /application\/ld\+json/);
+  assert.match(previewHtml, /Bài viết nháp/);
 });
