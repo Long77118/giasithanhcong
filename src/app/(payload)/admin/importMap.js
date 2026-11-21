@@ -1,3 +1,6 @@
+import { default as default_0b4330d73a678c4b89b1d6b9a3d18943 } from '../../../admin/ProductShortDescription'
+import { ProductImageLabel as ProductImageLabel_ebe8827f95a493f251c5504dddec40a4 } from '../../../admin/ProductRowLabels'
+import { ProductSpecLabel as ProductSpecLabel_ebe8827f95a493f251c5504dddec40a4 } from '../../../admin/ProductRowLabels'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { LexicalDiffComponent as LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -37,6 +40,9 @@ import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } f
 
 /** @type import('payload').ImportMap */
 export const importMap = {
+  "/admin/ProductShortDescription#default": default_0b4330d73a678c4b89b1d6b9a3d18943,
+  "/admin/ProductRowLabels#ProductImageLabel": ProductImageLabel_ebe8827f95a493f251c5504dddec40a4,
+  "/admin/ProductRowLabels#ProductSpecLabel": ProductSpecLabel_ebe8827f95a493f251c5504dddec40a4,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#LexicalDiffComponent": LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e,
