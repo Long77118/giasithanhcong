@@ -73,6 +73,7 @@ export interface Config {
     'post-categories': PostCategory;
     'quote-requests': QuoteRequest;
     media: Media;
+    documents: Document;
     users: User;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -87,6 +88,7 @@ export interface Config {
     'post-categories': PostCategoriesSelect<false> | PostCategoriesSelect<true>;
     'quote-requests': QuoteRequestsSelect<false> | QuoteRequestsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    documents: DocumentsSelect<false> | DocumentsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -164,6 +166,54 @@ export interface Product {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Tình trạng hiện tại của sản phẩm. Có thể để trống để ẩn nhãn.
+   */
+  availability?: ('in_stock' | 'made_to_order' | 'discontinued') | null;
+  /**
+   * Mỗi mục là một ưu điểm đã được xác nhận của sản phẩm.
+   */
+  benefits?: string[] | null;
+  /**
+   * Mỗi mục là một cách sử dụng hoặc nhóm khách hàng phù hợp.
+   */
+  applications?: string[] | null;
+  /**
+   * Thêm câu hỏi và câu trả lời thực tế; để trống để ẩn khối.
+   */
+  faq?:
+    | {
+        question: string;
+        answer: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Chọn hoặc tải tài liệu PDF công khai. Không dùng thư viện ảnh cho tài liệu.
+   */
+  documents?: (number | Document)[] | null;
+  /**
+   * Chỉ nhận liên kết video YouTube. Trình phát chỉ nạp khi khách bấm xem.
+   */
+  videos?:
+    | {
+        youtubeUrl: string;
+        title: string;
+        /**
+         * Mô tả bằng chữ để khách hiểu nội dung trước khi xem.
+         */
+        description: string;
+        /**
+         * Để trống để dùng ảnh thu nhỏ của video YouTube.
+         */
+        thumbnail?: (number | null) | Media;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Chọn các bài viết hỗ trợ khách tìm hiểu sản phẩm. Chỉ bài đã xuất bản được hiển thị.
+   */
+  relatedPosts?: (number | Post)[] | null;
   images?:
     | {
         image: number | Media;
@@ -171,10 +221,17 @@ export interface Product {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Thông số hiển thị trong bảng; chọn tối đa 4 thông số cho nhãn nhìn nhanh cạnh tiêu đề.
+   */
   specs?:
     | {
         label: string;
         value: string;
+        /**
+         * Đưa thông số này lên cạnh tiêu đề sản phẩm (tối đa 4 nhãn).
+         */
+        showInQuickFacts?: boolean | null;
         id?: string | null;
       }[]
     | null;
@@ -279,6 +336,32 @@ export interface Media {
       filename?: string | null;
     };
   };
+}
+/**
+ * Tài liệu công khai để khách tải về: catalog và bảng giá dạng PDF.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "documents".
+ */
+export interface Document {
+  id: number;
+  _objectKey?: string | null;
+  prefix?: string | null;
+  /**
+   * Tên hiển thị trên liên kết tải PDF, ví dụ Catalog chai nhựa.
+   */
+  title: string;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -440,6 +523,10 @@ export interface PayloadLockedDocument {
         value: number | Media;
       } | null)
     | ({
+        relationTo: 'documents';
+        value: number | Document;
+      } | null)
+    | ({
         relationTo: 'users';
         value: number | User;
       } | null);
@@ -497,6 +584,27 @@ export interface ProductsSelect<T extends boolean = true> {
   category?: T;
   shortDescription?: T;
   description?: T;
+  availability?: T;
+  benefits?: T;
+  applications?: T;
+  faq?:
+    | T
+    | {
+        question?: T;
+        answer?: T;
+        id?: T;
+      };
+  documents?: T;
+  videos?:
+    | T
+    | {
+        youtubeUrl?: T;
+        title?: T;
+        description?: T;
+        thumbnail?: T;
+        id?: T;
+      };
+  relatedPosts?: T;
   images?:
     | T
     | {
@@ -509,6 +617,7 @@ export interface ProductsSelect<T extends boolean = true> {
     | {
         label?: T;
         value?: T;
+        showInQuickFacts?: T;
         id?: T;
       };
   packagingSpec?: T;
@@ -661,6 +770,26 @@ export interface MediaSelect<T extends boolean = true> {
               filename?: T;
             };
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "documents_select".
+ */
+export interface DocumentsSelect<T extends boolean = true> {
+  _objectKey?: T;
+  prefix?: T;
+  title?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

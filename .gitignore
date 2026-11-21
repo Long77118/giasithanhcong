@@ -11,6 +11,7 @@ coverage/
 .playwright-cli/
 public/media/
 media/
+documents/
 tsconfig.tsbuildinfo
 .open-next/
 .wrangler/

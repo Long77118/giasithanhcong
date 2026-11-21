@@ -8,6 +8,7 @@ import * as migration_20261119_015000_quote_rate_limits from './20261119_015000_
 import * as migration_20261119_021054_facebook_pages from './20261119_021054_facebook_pages';
 import * as migration_20261119_152602_home_promotions from './20261119_152602_home_promotions';
 import * as migration_20261120_040000_cloudflare_media from './20261120_040000_cloudflare_media';
+import * as migration_20261121_034654_product_detail_content from './20261121_034654_product_detail_content';
 
 export const migrations = [
   {
@@ -53,11 +54,16 @@ export const migrations = [
   {
     up: migration_20261119_152602_home_promotions.up,
     down: migration_20261119_152602_home_promotions.down,
-    name: '20261119_152602_home_promotions'
+    name: '20261119_152602_home_promotions',
   },
   {
     up: migration_20261120_040000_cloudflare_media.up,
     down: migration_20261120_040000_cloudflare_media.down,
     name: '20261120_040000_cloudflare_media',
+  },
+  {
+    up: migration_20261121_034654_product_detail_content.up,
+    down: migration_20261121_034654_product_detail_content.down,
+    name: '20261121_034654_product_detail_content'
   },
 ];

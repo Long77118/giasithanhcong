@@ -9,6 +9,7 @@ import { r2Storage } from '@payloadcms/storage-r2';
 
 import { Users } from './collections/Users';
 import { Media } from './collections/Media';
+import { Documents } from './collections/Documents';
 import { ProductCategories } from './collections/ProductCategories';
 import { Products } from './collections/Products';
 import { PostCategories } from './collections/PostCategories';
@@ -82,6 +83,7 @@ export default buildConfig({
     PostCategories,
     QuoteRequests,
     Media,
+    Documents,
     Users,
   ],
   globals: [SiteSettings],
@@ -117,7 +119,7 @@ export default buildConfig({
     }, Boolean(cloudflare)),
   sharp,
   plugins: [
-    ...(cloudflare ? [r2Storage({ bucket: cloudflare.MEDIA_BUCKET, collections: { media: true } })] : []),
+    ...(cloudflare ? [r2Storage({ bucket: cloudflare.MEDIA_BUCKET, collections: { media: true, documents: { prefix: 'documents' } } })] : []),
     seoPlugin({
       collections: ['products', 'product-categories', 'posts'],
       uploadsCollection: 'media',

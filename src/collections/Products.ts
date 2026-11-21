@@ -3,6 +3,7 @@ import { generateInitialSlug, guardPublicSlug, publicSlugField } from '../lib/pu
 import { publicContentPath } from '../lib/slug';
 import { safeRevalidateTags } from '../lib/revalidate';
 import { isAdmin, publishedOrAdmin } from './access';
+import { getYouTubeID } from '../lib/youtube';
 
 export const Products: CollectionConfig = {
   slug: 'products',
@@ -103,6 +104,61 @@ export const Products: CollectionConfig = {
       type: 'richText',
     },
     {
+      name: 'availability',
+      label: 'Tình trạng cung cấp',
+      type: 'select',
+      defaultValue: 'in_stock',
+      options: [
+        { label: 'Còn hàng', value: 'in_stock' },
+        { label: 'Đặt theo yêu cầu', value: 'made_to_order' },
+        { label: 'Ngừng cung cấp', value: 'discontinued' },
+      ],
+      admin: { description: 'Tình trạng hiện tại của sản phẩm. Có thể để trống để ẩn nhãn.' },
+    },
+    {
+      name: 'benefits', label: 'Ưu điểm', type: 'text', hasMany: true,
+      admin: { description: 'Mỗi mục là một ưu điểm đã được xác nhận của sản phẩm.' },
+    },
+    {
+      name: 'applications', label: 'Ứng dụng', type: 'text', hasMany: true,
+      admin: { description: 'Mỗi mục là một cách sử dụng hoặc nhóm khách hàng phù hợp.' },
+    },
+    {
+      name: 'faq', label: 'Câu hỏi thường gặp', type: 'array',
+      admin: { initCollapsed: true, description: 'Thêm câu hỏi và câu trả lời thực tế; để trống để ẩn khối.' },
+      fields: [
+        { name: 'question', label: 'Câu hỏi', type: 'text', required: true },
+        { name: 'answer', label: 'Câu trả lời', type: 'textarea', required: true },
+      ],
+    },
+    {
+      name: 'documents', label: 'Bảng giá và catalog (PDF)', type: 'upload', relationTo: 'documents', hasMany: true,
+      admin: { description: 'Chọn hoặc tải tài liệu PDF công khai. Không dùng thư viện ảnh cho tài liệu.' },
+    },
+    {
+      name: 'videos', label: 'Video sản phẩm', type: 'array',
+      admin: { initCollapsed: true, description: 'Chỉ nhận liên kết video YouTube. Trình phát chỉ nạp khi khách bấm xem.' },
+      fields: [
+        {
+          name: 'youtubeUrl', label: 'Liên kết YouTube', type: 'text', required: true,
+          validate: (value: unknown) => getYouTubeID(value) !== null || 'Nhập URL video YouTube hợp lệ (watch, youtu.be, shorts hoặc embed).',
+        },
+        { name: 'title', label: 'Tiêu đề video', type: 'text', required: true },
+        {
+          name: 'description', label: 'Tóm tắt nội dung video', type: 'textarea', required: true,
+          admin: { description: 'Mô tả bằng chữ để khách hiểu nội dung trước khi xem.' },
+        },
+        {
+          name: 'thumbnail', label: 'Ảnh thu nhỏ (tùy chọn)', type: 'upload', relationTo: 'media',
+          admin: { description: 'Để trống để dùng ảnh thu nhỏ của video YouTube.' },
+        },
+      ],
+    },
+    {
+      name: 'relatedPosts', label: 'Bài viết liên quan', type: 'relationship', relationTo: 'posts', hasMany: true,
+      admin: { description: 'Chọn các bài viết hỗ trợ khách tìm hiểu sản phẩm. Chỉ bài đã xuất bản được hiển thị.' },
+    },
+    {
       name: 'images',
       label: 'Bộ ảnh sản phẩm',
       type: 'array',
@@ -126,6 +182,10 @@ export const Products: CollectionConfig = {
       name: 'specs',
       label: 'Thông số kỹ thuật',
       type: 'array',
+      admin: { description: 'Thông số hiển thị trong bảng; chọn tối đa 4 thông số cho nhãn nhìn nhanh cạnh tiêu đề.' },
+      validate: (value: unknown) => !Array.isArray(value)
+        || value.filter((item) => item?.showInQuickFacts === true).length <= 4
+        || 'Chỉ chọn tối đa 4 thông số hiện ở nhãn nhìn nhanh.',
       fields: [
         {
           name: 'label',
@@ -138,6 +198,10 @@ export const Products: CollectionConfig = {
           label: 'Giá trị',
           type: 'text',
           required: true,
+        },
+        {
+          name: 'showInQuickFacts', label: 'Hiện ở nhãn nhìn nhanh', type: 'checkbox', defaultValue: false,
+          admin: { description: 'Đưa thông số này lên cạnh tiêu đề sản phẩm (tối đa 4 nhãn).' },
         },
       ],
     },
