@@ -131,6 +131,21 @@ export function SiteHeader({ brandName, categories }: { brandName: string; categ
   const [pinned, setPinned] = useState(false);
 
   useEffect(() => {
+    const row = topRow.current;
+    const header = row?.parentElement;
+    if (!row || !header) return;
+    // A long company name may wrap. Pin only the navigation bar, using the real top-row height.
+    const updateOffset = () => header.style.setProperty('--header-top-offset', `${row.getBoundingClientRect().height}px`);
+    updateOffset();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateOffset);
+    observer?.observe(row);
+    return () => {
+      observer?.disconnect();
+      header.style.removeProperty('--header-top-offset');
+    };
+  }, [brandName]);
+
+  useEffect(() => {
     if (!topRow.current || typeof IntersectionObserver === 'undefined') return;
     const observer = new IntersectionObserver(([entry]) => {
       setPinned(entry.boundingClientRect.bottom <= 1);

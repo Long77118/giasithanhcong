@@ -8,7 +8,7 @@
   --header-tint: #eaf0dc;
   --header-quote: #a3422f;
   position: sticky;
-  top: calc(-1 * var(--header-top-height));
+  top: calc(-1 * var(--header-top-offset, var(--header-top-height)));
   z-index: 30;
   flex: none;
   color: var(--header-ink);
@@ -24,20 +24,22 @@
 .site-header-top-inner {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  height: var(--header-top-height);
+  min-height: var(--header-top-height);
+  padding-block: .625rem;
   align-items: center;
   gap: .75rem;
 }
 
 .site-wordmark {
-  overflow: hidden;
+  min-width: 0;
   font-family: var(--font-display);
   font-size: clamp(1.125rem, 5.5vw, 1.5rem);
   font-weight: 700;
   letter-spacing: -.035em;
-  line-height: 1.15;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .site-header-quote {
@@ -364,7 +366,7 @@ body:has(.site-header-dialog[open]) { overflow: hidden; }
     --header-column-gap: clamp(1.25rem, 2vw, 1.875rem);
   }
   .site-header-top-inner {
-    grid-template-columns: var(--header-category-width) minmax(0, 1fr) max-content;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) max-content;
     gap: var(--header-column-gap);
   }
   .site-wordmark { font-size: clamp(1.625rem, 2vw, 2rem); }
