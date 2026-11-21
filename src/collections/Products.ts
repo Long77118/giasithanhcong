@@ -4,7 +4,7 @@ import { publicContentPath } from '../lib/slug';
 import { safeRevalidateTags } from '../lib/revalidate';
 import { isAdmin, publishedOrAdmin } from './access';
 import { getYouTubeID } from '../lib/youtube';
-import { getSiteUrl } from '../lib/seo';
+import { previewUrl } from '../lib/preview';
 import { duplicateProductSKU, validateProductShortDescription } from '../lib/product-admin';
 export const Products: CollectionConfig = {
   slug: 'products',
@@ -17,12 +17,9 @@ export const Products: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['sku', 'name', 'category', 'minOrderQty', 'featured', 'status', 'updatedAt'],
     listSearchableFields: ['name', 'sku', 'brandName'],
-    preview: (doc) =>
-      typeof doc.slug === 'string' && doc.slug
-        ? `${getSiteUrl()}${publicContentPath('products', doc.slug)}`
-        : null,
+    preview: (doc) => previewUrl('products', doc.id),
     description:
-      'Nhập lần lượt các tab, lưu nháp để kiểm tra trước khi xuất bản. Xem nhanh chỉ hiển thị sản phẩm đã xuất bản; bản nháp vẫn trả 404.',
+      'Nhập lần lượt các tab và bấm Lưu trước khi Xem trước. Xem trước dùng dữ liệu đã lưu, chỉ dành cho quản trị viên; khách không xem được bản nháp.',
   },
   access: {
     read: publishedOrAdmin,
