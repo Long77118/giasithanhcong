@@ -28,6 +28,7 @@ export default function robots(): MetadataRoute.Robots {
           '/admin',
           '/admin/*',
           '/api/',
+          '/xem-truoc',
           // Public parameter URLs must be crawlable to expose their noindex/canonical.
         ],
       },

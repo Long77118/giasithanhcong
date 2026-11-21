@@ -22,10 +22,19 @@ const nextConfig = {
       },
     ],
   },
-  headers: async () => workersBuild ? [{
-    source: '/:path*',
-    headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' }],
-  }] : [],
+  headers: async () => [
+    ...(workersBuild ? [{
+      source: '/:path*',
+      headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' }],
+    }] : []),
+    {
+      source: '/xem-truoc/:path*',
+      headers: [
+        { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+        { key: 'Cache-Control', value: 'no-store' },
+      ],
+    },
+  ],
   webpack: (config) => {
     config.resolve = config.resolve || {};
     config.resolve.alias = {
