@@ -23,6 +23,7 @@ import { normalizeCanonicalPath } from './lib/canonical';
 import { richTextCollections } from './lib/rich-text';
 import { isPublicContentCollection, publicContentPath } from './lib/slug';
 import { getRuntimeBindings, createWorkersLogger } from './lib/cloudflare-runtime';
+import { generateSiteSeoTitle } from './lib/product-admin';
 
 const cloudflare = await getRuntimeBindings();
 // The build-time constant removes Sharp's native binaries from the Worker bundle.
@@ -124,14 +125,7 @@ export default buildConfig({
       collections: ['products', 'product-categories', 'posts'],
       uploadsCollection: 'media',
       tabbedUI: true,
-      generateTitle: ({ doc }) => {
-        const record = doc as Record<string, unknown> | undefined;
-        const name =
-          (typeof record?.name === 'string' && record.name) ||
-          (typeof record?.title === 'string' && record.title) ||
-          'Bao Bì An Phát';
-        return `${name} | Bao Bì An Phát`;
-      },
+      generateTitle: generateSiteSeoTitle,
       generateDescription: ({ doc }) => {
         const record = doc as Record<string, unknown> | undefined;
         if (typeof record?.shortDescription === 'string' && record.shortDescription) {
