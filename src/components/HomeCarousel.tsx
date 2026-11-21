@@ -3,12 +3,22 @@
 import { Children, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
+const autoplayInterval = 5000;
+
+type MoveOptions = { instant?: boolean; automatic?: boolean };
+
+function bannerSwipeDistance(width: number) {
+  return Math.min(96, Math.max(40, width * 0.12));
+}
+
 export function HomeCarousel({
   children,
+  backdrop,
   label,
   variant,
 }: {
   children: ReactNode;
+  backdrop?: ReactNode;
   label: string;
   variant: 'banner' | 'categories';
 }) {
@@ -18,14 +28,15 @@ export function HomeCarousel({
   const viewport = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
   const scrollAnimation = useRef<Animation | null>(null);
-  const drag = useRef<{ x: number; y: number; scroll: number; moved: boolean } | null>(null);
+  const categoryAutoplay = useRef(false);
+  const drag = useRef<{ id: number; x: number; y: number; scroll: number; moved: boolean } | null>(null);
   const suppressClick = useRef(false);
   const resumeAt = useRef(0);
-  const pointerDown = useRef(false);
+  const pointerDown = useRef<number | null>(null);
   const [active, setActive] = useState(0);
   const [scrollable, setScrollable] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
-  const interval = variant === 'banner' ? 5000 : 2800;
+  const interactionDelay = variant === 'banner' ? autoplayInterval : 1600;
 
   function stopCategoryScroll() {
     const animation = scrollAnimation.current;
@@ -36,36 +47,48 @@ export function HomeCarousel({
     const offset = transform === 'none' ? 0 : new DOMMatrixReadOnly(transform).m41;
     const visiblePosition = element.scrollLeft - offset;
     scrollAnimation.current = null;
+    categoryAutoplay.current = false;
     animation.cancel();
     element.scrollTo({ left: visiblePosition, behavior: 'instant' });
   }
 
-  function scrollCategoryTo(target: number, instant = false, duration = 900) {
+  function centerCategoryLoop(element: HTMLDivElement, rail: HTMLDivElement) {
+    const nextCopy = rail.children[items.length];
+    if (!looping || !nextCopy) return;
+    const period = nextCopy.getBoundingClientRect().left - rail.children[0].getBoundingClientRect().left;
+    const max = element.scrollWidth - element.clientWidth;
+    if (period <= 0 || max < 2 * period) return;
+    const lower = Math.min(2 * period, max - 2 * period);
+    const position = element.scrollLeft;
+    const offset = ((position - lower) % period + period) % period;
+    const equivalent = lower + offset;
+    if (Math.abs(equivalent - position) > 0.5) element.scrollLeft = equivalent;
+  }
+
+  function scrollCategoryTo(target: number, { instant, automatic }: MoveOptions) {
     const element = viewport.current;
     const rail = track.current;
     if (!element || !rail) return;
-    stopCategoryScroll();
     const start = element.scrollLeft;
     const destination = Math.max(0, Math.min(target, element.scrollWidth - element.clientWidth));
-    if (instant || typeof rail.animate !== 'function') {
+    if (instant || reducedMotion || typeof rail.animate !== 'function') {
       element.scrollTo({ left: destination, behavior: 'instant' });
-      delete element.dataset.animating;
       return;
     }
-    element.dataset.animating = 'true';
     element.scrollTo({ left: destination, behavior: 'instant' });
     const distance = element.scrollLeft - start;
-    const animation = reducedMotion
-      ? rail.animate([{ opacity: 0.7 }, { opacity: 1 }], { duration: 180, easing: 'ease' })
-      : rail.animate(
-        [{ transform: `translateX(${distance}px)` }, { transform: 'translateX(0)' }],
-        { duration, easing: getComputedStyle(element).getPropertyValue(duration === 900 ? '--home-ease-soft' : '--home-ease-out').trim() },
-      );
+    if (!distance) return;
+    const easing = automatic ? '--home-ease-soft' : '--home-ease-out';
+    const animation = rail.animate(
+      [{ transform: `translateX(${distance}px)` }, { transform: 'translateX(0)' }],
+      { duration: automatic ? 560 : 260, easing: getComputedStyle(element).getPropertyValue(easing).trim() },
+    );
     scrollAnimation.current = animation;
+    categoryAutoplay.current = Boolean(automatic);
     animation.onfinish = () => {
       if (scrollAnimation.current !== animation) return;
       scrollAnimation.current = null;
-      delete element.dataset.animating;
+      categoryAutoplay.current = false;
     };
   }
 
@@ -73,9 +96,14 @@ export function HomeCarousel({
 
   useEffect(() => {
     const preference = matchMedia('(prefers-reduced-motion: reduce)');
+    const preview = new URLSearchParams(window.location.search).get('preview-motion');
+    const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname);
+    const previewMotion = process.env.NODE_ENV === 'development'
+      && (preview === 'on' || (loopback && preview !== 'off'));
     const update = () => {
-      setReducedMotion(preference.matches);
-      if (preference.matches) stopCategoryScroll();
+      const reduce = preference.matches && !previewMotion;
+      setReducedMotion(reduce);
+      if (reduce) stopCategoryScroll();
     };
     update();
     preference.addEventListener('change', update);
@@ -83,10 +111,11 @@ export function HomeCarousel({
   }, []);
 
   useEffect(() => {
-    const releasePointer = () => {
-      if (!pointerDown.current) return;
-      pointerDown.current = false;
-      resumeAt.current = Date.now() + interval;
+    const releasePointer = (event: PointerEvent) => {
+      if (pointerDown.current !== event.pointerId) return;
+      pointerDown.current = null;
+      resumeAt.current = Date.now() + interactionDelay;
+      drag.current = null;
     };
     window.addEventListener('pointerup', releasePointer);
     window.addEventListener('pointercancel', releasePointer);
@@ -94,11 +123,13 @@ export function HomeCarousel({
       window.removeEventListener('pointerup', releasePointer);
       window.removeEventListener('pointercancel', releasePointer);
     };
-  }, [interval]);
+  }, [interactionDelay]);
 
-  function move(direction: number, instant = false) {
+  function move(direction: number, options: MoveOptions = {}) {
+    if (!options.automatic) resumeAt.current = Date.now() + interactionDelay;
     if (variant === 'banner') {
-      if (instant && viewport.current) {
+      if (items.length < 2) return;
+      if (options.instant && viewport.current) {
         const element = viewport.current;
         element.dataset.instant = 'true';
         requestAnimationFrame(() => requestAnimationFrame(() => { delete element.dataset.instant; }));
@@ -107,8 +138,11 @@ export function HomeCarousel({
       return;
     }
     const element = viewport.current;
-    if (!element) return;
-    const slides = Array.from(track.current?.children ?? []) as HTMLElement[];
+    const rail = track.current;
+    if (!element || !rail) return;
+    stopCategoryScroll();
+    centerCategoryLoop(element, rail);
+    const slides = Array.from(rail.children) as HTMLElement[];
     const max = element.scrollWidth - element.clientWidth;
     const current = element.scrollLeft;
     let target: number;
@@ -121,7 +155,7 @@ export function HomeCarousel({
         ? max
         : slides.findLast((slide) => slide.offsetLeft < current - 2)?.offsetLeft ?? 0;
     }
-    scrollCategoryTo(target, instant, 250);
+    scrollCategoryTo(target, options);
   }
 
   useEffect(() => {
@@ -135,30 +169,14 @@ export function HomeCarousel({
       if (looping) {
         element.scrollLeft = (rail.children[items.length * 2] as HTMLElement).offsetLeft;
       }
-      delete element.dataset.animating;
     });
     resize.observe(element);
-    let settleTimer: ReturnType<typeof setTimeout>;
-    const normalizeLoop = () => {
-      if (!looping || drag.current || !element.isConnected) return;
-      if (scrollAnimation.current) {
-        settleTimer = setTimeout(normalizeLoop, 180);
-        return;
-      }
-      const start = (rail.children[items.length] as HTMLElement).offsetLeft;
-      const maximum = element.scrollWidth - element.clientWidth;
-      const lower = Math.max(0, (maximum - start) / 2);
-      if (element.scrollLeft >= lower + start) {
-        element.scrollTo({ left: element.scrollLeft - start, behavior: 'instant' });
-      } else if (element.scrollLeft < lower) {
-        element.scrollTo({ left: element.scrollLeft + start, behavior: 'instant' });
-      }
-    };
     const onScroll = () => {
-      clearTimeout(settleTimer);
-      settleTimer = setTimeout(normalizeLoop, 180);
+      if (!scrollAnimation.current) {
+        resumeAt.current = Math.max(resumeAt.current, Date.now() + 450);
+      }
     };
-    element.addEventListener('scroll', onScroll, { passive: true });
+    if (looping) element.addEventListener('scroll', onScroll, { passive: true });
     if (looping) {
       element.querySelectorAll<HTMLElement>('[data-clone="true"] a').forEach((link) => {
         link.tabIndex = -1;
@@ -167,59 +185,66 @@ export function HomeCarousel({
     return () => {
       resize.disconnect();
       element.removeEventListener('scroll', onScroll);
-      clearTimeout(settleTimer);
     };
   }, [items.length, variant, looping]);
 
   useEffect(() => {
     const element = viewport.current;
-    if (!element || !scrollable) return;
+    const root = element?.parentElement;
+    if (!element || !root || !scrollable || reducedMotion) return;
+    const hover = matchMedia('(hover: hover) and (pointer: fine)');
+    let visible = false;
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting && entry.intersectionRatio >= 0.3;
+      if (!visible && categoryAutoplay.current) stopCategoryScroll();
+    }, { threshold: 0.3 });
+    observer.observe(element);
+    const onVisibility = () => {
+      if (document.hidden && categoryAutoplay.current) stopCategoryScroll();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
     const timer = window.setInterval(() => {
-      const root = element.parentElement;
-      const rect = element.getBoundingClientRect();
-      const visibleHeight = Math.min(rect.bottom, innerHeight) - Math.max(rect.top, 0);
-      if (visibleHeight < rect.height * 0.3 || document.hidden || Date.now() < resumeAt.current || pointerDown.current || drag.current) return;
-      if (root?.contains(document.activeElement) && document.activeElement?.matches(':focus-visible')) return;
-      if (matchMedia('(hover: hover) and (pointer: fine)').matches && root?.matches(':hover')) return;
-      if (variant === 'banner') {
-        setActive((index) => (index + 1) % items.length);
-        return;
-      }
-      const slides = Array.from(track.current?.children ?? []) as HTMLElement[];
-      const next = slides.find((slide) => slide.offsetLeft > element.scrollLeft + 2);
-      const max = element.scrollWidth - element.clientWidth;
-      scrollCategoryTo(element.scrollLeft >= max - 2 ? 0 : Math.min(next?.offsetLeft ?? max, max));
-    }, interval);
+      if (!visible || document.hidden || Date.now() < resumeAt.current || pointerDown.current !== null || drag.current) return;
+      if (root.contains(document.activeElement) && document.activeElement?.matches(':focus-visible')) return;
+      if (hover.matches && root.matches(':hover')) return;
+      if (scrollAnimation.current) return;
+      move(1, { automatic: true });
+    }, autoplayInterval);
     return () => {
       clearInterval(timer);
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', onVisibility);
+      if (categoryAutoplay.current) stopCategoryScroll();
     };
-  }, [scrollable, variant, items.length, interval, reducedMotion]);
+  }, [scrollable, variant, items.length, looping, reducedMotion]);
 
   return (
     <section
       aria-label={label}
       aria-roledescription="băng chuyền"
       className={`home-carousel home-carousel-${variant}`}
-      data-autoplay="enabled"
+      data-autoplay={reducedMotion ? 'paused' : 'enabled'}
       data-motion={reducedMotion ? 'reduced' : 'full'}
       onFocusCapture={() => { if (variant === 'categories') stopCategoryScroll(); }}
       onPointerEnter={(event) => {
         if (event.pointerType === 'mouse' && variant === 'categories') stopCategoryScroll();
       }}
-      onPointerDown={() => { pointerDown.current = true; }}
-      onPointerUp={() => {
-        pointerDown.current = false;
-        resumeAt.current = Date.now() + interval;
+      onPointerDown={(event) => { if (event.isPrimary) pointerDown.current = event.pointerId; }}
+      onPointerUp={(event) => {
+        if (pointerDown.current !== event.pointerId) return;
+        pointerDown.current = null;
+        resumeAt.current = Date.now() + interactionDelay;
       }}
-      onPointerCancel={() => {
-        pointerDown.current = false;
-        resumeAt.current = Date.now() + interval;
+      onPointerCancel={(event) => {
+        if (pointerDown.current !== event.pointerId) return;
+        pointerDown.current = null;
+        resumeAt.current = Date.now() + interactionDelay;
       }}
       onWheel={() => {
         stopCategoryScroll();
-        resumeAt.current = Date.now() + interval;
+        resumeAt.current = Date.now() + interactionDelay;
       }}
-      onKeyDown={() => { resumeAt.current = Date.now() + interval; }}
+      onKeyDown={() => { resumeAt.current = Date.now() + interactionDelay; }}
     >
       <div
         ref={viewport}
@@ -230,29 +255,31 @@ export function HomeCarousel({
           if (event.target !== event.currentTarget) return;
           if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
             event.preventDefault();
-            move(event.key === 'ArrowRight' ? 1 : -1, true);
+            move(event.key === 'ArrowRight' ? 1 : -1, { instant: true });
           }
         }}
         onPointerDown={(event) => {
           suppressClick.current = false;
           if (variant === 'categories') stopCategoryScroll();
-          if ((event.pointerType !== 'mouse' && variant !== 'banner') || event.button !== 0) return;
-          drag.current = { x: event.clientX, y: event.clientY, scroll: event.currentTarget.scrollLeft, moved: false };
+          if (!event.isPrimary || items.length < 2 || (event.pointerType !== 'mouse' && variant !== 'banner') || event.button !== 0) return;
+          drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, scroll: event.currentTarget.scrollLeft, moved: false };
         }}
         onPointerMove={(event) => {
           const tracking = drag.current;
-          if (!tracking) return;
+          if (!tracking || tracking.id !== event.pointerId) return;
           const delta = event.clientX - tracking.x;
           if (!tracking.moved && Math.abs(event.clientY - tracking.y) > Math.abs(delta)) return;
           if (Math.abs(delta) < 6 && !tracking.moved) return;
-          tracking.moved = true;
-          suppressClick.current = true;
-          event.currentTarget.setPointerCapture(event.pointerId);
-          event.currentTarget.dataset.dragging = 'true';
+          if (!tracking.moved) {
+            tracking.moved = true;
+            suppressClick.current = true;
+            event.currentTarget.setPointerCapture(event.pointerId);
+            event.currentTarget.dataset.dragging = 'true';
+          }
           if (variant === 'banner') {
             const slides = track.current!.children;
             const next = (active + (delta < 0 ? 1 : -1) + items.length) % items.length;
-            const progress = Math.min(Math.abs(delta) / (event.currentTarget.clientWidth * 0.5), 1);
+            const progress = Math.min(Math.abs(delta) / (bannerSwipeDistance(event.currentTarget.clientWidth) * 1.5), 1);
             for (const slide of slides) (slide as HTMLElement).style.opacity = '0';
             (slides[active] as HTMLElement).style.opacity = String(1 - progress);
             (slides[next] as HTMLElement).style.opacity = String(progress);
@@ -262,6 +289,7 @@ export function HomeCarousel({
         }}
         onPointerUp={(event) => {
           const tracking = drag.current;
+          if (tracking && tracking.id !== event.pointerId) return;
           drag.current = null;
           delete event.currentTarget.dataset.dragging;
           if (!tracking?.moved) return;
@@ -270,15 +298,12 @@ export function HomeCarousel({
           if (variant === 'banner') {
             for (const slide of track.current!.children) (slide as HTMLElement).style.removeProperty('opacity');
             const distance = event.clientX - tracking.x;
-            if (Math.abs(distance) > 40) move(distance < 0 ? 1 : -1);
+            if (Math.abs(distance) > bannerSwipeDistance(element.clientWidth)) move(distance < 0 ? 1 : -1);
             return;
           }
-          const slides = Array.from(track.current?.children ?? []) as HTMLElement[];
-          const nearest = slides.reduce((a, b) =>
-            Math.abs(a.offsetLeft - element.scrollLeft) < Math.abs(b.offsetLeft - element.scrollLeft) ? a : b);
-          scrollCategoryTo(nearest.offsetLeft, false, 250);
         }}
         onPointerCancel={(event) => {
+          if (drag.current?.id !== event.pointerId) return;
           drag.current = null;
           delete event.currentTarget.dataset.dragging;
           if (variant === 'banner') {
@@ -293,6 +318,7 @@ export function HomeCarousel({
         }}
         onDragStart={(event) => event.preventDefault()}
       >
+        {backdrop}
         <div ref={track} className="home-carousel-track">
           {renderedItems.map((item, index) => (
             <div
@@ -310,10 +336,10 @@ export function HomeCarousel({
       </div>
       {scrollable && (
         <div className="home-carousel-controls">
-          <button type="button" aria-label={`${label} trước`} onClick={(event) => move(-1, event.detail === 0)}>
+          <button type="button" aria-label={`${label} trước`} onClick={(event) => move(-1, { instant: event.detail === 0 })}>
             <ArrowLeft size={19} aria-hidden="true" />
           </button>
-          <button type="button" aria-label={`${label} tiếp theo`} onClick={(event) => move(1, event.detail === 0)}>
+          <button type="button" aria-label={`${label} tiếp theo`} onClick={(event) => move(1, { instant: event.detail === 0 })}>
             <ArrowRight size={19} aria-hidden="true" />
           </button>
         </div>

@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, BottleWine, ChevronsDown, CupSoda, Package, ShoppingBag } from 'lucide-react';
+import { ArrowRight, BottleWine, CupSoda, Package, ShoppingBag } from 'lucide-react';
 import type { ProductCategory } from '@/payload-types';
 import { publicContentPath } from '@/lib/slug';
 import { getHomeCategoryArtwork } from '@/lib/home-catalog';
@@ -35,14 +35,19 @@ export function HomeBanner({ categories }: { categories: ProductCategory[] }) {
 
   return (
     <div className="home-banner-wrap">
-      <HomeCarousel label="Banner sản phẩm" variant="banner">
+      <HomeCarousel
+        label="Banner sản phẩm"
+        variant="banner"
+        backdrop={(
+          <div className="home-banner-pattern" aria-hidden="true">
+            {decorations.map((Icon, i) => <Icon key={i} strokeWidth={0.6} />)}
+          </div>
+        )}
+      >
         {slides.map((slide, index) => {
           const Heading = index === 0 ? 'h1' : 'h2';
           return (
             <div className="home-banner" key={slide.href}>
-              <div className="home-banner-pattern" aria-hidden="true">
-                {decorations.map((Icon, i) => <Icon key={i} strokeWidth={0.6} />)}
-              </div>
               <div className="home-banner-copy">
                 <span className="home-banner-eyebrow">{slide.eyebrow}</span>
                 <Heading id={index === 0 ? 'home-title' : undefined}>{slide.title}<br /><em>{slide.highlight}</em></Heading>
@@ -72,8 +77,11 @@ export function HomeBanner({ categories }: { categories: ProductCategory[] }) {
         <path d="M0 0C76 0 96 64 180 64S284 0 360 0Z" />
       </svg>
       <Link href="#home-category-heading" className="home-banner-scroll" aria-label="Xem danh mục sản phẩm">
-        <span className="home-banner-scroll-trail" aria-hidden="true" />
-        <ChevronsDown size={28} aria-hidden="true" />
+        <svg width="28" height="44" viewBox="0 0 28 44" fill="none" stroke="currentColor"
+          strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M14 3v2m0 5v2m0 5v2" strokeWidth="2" opacity=".5" />
+          <path d="m6 23 8 7 8-7M6 32l8 7 8-7" strokeWidth="2.5" />
+        </svg>
       </Link>
     </div>
   );
