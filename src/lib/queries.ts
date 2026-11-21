@@ -1,6 +1,6 @@
 import { unstable_cache as nextCache } from 'next/cache';
 import { sql } from '@payloadcms/db-postgres';
-import { getPayload, type Payload, type Where } from 'payload';
+import { getPayload, type Payload, type Where, type TypedUser, type PopulateType } from 'payload';
 import config from '@payload-config';
 import type {
   Post,
@@ -15,6 +15,7 @@ import { getSqlExecutor } from './db-transaction';
 import { createCanonicalResolver, type CanonicalDocument } from './canonical';
 import { parsePublicContentPath, publicContentPath, type PublicContentCollection } from './slug';
 import { isCloudflareTarget } from './deployment';
+import { canPreview } from './preview';
 
 // Trial Workers always read current CMS data. Node retains its tag-invalidated cache.
 // A production shared cache can be added after choosing cache storage and revalidation bindings.
@@ -274,6 +275,21 @@ export const getHomeShortcutProductCountCached = unstable_cache(
   { tags: ['catalog', 'products', 'categories'], revalidate: 300 },
 );
 
+// The public page and authenticated preview hydrate exactly the same related card fields.
+const productDetailPopulate = {
+  products: { name: true, slug: true, sku: true, status: true, images: true, category: true, shortDescription: true, minOrderQty: true, minOrderUnit: true },
+  posts: { title: true, slug: true, status: true, coverImage: true, excerpt: true, publishedAt: true, authorName: true, category: true },
+} satisfies PopulateType;
+
+export async function getProductForPreview(id: number, user: TypedUser): Promise<Product | null> {
+  if (!canPreview(user)) return null;
+  const payload = await getClient();
+  return payload.findByID({
+    collection: 'products', id, user, overrideAccess: false, disableErrors: true,
+    depth: 2, populate: productDetailPopulate,
+  });
+}
+
 export async function getPublishedProductBySlug(slug: string): Promise<Product | null> {
   const payload = await getClient();
   const res = await payload.find({
@@ -287,10 +303,7 @@ export async function getPublishedProductBySlug(slug: string): Promise<Product |
     limit: 1,
     depth: 2,
     // Only the fields needed for related cards; do not recursively hydrate their detail content.
-    populate: {
-      products: { name: true, slug: true, sku: true, status: true, images: true, category: true, shortDescription: true, minOrderQty: true, minOrderUnit: true },
-      posts: { title: true, slug: true, status: true, coverImage: true, excerpt: true, publishedAt: true, authorName: true, category: true },
-    },
+    populate: productDetailPopulate,
     overrideAccess: false,
   });
   return res.docs[0] ?? null;

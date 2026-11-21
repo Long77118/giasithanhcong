@@ -12,9 +12,10 @@ export interface BreadcrumbTrailItem {
 interface BreadcrumbsProps {
   items: BreadcrumbTrailItem[];
   siteUrl: string;
+  structuredData?: boolean;
 }
 
-export function Breadcrumbs({ items, siteUrl }: BreadcrumbsProps) {
+export function Breadcrumbs({ items, siteUrl, structuredData = true }: BreadcrumbsProps) {
   const jsonLdItems = items.map((item) => ({
     name: item.label,
     url: new URL(item.href, siteUrl).href,
@@ -24,7 +25,7 @@ export function Breadcrumbs({ items, siteUrl }: BreadcrumbsProps) {
 
   return (
     <>
-      <JsonLd data={jsonLd} />
+      {structuredData && <JsonLd data={jsonLd} />}
       <nav aria-label="Breadcrumb" className="mb-6">
         <ol className="flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
           {items.map((item, idx) => {

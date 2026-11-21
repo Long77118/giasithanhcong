@@ -25,11 +25,12 @@ const orderSteps = [
   'Xác nhận quy cách, thời gian và địa điểm giao hàng với bộ phận kinh doanh.',
 ];
 
-export async function ProductDetail({ product, contact, siteUrl, canonical }: {
+export async function ProductDetail({ product, contact, siteUrl, canonical = '', preview = false }: {
   product: Product;
   contact: ResolvedContactConfig;
   siteUrl: string;
-  canonical: string;
+  canonical?: string;
+  preview?: boolean;
 }) {
   const category = typeof product.category === 'object' ? product.category : null;
   const explicitRelated = (product.relatedProducts ?? [])
@@ -69,9 +70,9 @@ export async function ProductDetail({ product, contact, siteUrl, canonical }: {
   });
   return (
     <article className="site-shell product-page product-detail">
-      <JsonLd data={productJsonLd} />
-      {videos.map((video) => <JsonLd key={video.id} data={buildVideoJsonLd({ youtubeUrl: `https://www.youtube.com/watch?v=${video.videoId}`, title: video.title, description: video.description, thumbnailUrl: video.thumbnail, pageUrl: canonical })!} />)}
-      <Breadcrumbs siteUrl={siteUrl} items={breadcrumbItems} />
+      {!preview && <JsonLd data={productJsonLd} />}
+      {!preview && videos.map((video) => <JsonLd key={video.id} data={buildVideoJsonLd({ youtubeUrl: `https://www.youtube.com/watch?v=${video.videoId}`, title: video.title, description: video.description, thumbnailUrl: video.thumbnail, pageUrl: canonical })!} />)}
+      <Breadcrumbs siteUrl={siteUrl} items={breadcrumbItems} structuredData={!preview} />
       <div className="product-detail-top" data-gallery={gallery.length > 0}>
         {gallery.length > 0 && <ProductGallery items={gallery} productName={product.name} />}
         <div className="product-detail-summary">
@@ -147,7 +148,14 @@ export async function ProductDetail({ product, contact, siteUrl, canonical }: {
         </section>
       )}
       <div className="product-detail-quote">
-        <QuoteRequestForm productId={product.id} productName={`${product.name} (${product.sku})`} defaultQuantity={product.minOrderQty ? `${product.minOrderQty} ${product.minOrderUnit || 'thùng'}` : ''} />
+        {preview ? (
+          <section id="bao-gia" className="preview-quote-notice">
+            <h2>Yêu cầu báo giá</h2>
+            <p>Form báo giá được tắt trong chế độ xem trước. Không có yêu cầu nào được gửi từ đây.</p>
+          </section>
+        ) : (
+          <QuoteRequestForm productId={product.id} productName={`${product.name} (${product.sku})`} defaultQuantity={product.minOrderQty ? `${product.minOrderQty} ${product.minOrderUnit || 'thùng'}` : ''} />
+        )}
       </div>
       {relatedProducts.length > 0 && (
         <section className="product-detail-related" aria-labelledby="product-related-heading">
