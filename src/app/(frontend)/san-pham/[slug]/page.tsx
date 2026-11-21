@@ -34,6 +34,11 @@ export const dynamic = 'force-dynamic';
 const getProduct = cache(getPublishedProductBySlug);
 const getCanonical = cache((slug: string, custom: string | null | undefined) =>
   resolvePublishedCanonicalUrl(getSiteUrl(), publicContentPath('products', slug), custom));
+const orderSteps = [
+  'Gửi mã sản phẩm, quy cách và số lượng cần qua Zalo, hotline hoặc form báo giá.',
+  'Trao đổi nhu cầu và nhận báo giá theo số lượng đặt hàng.',
+  'Xác nhận quy cách, thời gian và địa điểm giao hàng với bộ phận kinh doanh.',
+];
 
 interface ProductDetailProps {
   params: Promise<{ slug: string }>;
@@ -169,9 +174,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
       <section className="product-detail-section" aria-labelledby="product-order-heading">
         <h2 id="product-order-heading">Cách đặt hàng sỉ</h2>
         <ol className="product-detail-steps">
-          <li>Gửi mã sản phẩm, quy cách và số lượng cần qua Zalo, hotline hoặc form báo giá.</li>
-          <li>Trao đổi nhu cầu và nhận báo giá theo số lượng đặt hàng.</li>
-          <li>Xác nhận quy cách, thời gian và địa điểm giao hàng với bộ phận kinh doanh.</li>
+          {orderSteps.map((step, index) => <li key={step}><span className="product-detail-step-number" aria-hidden="true">{index + 1}</span><span>{step}</span></li>)}
         </ol>
       </section>
       {videos.length > 0 && (

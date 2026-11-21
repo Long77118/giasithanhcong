@@ -226,6 +226,18 @@ npm run start
 
 ## 6. Trạng thái bàn giao & giới hạn hiện tại
 
+### Nội dung trang chi tiết sản phẩm
+
+Chạy migration `20261121_034654_product_detail_content` bằng `npm run db:migrate` trước khi khởi động bản cập nhật. Migration chỉ thêm trường/bảng; dữ liệu sản phẩm cũ được giữ lại. `availability` mặc định là **Còn hàng**; hãy xác nhận tình trạng thực tế hoặc để trống trong CMS để ẩn nhãn.
+
+Trong **Sản phẩm bán sỉ**, có thể thêm Ưu điểm, Ứng dụng, FAQ, video YouTube, tài liệu PDF và Bài viết liên quan. Đánh dấu tối đa 4 dòng Thông số kỹ thuật là **Hiện ở nhãn nhìn nhanh**. Những khối chưa có dữ liệu sẽ được ẩn. Khi không chọn sản phẩm liên quan đã xuất bản, trang lấy tối đa 4 sản phẩm khác cùng danh mục; bài viết chỉ lấy từ danh sách được chọn và đã xuất bản.
+
+**Tài liệu PDF** là collection upload riêng, công khai để khách tải catalog/bảng giá. Node lưu trong `documents/` (đã Git ignore); Workers dùng adapter và bucket R2 hiện có với prefix `documents`. Media tiếp tục chỉ nhận ảnh. Không tải tài liệu nội bộ/bí mật vào thư viện công khai này.
+
+Video chỉ nhận URL YouTube hợp lệ, hiển thị ảnh thu nhỏ trước và chỉ nạp iframe `youtube-nocookie.com` khi khách bấm; không tự phát. JSON-LD có Product, BreadcrumbList và VideoObject theo dữ liệu thật, không tạo giá/Offer/đánh giá. Chưa có trường ngày tải video nên không tự suy ra `uploadDate` từ ngày tạo sản phẩm.
+
+Các commit của nâng cấp này không thay đổi `force-dynamic`, cache lâu dài, hạ tầng hoặc quy tắc phân quyền hiện có. Form báo giá cũ được giữ nguyên hành vi.
+
 ### Đã hoàn thiện
 - Next.js App Router + Payload CMS v3 + PostgreSQL migrations & idempotent seed.
 - Đầy đủ các trang: `/`, `/san-pham`, `/danh-muc/[slug]`, `/san-pham/[slug]`, `/blog`, `/blog/[slug]`, `/gioi-thieu`, `/lien-he`, `/admin`, `/sitemap.xml`, `/robots.txt`, `404`.

@@ -17,7 +17,7 @@ const createConverters = (headingTag?: 'h3', hideUnavailable = false): JSXConver
   ...defaultConverters,
   link: linkConverter,
   autolink: linkConverter,
-  ...(headingTag ? { heading: ({ node, nodesToJSX }) => React.createElement(headingTag, null, nodesToJSX({ nodes: node.children })) } satisfies Partial<ReturnType<JSXConvertersFunction<DefaultNodeTypes>>> : {}),
+  ...(headingTag ? { heading: ({ node, nodesToJSX }) => React.createElement(headingTag, { style: node.format ? { textAlign: node.format } : undefined }, nodesToJSX({ nodes: node.children })) } satisfies Partial<ReturnType<JSXConvertersFunction<DefaultNodeTypes>>> : {}),
   upload: ({ node }) => {
     const image = node.relationTo === 'media' ? richTextImage(node.value, node.fields) : undefined;
     if (!image) return hideUnavailable ? null : <p className="rich-text-unavailable">Ảnh không còn khả dụng.</p>;
