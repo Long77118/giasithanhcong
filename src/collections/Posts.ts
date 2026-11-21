@@ -3,6 +3,7 @@ import { generateInitialSlug, guardPublicSlug, publicSlugField } from '../lib/pu
 import { publicContentPath } from '../lib/slug';
 import { safeRevalidateTags } from '../lib/revalidate';
 import { isAdmin, publishedOrAdmin } from './access';
+import { previewUrl } from '../lib/preview';
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
@@ -14,6 +15,8 @@ export const Posts: CollectionConfig = {
     group: 'Nội dung',
     useAsTitle: 'title',
     defaultColumns: ['title', 'category', 'authorName', 'publishedAt', 'status'],
+    preview: (doc) => previewUrl('posts', doc.id),
+    description: 'Bấm Lưu trước khi Xem trước. Chỉ quản trị viên xem được bản nháp đã lưu.',
   },
   access: {
     read: publishedOrAdmin,

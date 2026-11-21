@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { getPayload } from 'payload';
 import config from '@payload-config';
 import { canPreview, parsePreviewID } from './preview';
-import { getProductForPreview } from './queries';
+import { getPostForPreview, getProductForPreview } from './queries';
 
 // React cache only deduplicates within this request; no authenticated data is cached across users.
 const getPreviewUser = cache(async () => {
@@ -20,4 +20,12 @@ export const requirePreviewProduct = cache(async (value: string) => {
   const product = await getProductForPreview(id, await getPreviewUser());
   if (!product) notFound();
   return product;
+});
+
+export const requirePreviewPost = cache(async (value: string) => {
+  const id = parsePreviewID(value);
+  if (id === null) notFound();
+  const post = await getPostForPreview(id, await getPreviewUser());
+  if (!post) notFound();
+  return post;
 });

@@ -427,6 +427,14 @@ export async function getPublishedPostBySlug(slug: string): Promise<Post | null>
   return res.docs[0] ?? null;
 }
 
+export async function getPostForPreview(id: number, user: TypedUser): Promise<Post | null> {
+  if (!canPreview(user)) return null;
+  const payload = await getClient();
+  return payload.findByID({
+    collection: 'posts', id, user, overrideAccess: false, disableErrors: true, depth: 2,
+  });
+}
+
 export async function getRelatedPublishedPosts(categoryId: number, currentPostId: number): Promise<Post[]> {
   const payload = await getClient();
   const { docs } = await payload.find({
