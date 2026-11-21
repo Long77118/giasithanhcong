@@ -24,7 +24,7 @@ function withEnvironment<T>(env: SeoEnv, run: () => T): T {
 test('Production robots exposes media and pagination while keeping Admin and API restrictions', () => {
   const result = withEnvironment({ APP_URL:'https://giasithanhcong.example/', ALLOW_INDEXING:'true', NODE_ENV:'production' }, robots);
   assert.equal(result.sitemap,'https://giasithanhcong.example/sitemap.xml');
-  assert.deepEqual(result.rules,[{userAgent:'*',allow:['/','/api/media/file/','/_next/image'],disallow:['/admin','/admin/*','/api/']}]);
+  assert.deepEqual(result.rules,[{userAgent:'*',allow:['/','/api/media/file/','/_next/image'],disallow:['/admin','/admin/*','/api/','/xem-truoc']}]);
 });
 
 test('Local, preview, staging and unset opt-in keep a full robots block without image exceptions', () => {

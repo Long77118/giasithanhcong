@@ -26,7 +26,13 @@ body:has(.preview-banner) .site-header {
 }
 .preview-banner strong { flex-basis: 100%; }
 .preview-banner a { text-decoration: underline; text-underline-offset: .2em; }
-.preview-quote-notice { padding: 1.5rem; border: 1px solid #d97706; border-radius: .75rem; background: #fffbeb; }
+.preview-quote-notice {
+  padding: 1.5rem;
+  border: 1px solid #d97706;
+  border-radius: .75rem;
+  background: #fffbeb;
+  scroll-margin-top: calc(var(--preview-banner-height) + 5.75rem);
+}
 @media (min-width: 48rem) {
   body:has(.preview-banner) { --preview-banner-height: 3.5rem; }
   .preview-banner strong { flex-basis: auto; }
