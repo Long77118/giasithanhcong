@@ -286,9 +286,29 @@ export async function getPublishedProductBySlug(slug: string): Promise<Product |
     },
     limit: 1,
     depth: 2,
+    // Only the fields needed for related cards; do not recursively hydrate their detail content.
+    populate: {
+      products: { name: true, slug: true, sku: true, status: true, images: true, category: true, shortDescription: true, minOrderQty: true, minOrderUnit: true },
+      posts: { title: true, slug: true, status: true, coverImage: true, excerpt: true, publishedAt: true, authorName: true, category: true },
+    },
     overrideAccess: false,
   });
   return res.docs[0] ?? null;
+}
+
+export async function getRelatedPublishedProducts(categoryId: number, currentProductId: number): Promise<Product[]> {
+  const payload = await getClient();
+  const { docs } = await payload.find({
+    collection: 'products',
+    where: { status: { equals: 'published' }, category: { equals: categoryId }, id: { not_equals: currentProductId } },
+    sort: ['-updatedAt', '-id'],
+    limit: 4,
+    pagination: false,
+    depth: 1,
+    select: { name: true, slug: true, sku: true, status: true, images: true, category: true, shortDescription: true, minOrderQty: true, minOrderUnit: true, packagingSpec: true, updatedAt: true, createdAt: true },
+    overrideAccess: false,
+  });
+  return docs;
 }
 
 export const getPublishedPostCategoriesCached = unstable_cache(

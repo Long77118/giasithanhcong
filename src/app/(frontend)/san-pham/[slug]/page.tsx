@@ -1,83 +1,64 @@
-import React from 'react';
-import { ArrowRight } from 'lucide-react';
+import { cache } from 'react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { FileDown } from 'lucide-react';
 import { notFound, permanentRedirect } from 'next/navigation';
-import type { Product, ProductCategory } from '@/payload-types';
+import type { Post, Product } from '@/payload-types';
 import {
   getPublishedProductBySlug,
   getPublishedCategoriesCached,
   getPublishedSlugRedirect,
+  getRelatedPublishedProducts,
   getSiteSettingsCached,
   resolvePublishedCanonicalUrl,
 } from '@/lib/queries';
-import {
-  buildProductJsonLd,
-  getSiteUrl,
-  isIndexingAllowed,
-} from '@/lib/seo';
+import { buildProductJsonLd, getSiteUrl, isIndexingAllowed } from '@/lib/seo';
 import { resolveOpenGraphImages, resolvePublicImageUrl } from '@/lib/seo-images';
 import { categoryAncestors } from '@/lib/category-tree';
 import { decodePublicSlugParam, publicContentPath, withPublicSearchParams, type PublicSearchParams } from '@/lib/slug';
+import { availabilityLabels, hasProductDescription, productDocuments, productQuickFacts, productTextItems, productVideos } from '@/lib/product-detail';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { ContactActions } from '@/components/ContactActions';
 import { LexicalContent } from '@/components/LexicalContent';
-import { resolveMediaUrl } from '@/components/MediaImage';
 import { ProductCard } from '@/components/ProductCard';
+import { PostCard } from '@/components/PostCard';
 import { compactCatalogCardSizes } from '@/lib/storefront-image-sizes';
 import { ProductGallery, type GalleryImageItem } from '@/components/ProductGallery';
+import { ProductContactActions } from '@/components/ProductContactActions';
+import { ProductVideo } from '@/components/ProductVideo';
 import { QuoteRequestForm } from '@/components/QuoteRequestForm';
 import { JsonLd } from '@/components/JsonLd';
+import './product-detail.css';
 
 export const dynamic = 'force-dynamic';
+
+// Deduplicate only within this render (metadata + page). Persistent cache policy is unchanged.
+const getProduct = cache(getPublishedProductBySlug);
+const getCanonical = cache((slug: string, custom: string | null | undefined) =>
+  resolvePublishedCanonicalUrl(getSiteUrl(), publicContentPath('products', slug), custom));
 
 interface ProductDetailProps {
   params: Promise<{ slug: string }>;
   searchParams: Promise<PublicSearchParams>;
 }
 
-export async function generateMetadata({
-  params,
-}: ProductDetailProps): Promise<Metadata> {
+export async function generateMetadata({ params }: ProductDetailProps): Promise<Metadata> {
   const slug = decodePublicSlugParam((await params).slug);
   if (slug === null) notFound();
-  const product = await getPublishedProductBySlug(slug);
-
-  if (!product) {
-    return {
-      title: 'Không tìm thấy sản phẩm',
-      robots: { index: false, follow: false },
-    };
-  }
-
+  const product = await getProduct(slug);
+  if (!product) return { title: 'Không tìm thấy sản phẩm', robots: { index: false, follow: false } };
   const siteUrl = getSiteUrl();
   const indexingAllowed = isIndexingAllowed();
   const { settings, contact } = await getSiteSettingsCached();
-
   const meta = product.meta;
-  const canonical = await resolvePublishedCanonicalUrl(siteUrl, publicContentPath('products', product.slug), meta?.canonicalUrl);
+  const canonical = await getCanonical(product.slug, meta?.canonicalUrl);
   const title = meta?.title || `${product.name} | ${contact.brandName}`;
   const description = meta?.description || product.shortDescription;
-
   return {
-    title,
-    description,
+    title, description,
     alternates: { canonical },
-    robots: {
-      index: indexingAllowed,
-      follow: indexingAllowed,
-    },
+    robots: { index: indexingAllowed, follow: indexingAllowed },
     openGraph: {
-      type: 'website',
-      url: canonical,
-      title,
-      description,
-      images: resolveOpenGraphImages(
-        siteUrl,
-        meta?.image,
-        ...(product.images ?? []).map(({ image }) => image),
-        settings?.defaultOgImage,
-      ),
+      type: 'website', url: canonical, title, description,
+      images: resolveOpenGraphImages(siteUrl, meta?.image, ...(product.images ?? []).map(({ image }) => image), settings?.defaultOgImage),
     },
   };
 }
@@ -86,228 +67,145 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
   const slug = decodePublicSlugParam((await params).slug);
   if (slug === null) notFound();
   const siteUrl = getSiteUrl();
-
-  const [product, { contact }] = await Promise.all([
-    getPublishedProductBySlug(slug),
-    getSiteSettingsCached(),
-  ]);
-
+  const [product, { contact }] = await Promise.all([getProduct(slug), getSiteSettingsCached()]);
   if (!product) {
     const currentSlug = await getPublishedSlugRedirect('products', slug);
-    if (currentSlug) {
-      permanentRedirect(withPublicSearchParams(publicContentPath('products', currentSlug), await searchParams));
-    }
+    if (currentSlug) permanentRedirect(withPublicSearchParams(publicContentPath('products', currentSlug), await searchParams));
     notFound();
   }
-
-  const categoryObj =
-    product.category && typeof product.category === 'object'
-      ? (product.category as ProductCategory)
-      : null;
-
-  const galleryItems: GalleryImageItem[] = (product.images ?? []).map((entry) => {
-    const resolved = resolveMediaUrl(entry.image, 'card');
-    return {
-      ...resolved,
-      caption: entry.caption,
-    };
-  });
-
-  const brandName = product.brandName?.trim();
-  const productJsonLd = buildProductJsonLd({
-    name: product.name,
-    sku: product.sku,
-    description: product.shortDescription,
-    url: `${siteUrl}${publicContentPath('products', product.slug)}`,
-    brandName,
-    categoryName: categoryObj?.name,
-    images: galleryItems
-      .map((i) => resolvePublicImageUrl(siteUrl, i.url))
-      .filter((u): u is string => Boolean(u)),
-  });
-
-  const relatedList = (product.relatedProducts ?? [])
+  const category = typeof product.category === 'object' ? product.category : null;
+  const explicitRelated = (product.relatedProducts ?? [])
     .filter((item): item is Product => Boolean(item && typeof item === 'object'))
     .filter((item) => item.status === 'published' && item.id !== product.id);
-
-  const breadcrumbCategories = categoryObj?.status === 'published'
-    ? [...categoryAncestors(categoryObj, await getPublishedCategoriesCached()), categoryObj]
-    : [];
+  const categoryId = category?.id ?? (typeof product.category === 'number' ? product.category : null);
+  const [relatedProducts, categories, canonical] = await Promise.all([
+    explicitRelated.length ? Promise.resolve(explicitRelated) : categoryId ? getRelatedPublishedProducts(categoryId, product.id) : Promise.resolve([]),
+    category?.status === 'published' ? getPublishedCategoriesCached() : Promise.resolve([]),
+    getCanonical(product.slug, product.meta?.canonicalUrl),
+  ]);
+  const relatedPosts = (product.relatedPosts ?? [])
+    .filter((post): post is Post => Boolean(post && typeof post === 'object'))
+    .filter((post) => post.status === 'published');
+  const gallery: GalleryImageItem[] = (product.images ?? []).flatMap(({ image, caption }) => {
+    if (!image || typeof image !== 'object' || !image.url) return [];
+    return [{ url: image.url, width: image.width || 800, height: image.height || 800, alt: image.alt, caption }];
+  });
+  const specs = (product.specs ?? []).filter((spec) => spec.label.trim() && spec.value.trim());
+  const quickFacts = productQuickFacts(specs);
+  const benefits = productTextItems(product.benefits);
+  const applications = productTextItems(product.applications);
+  const faq = (product.faq ?? []).filter((item) => item.question.trim() && item.answer.trim());
+  const documents = productDocuments(product.documents, siteUrl);
+  const videos = productVideos(product.videos, siteUrl);
+  const hasDescription = hasProductDescription(product.description);
+  const availability = product.availability ? availabilityLabels[product.availability] : null;
+  const breadcrumbCategories = category?.status === 'published' ? [...categoryAncestors(category, categories), category] : [];
   const breadcrumbItems = [
     { label: 'Trang chủ', href: '/' },
-    { label: 'Sản phẩm', href: '/san-pham' },
-    ...breadcrumbCategories.map(category => ({
-      label: category.name,
-      href: publicContentPath('product-categories', category.slug),
-    })),
+    ...breadcrumbCategories.map((item) => ({ label: item.name, href: publicContentPath('product-categories', item.slug) })),
     { label: product.name, href: publicContentPath('products', product.slug) },
   ];
-
+  const productJsonLd = buildProductJsonLd({
+    name: product.name, sku: product.sku, description: product.shortDescription,
+    url: canonical, brandName: product.brandName, categoryName: category?.name,
+    images: gallery.map((image) => resolvePublicImageUrl(siteUrl, image.url)).filter((url): url is string => Boolean(url)),
+  });
   return (
-    <>
+    <article className="site-shell product-page product-detail">
       <JsonLd data={productJsonLd} />
-
-      <div className="site-shell product-page py-4 sm:py-7 lg:py-8">
-        <Breadcrumbs siteUrl={siteUrl} items={breadcrumbItems} />
-
-        <section className="product-overview rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-6 lg:p-8">
-          <header className="product-heading min-w-0 [overflow-wrap:anywhere]">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs font-medium text-slate-600">
-              {categoryObj?.status === 'published' && (
-                <Link
-                  href={publicContentPath('product-categories', categoryObj.slug)}
-                  className="font-semibold text-[#294762] underline-offset-4 hover:underline"
-                >
-                  {categoryObj.name}
-                </Link>
-              )}
-              <span className="font-mono tabular-nums text-slate-600">SKU {product.sku}</span>
-            </div>
-            <h1 className="mt-2 max-w-[36rem] font-display text-[1.65rem] font-bold leading-tight tracking-tight text-[#0C2340] text-pretty sm:text-3xl lg:text-[2.5rem]">
-              {product.name}
-            </h1>
-          </header>
-
-          <div className="product-gallery min-w-0">
-            <ProductGallery items={galleryItems} productName={product.name} />
+      <Breadcrumbs siteUrl={siteUrl} items={breadcrumbItems} />
+      <div className="product-detail-top" data-gallery={gallery.length > 0}>
+        {gallery.length > 0 && <ProductGallery items={gallery} productName={product.name} />}
+        <div className="product-detail-summary">
+          <div className="product-detail-identity">
+            <span>SKU {product.sku}</span>
+            {product.brandName?.trim() && <span>Thương hiệu: {product.brandName}</span>}
           </div>
-
-          <div className="product-order flex min-w-0 flex-col [overflow-wrap:anywhere]">
-            <div className="rounded-xl bg-[#eef3f7] p-3.5 sm:p-5">
-              <dl className="grid grid-cols-2 gap-x-3 gap-y-2 sm:gap-x-6">
-                <div className="min-w-0">
-                  <dt className="text-xs font-medium text-[#405670]">Đặt tối thiểu (MOQ)</dt>
-                  <dd className="mt-1 font-display text-base font-bold tabular-nums text-[#0C2340] sm:text-lg">
-                    {product.minOrderQty
-                      ? `${product.minOrderQty} ${product.minOrderUnit || 'thùng'}`
-                      : 'Theo thỏa thuận'}
-                  </dd>
-                </div>
-                <div className="min-w-0 border-s border-[#ccd9e4] ps-3 sm:ps-5">
-                  <dt className="text-xs font-medium text-[#405670]">Quy cách đóng gói</dt>
-                  <dd className="mt-1 text-sm font-semibold text-[#0C2340]">{product.packagingSpec}</dd>
-                </div>
-                {brandName && (
-                  <div className="col-span-2 flex flex-wrap gap-x-2 border-t border-[#ccd9e4] pt-2 text-xs">
-                    <dt className="text-[#405670]">Thương hiệu</dt>
-                    <dd className="font-semibold text-[#0C2340]">{brandName}</dd>
-                  </div>
-                )}
-              </dl>
-
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t border-[#ccd9e4] pt-3">
-                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                  <span className="text-xs font-medium text-slate-600">Báo giá sỉ</span>
-                  <span className="font-display text-base font-bold text-[#0C2340]">Liên hệ</span>
-                </div>
-                <a
-                  href="#bao-gia"
-                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#9a470b] px-4 text-sm font-semibold text-white hover:bg-[#7c3608] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9a470b] sm:w-auto"
-                >
-                  Yêu cầu báo giá
-                  <ArrowRight size={16} aria-hidden="true" />
-                </a>
-              </div>
-            </div>
-
-            <div className="mt-3">
-              <ContactActions contact={contact} compact tone="secondary" />
-            </div>
-            <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600 lg:order-first lg:mt-0 lg:mb-4">
-              {product.shortDescription}
-            </p>
+          <h1>{product.name}</h1>
+          {product.shortDescription?.trim() && <p className="product-detail-lead">{product.shortDescription}</p>}
+          {quickFacts.length > 0 && (
+            <ul className="product-detail-facts" aria-label="Thông số nhìn nhanh">
+              {quickFacts.map((spec, index) => <li key={spec.id || index}><span>{spec.label}:</span> {spec.value}</li>)}
+            </ul>
+          )}
+          {availability && <p className="product-detail-availability" data-availability={product.availability}>{availability}</p>}
+          <ProductContactActions contact={contact} />
+          <a href="#bao-gia" className="product-detail-form-link">Gửi yêu cầu báo giá theo quy cách</a>
+          {documents.length > 0 && (
+            <details className="product-detail-documents">
+              <summary>Tải bảng giá và catalog (PDF)</summary>
+              <ul>{documents.map((document) => (
+                <li key={document.id}><a href={document.url} target="_blank" rel="noopener noreferrer"><FileDown size={17} aria-hidden="true" />{document.title} (PDF)</a></li>
+              ))}</ul>
+            </details>
+          )}
+        </div>
+      </div>
+      {specs.length > 0 && (
+        <section className="product-detail-section" aria-labelledby="product-specs-heading">
+          <h2 id="product-specs-heading">Thông số kỹ thuật</h2>
+          <div className="product-detail-table-wrap" role="region" tabIndex={0} aria-label="Bảng thông số kỹ thuật, có thể cuộn ngang">
+            <table className="product-detail-table"><tbody>
+              {product.packagingSpec?.trim() && <tr><th scope="row">Quy cách đóng gói</th><td>{product.packagingSpec}</td></tr>}
+              {product.minOrderQty != null && <tr><th scope="row">Số lượng đặt tối thiểu</th><td>{product.minOrderQty} {product.minOrderUnit}</td></tr>}
+              {specs.map((spec, index) => <tr key={spec.id || index}><th scope="row">{spec.label}</th><td>{spec.value}</td></tr>)}
+            </tbody></table>
           </div>
         </section>
-
-        {/* Technical Specs & Rich Description */}
-        <div className="mt-6 grid grid-cols-1 gap-5 lg:mt-9 lg:grid-cols-12 lg:gap-8">
-          <div className="min-w-0 space-y-5 lg:col-span-7 lg:space-y-8">
-            {product.specs && product.specs.length > 0 && (
-              <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-7">
-                <h2 className="font-display text-xl font-bold text-[#0C2340]">
-                  Thông số kỹ thuật
-                </h2>
-                <div className="mt-4 overflow-hidden rounded-lg border border-slate-200">
-                  <table className="w-full table-fixed border-collapse text-left text-sm [overflow-wrap:anywhere]">
-                    <tbody className="divide-y divide-slate-200">
-                      <tr className="bg-slate-50">
-                        <th scope="row" className="w-2/5 px-3 py-3 font-medium text-slate-600 sm:px-4">
-                          Mã sản phẩm (SKU)
-                        </th>
-                        <td className="px-4 py-3 font-mono font-semibold tabular-nums text-slate-900">
-                          {product.sku}
-                        </td>
-                      </tr>
-                      <tr>
-                        <th scope="row" className="px-3 py-3 font-medium text-slate-600 sm:px-4">
-                          Quy cách đóng gói
-                        </th>
-                        <td className="px-4 py-3 text-slate-900">
-                          {product.packagingSpec}
-                        </td>
-                      </tr>
-                      {product.specs.map((spec, idx) => (
-                        <tr
-                          key={spec.id || `${spec.label}-${idx}`}
-                          className={idx % 2 === 0 ? 'bg-slate-50/70' : 'bg-white'}
-                        >
-                          <th scope="row" className="px-3 py-3 font-medium text-slate-600 sm:px-4">
-                            {spec.label}
-                          </th>
-                          <td className="px-4 py-3 tabular-nums text-slate-900">
-                            {spec.value}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            )}
-
-            <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-7">
-              <h2 className="font-display text-xl font-bold text-[#0C2340]">
-                Thông tin chi tiết sản phẩm
-              </h2>
-              <div className="mt-3">
-                {product.description ? (
-                  <LexicalContent data={product.description} />
-                ) : (
-                  <p className="text-sm text-slate-600">
-                    {product.shortDescription}
-                  </p>
-                )}
-              </div>
-            </section>
-          </div>
-
-          <div className="min-w-0 lg:col-span-5">
-            <QuoteRequestForm
-              productId={product.id}
-              productName={`${product.name} (${product.sku})`}
-              defaultQuantity={
-                product.minOrderQty
-                  ? `${product.minOrderQty} ${product.minOrderUnit || 'thùng'}`
-                  : ''
-              }
-            />
-          </div>
-        </div>
-
-        {/* Related Products */}
-        {relatedList.length > 0 && (
-          <section className="mt-14 border-t border-slate-200 pt-10">
-            <h2 className="font-display text-2xl font-bold text-[#0C2340]">
-              Sản phẩm liên quan
-            </h2>
-            <div className="catalog-grid mt-6">
-              {relatedList.map((rel) => (
-                <ProductCard key={rel.id} product={rel} sizes={compactCatalogCardSizes} variant="catalog" />
-              ))}
+      )}
+      {(hasDescription || benefits.length > 0 || applications.length > 0) && (
+        <section className="product-detail-section" aria-labelledby="product-description-heading">
+          <h2 id="product-description-heading">Mô tả sản phẩm</h2>
+          {hasDescription && <div className="product-detail-description"><LexicalContent data={product.description} headingTag="h3" hideUnavailable /></div>}
+          {(benefits.length > 0 || applications.length > 0) && (
+            <div className="product-detail-lists">
+              {benefits.length > 0 && <div><h3>Ưu điểm</h3><ul>{benefits.map((text, index) => <li key={index}>{text}</li>)}</ul></div>}
+              {applications.length > 0 && <div><h3>Ứng dụng</h3><ul>{applications.map((text, index) => <li key={index}>{text}</li>)}</ul></div>}
             </div>
-          </section>
-        )}
+          )}
+        </section>
+      )}
+      <section className="product-detail-section" aria-labelledby="product-order-heading">
+        <h2 id="product-order-heading">Cách đặt hàng sỉ</h2>
+        <ol className="product-detail-steps">
+          <li>Gửi mã sản phẩm, quy cách và số lượng cần qua Zalo, hotline hoặc form báo giá.</li>
+          <li>Trao đổi nhu cầu và nhận báo giá theo số lượng đặt hàng.</li>
+          <li>Xác nhận quy cách, thời gian và địa điểm giao hàng với bộ phận kinh doanh.</li>
+        </ol>
+      </section>
+      {videos.length > 0 && (
+        <section className="product-detail-section" aria-labelledby="product-videos-heading">
+          <h2 id="product-videos-heading">Video sản phẩm</h2>
+          <div className="product-detail-videos">{videos.map((video) => (
+            <div className="product-detail-video" key={video.id}>
+              <ProductVideo videoId={video.videoId} title={video.title} thumbnail={video.thumbnail} thumbnailAlt={video.thumbnailAlt} />
+              <div><h3>{video.title}</h3><p>{video.description}</p></div>
+            </div>
+          ))}</div>
+        </section>
+      )}
+      {faq.length > 0 && (
+        <section className="product-detail-section product-detail-faq" aria-labelledby="product-faq-heading">
+          <h2 id="product-faq-heading">Câu hỏi thường gặp</h2>
+          {faq.map((item, index) => <details key={item.id || index}><summary>{item.question}</summary><p>{item.answer}</p></details>)}
+        </section>
+      )}
+      <div className="product-detail-quote">
+        <QuoteRequestForm productId={product.id} productName={`${product.name} (${product.sku})`} defaultQuantity={product.minOrderQty ? `${product.minOrderQty} ${product.minOrderUnit || 'thùng'}` : ''} />
       </div>
-    </>
+      {relatedProducts.length > 0 && (
+        <section className="product-detail-related" aria-labelledby="product-related-heading">
+          <h2 id="product-related-heading">Sản phẩm liên quan</h2>
+          <div className="catalog-grid">{relatedProducts.map((related) => <ProductCard key={related.id} product={related} sizes={compactCatalogCardSizes} variant="catalog" />)}</div>
+        </section>
+      )}
+      {relatedPosts.length > 0 && (
+        <section className="product-detail-related" aria-labelledby="product-posts-heading">
+          <h2 id="product-posts-heading">Bài viết liên quan</h2>
+          <div className="product-detail-posts">{relatedPosts.map((post) => <PostCard key={post.id} post={post} />)}</div>
+        </section>
+      )}
+      <ProductContactActions contact={contact} mobile />
+    </article>
   );
 }

@@ -23,8 +23,8 @@ export const featuredCardSizes = [
 ].join(', ');
 
 export const productGallerySizes = [
-  '(min-width: 100rem) calc(53.5vw - 96px)',
-  '(min-width: 64rem) calc(53.5vw - 87px)',
-  '(min-width: 40rem) calc(100vw - 116px)',
-  'calc(100vw - 66px)',
+  '(min-width: 77.5rem) 590px',
+  '(min-width: 48rem) calc(51vw - 44px)',
+  '(min-width: 40rem) calc(100vw - 48px)',
+  'calc(100vw - 32px)',
 ].join(', ');

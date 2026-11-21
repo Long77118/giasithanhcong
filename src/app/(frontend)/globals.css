@@ -24,30 +24,11 @@
     overflow-wrap: anywhere;
   }
 
-  .product-overview {
-    display: grid;
-    gap: 1rem;
-  }
-
   .quote-request,
   .quote-request [aria-invalid="true"],
   .quote-request [role="alert"],
   .quote-request [role="status"] {
     scroll-margin-block-start: 5.75rem;
-  }
-
-  @media (min-width: 64rem) {
-    .product-overview {
-      grid-template:
-        "gallery heading" auto
-        "gallery order" 1fr
-        / minmax(0, 1.15fr) minmax(0, 1fr);
-      align-items: start;
-      gap: 1.25rem 3rem;
-    }
-    .product-heading { grid-area: heading; }
-    .product-gallery { grid-area: gallery; }
-    .product-order { grid-area: order; }
   }
 
   @media (min-width: 40rem) { .catalog-grid { --catalog-columns: 2; } }

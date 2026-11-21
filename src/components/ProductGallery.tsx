@@ -23,26 +23,22 @@ export function ProductGallery({
   const [activeIndex, setActiveIndex] = useState(0);
 
   if (validItems.length === 0) {
-    return (
-      <div className="flex aspect-[16/10] w-full flex-col items-center justify-center rounded-xl bg-slate-100 p-6 text-center text-slate-600">
-        <span className="text-sm font-medium text-slate-700">{productName}</span>
-        <span className="mt-1 text-xs text-slate-500">Chưa có hình ảnh sản phẩm</span>
-      </div>
-    );
+    return null;
   }
 
   const current = validItems[activeIndex] ?? validItems[0];
 
   return (
-    <div className="space-y-3">
-      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-slate-100">
+    <figure className="product-detail-gallery">
+      <div className="product-detail-stage">
         {current.url && (
           <Image
             src={current.url}
             alt={current.alt || productName}
             width={current.width}
             height={current.height}
-            priority
+            preload={activeIndex === 0}
+            loading={activeIndex === 0 ? undefined : 'eager'}
             sizes={productGallerySizes}
             className="h-full w-full object-contain"
           />
@@ -50,11 +46,11 @@ export function ProductGallery({
       </div>
 
       {current.caption && (
-        <p className="text-xs text-slate-500">{current.caption}</p>
+        <figcaption className="product-detail-caption" aria-live="polite">{current.caption}</figcaption>
       )}
 
       {validItems.length > 1 && (
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Chọn ảnh sản phẩm">
+        <div className="product-detail-thumbnails" role="group" aria-label={`Chọn ảnh ${productName}`}>
           {validItems.map((item, idx) => {
             const isSelected = idx === activeIndex;
             return (
@@ -62,21 +58,18 @@ export function ProductGallery({
                 key={`${item.url}-${idx}`}
                 type="button"
                 aria-pressed={isSelected}
-                aria-label={`Xem ảnh ${idx + 1} của ${productName}`}
+                aria-label={`Ảnh ${idx + 1}: ${item.alt || productName}`}
                 onClick={() => setActiveIndex(idx)}
-                className={`relative h-12 w-15 overflow-hidden rounded-lg border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0C2340] sm:h-16 sm:w-20 ${
-                  isSelected
-                    ? 'border-[#0C2340] ring-2 ring-[#0C2340]/20'
-                    : 'border-slate-200 opacity-75 hover:opacity-100'
-                }`}
+                className="product-detail-thumbnail"
               >
                 {item.url && (
                   <Image
                     src={item.url}
-                    alt={item.alt}
-                    width={160}
-                    height={120}
-                    className="h-full w-full object-cover"
+                    alt=""
+                    width={128}
+                    height={128}
+                    sizes="80px"
+                    className="h-full w-full object-contain"
                   />
                 )}
               </button>
@@ -84,6 +77,6 @@ export function ProductGallery({
           })}
         </div>
       )}
-    </div>
+    </figure>
   );
 }
