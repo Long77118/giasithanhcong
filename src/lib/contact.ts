@@ -2,6 +2,7 @@ export interface SiteContactInput {
   brandName?: string | null;
   tagline?: string | null;
   hotline?: string | null;
+  secondaryHotline?: string | null;
   zaloUrl?: string | null;
   email?: string | null;
   address?: string | null;
@@ -14,6 +15,8 @@ export interface ResolvedContactConfig {
   tagline: string;
   hotline: string | null;
   telHref: string | null;
+  secondaryHotline: string | null;
+  secondaryTelHref: string | null;
   isHotlineConfigured: boolean;
   zaloUrl: string | null;
   isZaloConfigured: boolean;
@@ -54,6 +57,8 @@ export function resolveContactConfig(
 ): ResolvedContactConfig {
   const hotline = input?.hotline?.trim() || null;
   const telHref = normalizeVietnamesePhoneHref(hotline);
+  const secondaryHotline = input?.secondaryHotline?.trim() || null;
+  const secondaryTelHref = normalizeVietnamesePhoneHref(secondaryHotline);
   const zaloUrl = normalizeZaloUrl(input?.zaloUrl);
 
   return {
@@ -63,6 +68,8 @@ export function resolveContactConfig(
       'Nhà cung cấp sỉ ly, chai, hũ, hộp thực phẩm và bao bì dùng một lần.',
     hotline: telHref ? hotline : null,
     telHref,
+    secondaryHotline: secondaryTelHref ? secondaryHotline : null,
+    secondaryTelHref,
     isHotlineConfigured: Boolean(telHref && hotline),
     zaloUrl,
     isZaloConfigured: Boolean(zaloUrl),

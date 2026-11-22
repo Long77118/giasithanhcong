@@ -9,6 +9,7 @@ import * as migration_20261119_021054_facebook_pages from './20261119_021054_fac
 import * as migration_20261119_152602_home_promotions from './20261119_152602_home_promotions';
 import * as migration_20261120_040000_cloudflare_media from './20261120_040000_cloudflare_media';
 import * as migration_20261121_034654_product_detail_content from './20261121_034654_product_detail_content';
+import * as migration_20261122_080626_secondary_hotline from './20261122_080626_secondary_hotline';
 
 export const migrations = [
   {
@@ -65,5 +66,10 @@ export const migrations = [
     up: migration_20261121_034654_product_detail_content.up,
     down: migration_20261121_034654_product_detail_content.down,
     name: '20261121_034654_product_detail_content'
+  },
+  {
+    up: migration_20261122_080626_secondary_hotline.up,
+    down: migration_20261122_080626_secondary_hotline.down,
+    name: '20261122_080626_secondary_hotline',
   },
 ];

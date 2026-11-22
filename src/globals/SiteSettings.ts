@@ -123,6 +123,15 @@ export const SiteSettings: GlobalConfig = {
       ],
     },
     {
+      name: 'secondaryHotline',
+      label: 'Số điện thoại bán sỉ thứ hai (tùy chọn)',
+      type: 'text',
+      admin: {
+        placeholder: 'Ví dụ: 0900 123 456',
+        description: 'Hiển thị cùng hotline chính trong header và menu điện thoại. Để trống để ẩn.',
+      },
+    },
+    {
       type: 'row',
       fields: [
         {

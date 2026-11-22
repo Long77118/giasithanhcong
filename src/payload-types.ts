@@ -894,6 +894,10 @@ export interface SiteSetting {
    * Chỉ chấp nhận URL https://zalo.me/...; để trống nếu chưa cấu hình.
    */
   zaloUrl?: string | null;
+  /**
+   * Hiển thị cùng hotline chính trong header và menu điện thoại. Để trống để ẩn.
+   */
+  secondaryHotline?: string | null;
   email?: string | null;
   workingHours?: string | null;
   address?: string | null;
@@ -936,6 +940,7 @@ export interface SiteSettingsSelect<T extends boolean = true> {
   logo?: T;
   hotline?: T;
   zaloUrl?: T;
+  secondaryHotline?: T;
   email?: T;
   workingHours?: T;
   address?: T;

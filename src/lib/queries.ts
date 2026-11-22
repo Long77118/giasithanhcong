@@ -101,6 +101,7 @@ export const getSiteSettingsCached = unstable_cache(
         brandName: settings?.brandName,
         tagline: settings?.tagline,
         hotline: settings?.hotline,
+        secondaryHotline: settings?.secondaryHotline,
         zaloUrl: settings?.zaloUrl,
         email: settings?.email,
         address: settings?.address,
