@@ -2,6 +2,7 @@ import { BottleWine, CupSoda, Layers2, Package, ShoppingBag } from 'lucide-react
 import { categoryTreeOptions } from '@/lib/category-tree';
 import { publicContentPath } from '@/lib/slug';
 import type { ProductCategory } from '@/payload-types';
+import { resolveMediaUrl } from './MediaImage';
 
 export function categoryMenuItems(categories: ProductCategory[]) {
   return categoryTreeOptions(categories).map(({ category, depth }) => ({
@@ -9,6 +10,7 @@ export function categoryMenuItems(categories: ProductCategory[]) {
     name: category.name,
     href: publicContentPath('product-categories', category.slug),
     depth,
+    image: resolveMediaUrl(category.image, 'thumbnail').url,
   }));
 }
 
