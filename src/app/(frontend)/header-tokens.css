@@ -1,0 +1,20 @@
+:root {
+  --header-surface: #f2f4f1;
+  --header-white: #fff;
+  --header-ink: #14261f;
+  --header-muted: #5a6b66;
+  --header-brand: #1f3b35;
+  --header-quote: #f2b84b;
+  --header-mint: #ddebe5;
+  --header-sand: #fbefd0;
+  --header-blue: #e3eef8;
+  --header-lilac: #efe9f8;
+  --header-glass: rgb(242 244 241 / .92);
+  --header-backdrop: rgb(20 38 31 / .48);
+  --header-shadow: 0 8px 24px rgb(20 38 31 / .08);
+  --header-pill: 999px;
+  --header-panel-radius: 1.75rem;
+  --header-tile-radius: 1.25rem;
+  --header-motion: 160ms;
+  --header-touch-target: 2.75rem;
+}
