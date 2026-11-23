@@ -4,7 +4,6 @@ import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical
 import { RichText, type JSXConverter, type JSXConvertersFunction } from '@payloadcms/richtext-lexical/react';
 import { asRecord, publicDocumentLink, richTextImage, safeRichTextHref } from '@/lib/rich-text';
 import type { ArticleHeading } from '@/lib/article-content';
-import './article-body.css';
 
 const linkConverter: JSXConverter<SerializedLinkNode | SerializedAutoLinkNode> = ({ node, nodesToJSX }) => {
   const children = nodesToJSX({ nodes: node.children });

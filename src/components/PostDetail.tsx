@@ -14,6 +14,7 @@ import { MediaImage, resolveMediaUrl } from './MediaImage';
 import { PostCard } from './PostCard';
 import { ProductCard } from './ProductCard';
 import { JsonLd } from './JsonLd';
+import './article-body.css';
 import './post-detail.css';
 
 export async function PostDetail({ post, contact, siteUrl, preview = false }: {

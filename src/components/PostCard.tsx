@@ -52,9 +52,9 @@ export function PostCard({
   if (variant === 'related') {
     return (
       <article className="article-post-card">
-        <Link href={postPath} aria-label={post.title}>
+        <Link href={postPath}>
           {post.coverImage && typeof post.coverImage === 'object' && post.coverImage.url && (
-            <div className="article-post-card-image">
+            <div className="article-post-card-image" aria-hidden="true">
               <MediaImage media={post.coverImage} prefer="card" sizes={sizes} />
             </div>
           )}

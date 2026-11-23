@@ -140,6 +140,17 @@
 .article-post-card h3 { font-family: var(--font-sans); font-size: 1.0625rem; font-weight: 700; line-height: 1.45; }
 .article-post-card time { color: var(--header-muted); font-size: .8125rem; }
 .article-post-card a:hover h3 { text-decoration: underline; text-underline-offset: .2em; }
+.article-related-products :is(h3 a, a[href$="#bao-gia"]) {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--header-touch-target);
+  transition: none;
+}
+.article-related-products .catalog-grid article,
+.article-related-products .catalog-grid img {
+  transition-property: transform;
+  transition-duration: var(--header-motion);
+}
 .article-page :is(a, summary, [tabindex]):focus-visible { outline: 3px solid var(--header-brand); outline-offset: 3px; }
 .article-page :is(.article-zalo, .article-quote) .article-button:focus-visible { outline-color: var(--header-white); }
 @media (min-width: 64rem) {
