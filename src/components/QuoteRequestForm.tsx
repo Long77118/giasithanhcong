@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, AlertCircle, Send } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Send, MessageCircle } from 'lucide-react';
+import { useQuoteZaloUrl } from './QuoteContactProvider';
+import './quote-request.css';
 
-const quoteControlClass = 'min-h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-900 placeholder:text-slate-500 aria-invalid:border-red-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0C2340] sm:text-sm';
+const quoteControlClass = 'quote-control';
 
 interface QuoteRequestFormProps {
   productId?: number | null;
@@ -36,6 +38,8 @@ export function QuoteRequestForm({
     message: string;
   } | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
+  const moreRef = useRef<HTMLDetailsElement>(null);
+  const zaloUrl = useQuoteZaloUrl();
 
   useEffect(() => {
     setFormLoadedAt(Date.now());
@@ -44,6 +48,10 @@ export function QuoteRequestForm({
       section.focus({ preventScroll: true });
     }
   }, []);
+
+  useEffect(() => {
+    if ((fieldErrors.email || fieldErrors.companyName) && moreRef.current) moreRef.current.open = true;
+  }, [fieldErrors]);
 
   useEffect(() => {
     if (!serverError && !successInfo) return;
@@ -114,234 +122,111 @@ export function QuoteRequestForm({
     }
   }
 
+  const errorFor = (name: string, id: string) => fieldErrors[name]
+    ? <p id={id} className="quote-field-error">{fieldErrors[name]}</p> : null;
+
   return (
-    <section
-      ref={sectionRef}
-      id="bao-gia"
-      tabIndex={-1}
-      aria-labelledby="quote-heading"
-      className="quote-request min-w-0 rounded-xl border border-slate-200 bg-white p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0C2340] sm:p-8"
-    >
-      <div className="mb-6">
-        <h2 id="quote-heading" className="font-display text-xl font-bold text-[#0C2340] sm:text-2xl">
-          Gửi yêu cầu báo giá sỉ
-        </h2>
-        <p className="mt-1.5 text-sm [overflow-wrap:anywhere] text-slate-600">
-          {productName
-            ? `Sản phẩm đang chọn: ${productName}`
-            : 'Điền quy cách, số lượng dự kiến và số điện thoại để nhận bảng giá sỉ theo thùng.'}
-        </p>
+    <section ref={sectionRef} id="bao-gia" tabIndex={-1} aria-labelledby="quote-heading" className="quote-request">
+      <div className="quote-request-heading">
+        <h2 id="quote-heading">Gửi yêu cầu báo giá</h2>
+        <p>{productName ? 'Sản phẩm đang chọn: ' + productName : 'Cho bên mình biết sản phẩm và số lượng bạn cần.'}</p>
+        {!successInfo && <p className="quote-required-note">Các ô có dấu <span aria-hidden="true">*</span> là bắt buộc.</p>}
       </div>
 
       {successInfo ? (
-        <div
-          role="status"
-          tabIndex={-1}
-          className="rounded-lg border border-emerald-200 bg-emerald-50 p-5 text-emerald-950"
-        >
-          <div className="flex items-start gap-3">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" aria-hidden="true" />
-            <div>
-              <p className="font-semibold">
-                Gửi yêu cầu báo giá thành công
-                {successInfo.requestId ? ` (Mã #${successInfo.requestId})` : ''}
-              </p>
-              <p className="mt-1 text-sm text-emerald-900">{successInfo.message}</p>
-              <button
-                type="button"
-                onClick={() => setSuccessInfo(null)}
-                className="mt-4 inline-flex min-h-[40px] items-center rounded-lg border border-emerald-300 bg-white px-4 py-2 text-xs font-semibold text-emerald-900 hover:bg-emerald-100"
-              >
-                Gửi thêm yêu cầu khác
-              </button>
-            </div>
-          </div>
+        <div role="status" tabIndex={-1} className="quote-success">
+          <span className="quote-success-icon"><CheckCircle2 size={30} aria-hidden="true" /></span>
+          <h3>Đã nhận yêu cầu</h3>
+          {successInfo.requestId && <p className="quote-success-code">Mã yêu cầu #{successInfo.requestId}</p>}
+          <p>{successInfo.message}</p>
+          <nav aria-label="Sau khi gửi yêu cầu" className="quote-success-actions">
+            {zaloUrl && <a className="quote-button quote-button--primary" href={zaloUrl} target="_blank" rel="noopener noreferrer">
+              <MessageCircle size={18} aria-hidden="true" />Nhắn Zalo ngay
+            </a>}
+            <button type="button" className="quote-button quote-button--secondary" onClick={() => {
+              setSuccessInfo(null);
+              requestAnimationFrame(() => sectionRef.current?.querySelector<HTMLInputElement>('[name="customerName"]')?.focus());
+            }}>Gửi thêm yêu cầu</button>
+          </nav>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} noValidate className="space-y-4">
-          {serverError && (
-            <div
-              role="alert"
-              tabIndex={-1}
-              className="flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900"
-            >
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-700" aria-hidden="true" />
-              <span>{serverError}</span>
-            </div>
-          )}
+        <form onSubmit={handleSubmit} noValidate className="quote-fields" aria-busy={submitting}>
+          {serverError && <div role="alert" tabIndex={-1} className="quote-form-error">
+            <AlertCircle size={20} aria-hidden="true" /><span>{serverError}</span>
+          </div>}
 
-          {/* Anti-spam honeypot field */}
+          {/* Anti-spam honeypot: retained with the same state and API key. */}
           <div className="sr-only" aria-hidden="true">
             <label htmlFor="quote-website">Website</label>
-            <input
-              id="quote-website"
-              name="website"
-              type="text"
-              tabIndex={-1}
-              autoComplete="off"
-              value={website}
-              onChange={(e) => setWebsite(e.target.value)}
-            />
+            <input id="quote-website" name="website" type="text" tabIndex={-1} autoComplete="off"
+              value={website} onChange={(e) => setWebsite(e.target.value)} />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label
-                htmlFor="quote-customer-name"
-                className="mb-1.5 block text-sm font-medium text-slate-800"
-              >
-                Họ và tên <span className="text-red-600">*</span>
-              </label>
-              <input
-                id="quote-customer-name"
-                name="customerName"
-                type="text"
-                autoComplete="name"
-                required
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Nguyễn Văn A"
-                aria-invalid={Boolean(fieldErrors.customerName)}
-                aria-describedby={fieldErrors.customerName ? 'quote-customer-name-error' : undefined}
-                className={quoteControlClass}
-              />
-              {fieldErrors.customerName && (
-                <p id="quote-customer-name-error" className="mt-1 text-xs text-red-700">{fieldErrors.customerName}</p>
-              )}
+          <div className="quote-personal">
+            <div className="quote-field">
+              <label htmlFor="quote-customer-name">Tên của bạn <span aria-hidden="true">*</span></label>
+              <input id="quote-customer-name" name="customerName" type="text" autoComplete="name" required
+                value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Nguyễn Văn A"
+                aria-invalid={Boolean(fieldErrors.customerName)} aria-describedby={fieldErrors.customerName ? 'quote-customer-name-error' : undefined}
+                className={quoteControlClass} />
+              {errorFor('customerName', 'quote-customer-name-error')}
             </div>
-
-            <div>
-              <label
-                htmlFor="quote-phone"
-                className="mb-1.5 block text-sm font-medium text-slate-800"
-              >
-                Số điện thoại / Zalo <span className="text-red-600">*</span>
-              </label>
-              <input
-                id="quote-phone"
-                name="phone"
-                type="tel"
-                autoComplete="tel"
-                required
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="0901234567"
-                aria-invalid={Boolean(fieldErrors.phone)}
-                aria-describedby={fieldErrors.phone ? 'quote-phone-error' : undefined}
-                className={quoteControlClass}
-              />
-              {fieldErrors.phone && (
-                <p id="quote-phone-error" className="mt-1 text-xs text-red-700">{fieldErrors.phone}</p>
-              )}
+            <div className="quote-field">
+              <label htmlFor="quote-phone">Số điện thoại <span aria-hidden="true">*</span></label>
+              <input id="quote-phone" name="phone" type="tel" autoComplete="tel" required
+                value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0901234567"
+                aria-invalid={Boolean(fieldErrors.phone)} aria-describedby={fieldErrors.phone ? 'quote-phone-error' : undefined}
+                className={quoteControlClass} />
+              {errorFor('phone', 'quote-phone-error')}
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label
-                htmlFor="quote-quantity"
-                className="mb-1.5 block text-sm font-medium text-slate-800"
-              >
-                Số lượng dự kiến <span className="text-red-600">*</span>
-              </label>
-              <input
-                id="quote-quantity"
-                name="quantity"
-                type="text"
-                required
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                placeholder="Ví dụ: 10 thùng"
-                aria-invalid={Boolean(fieldErrors.quantity)}
-                aria-describedby={fieldErrors.quantity ? 'quote-quantity-error' : undefined}
-                className={quoteControlClass}
-              />
-              {fieldErrors.quantity && (
-                <p id="quote-quantity-error" className="mt-1 text-xs text-red-700">{fieldErrors.quantity}</p>
-              )}
+          <div className="quote-needs">
+            <div className="quote-field">
+              <label htmlFor="quote-message">Bạn cần mua gì? <span aria-hidden="true">*</span></label>
+              <textarea id="quote-message" name="message" rows={4} required value={message} onChange={(e) => setMessage(e.target.value)}
+                placeholder="Ví dụ: ly nhựa 500ml, nắp bằng, dùng cho quán cà phê."
+                aria-invalid={Boolean(fieldErrors.message)} aria-describedby={fieldErrors.message ? 'quote-message-error' : undefined}
+                className={quoteControlClass} />
+              {errorFor('message', 'quote-message-error')}
             </div>
-
-            <div>
-              <label
-                htmlFor="quote-email"
-                className="mb-1.5 block text-sm font-medium text-slate-800"
-              >
-                Email (tùy chọn)
-              </label>
-              <input
-                id="quote-email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="banhang@example.com"
-                aria-invalid={Boolean(fieldErrors.email)}
-                aria-describedby={fieldErrors.email ? 'quote-email-error' : undefined}
-                className={quoteControlClass}
-              />
-              {fieldErrors.email && (
-                <p id="quote-email-error" className="mt-1 text-xs text-red-700">{fieldErrors.email}</p>
-              )}
+            <div className="quote-field">
+              <label htmlFor="quote-quantity">Số lượng dự kiến <span aria-hidden="true">*</span></label>
+              <input id="quote-quantity" name="quantity" type="text" required value={quantity} onChange={(e) => setQuantity(e.target.value)}
+                placeholder="Ví dụ: 10 thùng ly 500ml"
+                aria-invalid={Boolean(fieldErrors.quantity)} aria-describedby={fieldErrors.quantity ? 'quote-quantity-error' : undefined}
+                className={quoteControlClass} />
+              {errorFor('quantity', 'quote-quantity-error')}
             </div>
           </div>
 
-          <div>
-            <label
-              htmlFor="quote-company"
-              className="mb-1.5 block text-sm font-medium text-slate-800"
-            >
-              Tên quán / Đơn vị kinh doanh (tùy chọn)
-            </label>
-            <input
-              id="quote-company"
-              name="companyName"
-              type="text"
-              autoComplete="organization"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="Cửa hàng cà phê / Nhà hàng / Đại lý"
-              aria-invalid={Boolean(fieldErrors.companyName)}
-              aria-describedby={fieldErrors.companyName ? 'quote-company-error' : undefined}
-              className={quoteControlClass}
-            />
-            {fieldErrors.companyName && (
-              <p id="quote-company-error" className="mt-1 text-xs text-red-700">{fieldErrors.companyName}</p>
-            )}
-          </div>
+          <details ref={moreRef} className="quote-more">
+            <summary>Thông tin thêm, không bắt buộc</summary>
+            <div className="quote-more-fields">
+              <div className="quote-field">
+                <label htmlFor="quote-email">Email</label>
+                <input id="quote-email" name="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                  placeholder="ban@example.com" aria-invalid={Boolean(fieldErrors.email)} aria-describedby={fieldErrors.email ? 'quote-email-error' : undefined}
+                  className={quoteControlClass} />
+                {errorFor('email', 'quote-email-error')}
+              </div>
+              <div className="quote-field">
+                <label htmlFor="quote-company">Tên công ty / cửa hàng</label>
+                <input id="quote-company" name="companyName" type="text" autoComplete="organization" value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)} placeholder="Tên công ty hoặc cửa hàng của bạn"
+                  aria-invalid={Boolean(fieldErrors.companyName)} aria-describedby={fieldErrors.companyName ? 'quote-company-error' : undefined}
+                  className={quoteControlClass} />
+                {errorFor('companyName', 'quote-company-error')}
+              </div>
+            </div>
+          </details>
 
-          <div>
-            <label
-              htmlFor="quote-message"
-              className="mb-1.5 block text-sm font-medium text-slate-800"
-            >
-              Nội dung cần tư vấn / Địa điểm giao hàng <span className="text-red-600">*</span>
-            </label>
-            <textarea
-              id="quote-message"
-              name="message"
-              rows={4}
-              required
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Ghi rõ dung tích, loại nắp đi kèm hoặc khu vực nhận hàng..."
-              aria-invalid={Boolean(fieldErrors.message)}
-              aria-describedby={fieldErrors.message ? 'quote-message-error' : undefined}
-              className={quoteControlClass}
-            />
-            {fieldErrors.message && (
-              <p id="quote-message-error" className="mt-1 text-xs text-red-700">{fieldErrors.message}</p>
-            )}
+          <div className="quote-submit">
+            <button type="submit" disabled={submitting} className="quote-button quote-button--primary">
+              <Send size={18} aria-hidden="true" /><span>{submitting ? 'Đang gửi...' : 'Gửi yêu cầu báo giá'}</span>
+            </button>
+            <p>Số điện thoại chỉ dùng để liên hệ báo giá.</p>
           </div>
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-lg bg-[#B45309] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#92400E] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B45309] sm:w-auto"
-          >
-            <Send className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span>{submitting ? 'Đang gửi yêu cầu...' : 'Gửi yêu cầu báo giá'}</span>
-          </button>
         </form>
       )}
     </section>

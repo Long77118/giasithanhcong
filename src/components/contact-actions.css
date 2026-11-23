@@ -1,0 +1,11 @@
+.contact-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.contact-action { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-width: 0; min-height: 3.25rem; padding: .75rem 1.25rem; border: 1px solid transparent; border-radius: var(--header-pill); font-size: .875rem; font-weight: 700; line-height: 1.5; text-align: center; overflow-wrap: anywhere; }
+.contact-action svg { flex: none; }
+.contact-action--phone { background: var(--header-brand); color: var(--header-white); }
+.contact-action--zalo, .contact-actions--secondary .contact-action--phone { background: var(--header-white); border-color: var(--header-brand); color: var(--header-brand); }
+.contact-action--quote { background: var(--header-quote); color: var(--header-ink); }
+.contact-action:focus-visible { outline: 3px solid var(--header-brand); outline-offset: 4px; }
+@media (prefers-reduced-motion: no-preference) {
+  .contact-action { transition: transform var(--header-motion); }
+  .contact-action:hover { transform: translateY(-2px); }
+}

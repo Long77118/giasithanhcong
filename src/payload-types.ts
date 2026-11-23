@@ -935,6 +935,10 @@ export interface SiteSetting {
   email?: string | null;
   workingHours?: string | null;
   address?: string | null;
+  /**
+   * Trong Google Maps: Chia sẻ → Nhúng bản đồ → Sao chép HTML, rồi dán vào đây. Để trống để ẩn bản đồ. Bản đồ chỉ tải khi khách bấm mở.
+   */
+  contactMapEmbedUrl?: string | null;
   sampleNotice?: string | null;
   defaultSeoTitle?: string | null;
   defaultSeoDescription?: string | null;
@@ -987,6 +991,7 @@ export interface SiteSettingsSelect<T extends boolean = true> {
   email?: T;
   workingHours?: T;
   address?: T;
+  contactMapEmbedUrl?: T;
   sampleNotice?: T;
   defaultSeoTitle?: T;
   defaultSeoDescription?: T;

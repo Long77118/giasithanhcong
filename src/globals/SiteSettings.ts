@@ -3,6 +3,7 @@ import { safeRevalidateTags } from '../lib/revalidate';
 import { isAdmin } from '../collections/access';
 import { normalizeFacebookPageUrl } from '../lib/facebook-page';
 import { normalizeHomePromotionHref } from '../lib/home-promotions';
+import { normalizeContactMapEmbedUrl } from '../lib/contact-map';
 
 const validateShelfCategory: RelationshipFieldSingleValidation = (value, { siblingData }) =>
   Boolean(value) || (siblingData as { enabled?: boolean } | undefined)?.enabled === false || 'Chọn danh mục cho khối đang hiển thị.';
@@ -183,6 +184,19 @@ export const SiteSettings: GlobalConfig = {
       name: 'address',
       label: 'Địa chỉ kho & văn phòng',
       type: 'textarea',
+    },
+    {
+      name: 'contactMapEmbedUrl',
+      label: 'Bản đồ trang Liên hệ (tùy chọn)',
+      type: 'text',
+      maxLength: 8000,
+      admin: {
+        placeholder: 'Dán link hoặc mã nhúng từ Google Maps',
+        description: 'Trong Google Maps: Chia sẻ → Nhúng bản đồ → Sao chép HTML, rồi dán vào đây. Để trống để ẩn bản đồ. Bản đồ chỉ tải khi khách bấm mở.',
+      },
+      validate: (value: unknown) => value == null || value === '' || normalizeContactMapEmbedUrl(value) !== null
+        || 'Dán mã nhúng Google Maps từ mục Chia sẻ → Nhúng bản đồ, không dùng link chia sẻ rút gọn.',
+      hooks: { beforeChange: [({ value }) => normalizeContactMapEmbedUrl(value) ?? value] },
     },
     {
       name: 'sampleNotice',

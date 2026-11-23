@@ -17,4 +17,8 @@
   --header-tile-radius: 1.25rem;
   --header-motion: 160ms;
   --header-touch-target: 2.75rem;
+  --contact-control-radius: 1rem;
+  --contact-border: #d5ddd8;
+  --contact-focus: 0 0 0 3px rgb(31 59 53 / .18);
+  --contact-error: #a32828;
 }

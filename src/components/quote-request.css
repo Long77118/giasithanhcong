@@ -1,0 +1,42 @@
+.quote-request { min-width: 0; padding: 1.5rem; border-radius: var(--header-panel-radius); background: var(--header-white); color: var(--header-ink); font-family: var(--font-sans); overflow-wrap: anywhere; }
+.quote-request-heading { margin-bottom: 1.75rem; }
+.quote-request-heading h2 { margin: 0; color: var(--header-brand); font-family: inherit; font-size: 1.5rem; font-weight: 700; line-height: 1.25; letter-spacing: -.025em; }
+.quote-request-heading p { margin-top: .65rem; color: var(--header-muted); font-size: .9375rem; line-height: 1.65; }
+.quote-request-heading .quote-required-note { margin-top: .5rem; font-size: .8125rem; }
+.quote-fields, .quote-personal, .quote-needs, .quote-more-fields { display: grid; gap: 1.25rem; }
+.quote-field { min-width: 0; }
+.quote-field label { display: block; margin-bottom: .5rem; font-size: .875rem; font-weight: 700; line-height: 1.5; }
+.quote-field label span { color: var(--contact-error); }
+.quote-control { display: block; width: 100%; min-width: 0; min-height: 3.25rem; padding: .875rem 1rem; border: 1px solid var(--contact-border); border-radius: var(--contact-control-radius); background: var(--header-surface); color: var(--header-ink); font: inherit; font-size: 1rem; line-height: 1.5; }
+.quote-control::placeholder { color: var(--header-muted); opacity: 1; }
+textarea.quote-control { min-height: 9rem; resize: vertical; }
+.quote-control:focus { outline: none; border-color: var(--header-brand); box-shadow: var(--contact-focus); }
+.quote-control[aria-invalid="true"] { border-color: var(--contact-error); }
+.quote-field-error { margin-top: .5rem; color: var(--contact-error); font-size: .8125rem; line-height: 1.6; }
+.quote-more { min-width: 0; border: 1px dashed var(--contact-border); border-radius: var(--contact-control-radius); padding-inline: 1rem; }
+.quote-more summary { min-height: 3.25rem; padding-block: .875rem; cursor: pointer; color: var(--header-brand); font-size: .875rem; font-weight: 700; line-height: 1.5; }
+.quote-more-fields { padding-block: .25rem 1.25rem; }
+.quote-button { display: inline-flex; align-items: center; justify-content: center; gap: .6rem; min-height: 3.25rem; padding: .875rem 1.25rem; border: 1px solid transparent; border-radius: var(--header-pill); font-size: .9375rem; font-weight: 700; line-height: 1.5; text-align: center; cursor: pointer; }
+.quote-button svg { flex: none; }
+.quote-button--primary { background: var(--header-quote); color: var(--header-ink); }
+.quote-button--secondary { background: var(--header-white); border-color: var(--header-brand); color: var(--header-brand); }
+.quote-button:disabled { cursor: wait; opacity: .65; }
+.quote-submit .quote-button { width: 100%; }
+.quote-submit > p { margin-top: .875rem; color: var(--header-muted); font-size: .8125rem; text-align: center; line-height: 1.6; }
+.quote-request:focus-visible, .quote-more summary:focus-visible, .quote-button:focus-visible, .quote-success:focus-visible, .quote-form-error:focus-visible { outline: 3px solid var(--header-brand); outline-offset: 4px; }
+.quote-form-error { display: flex; gap: .75rem; align-items: flex-start; padding: 1rem; border: 1px solid var(--contact-error); border-radius: var(--contact-control-radius); color: var(--contact-error); font-size: .875rem; line-height: 1.6; }
+.quote-form-error svg { flex: none; margin-top: .1rem; }
+.quote-success { padding: 1.5rem; border-radius: var(--header-tile-radius); background: var(--header-mint); }
+.quote-success-icon { display: inline-grid; place-items: center; width: 3.5rem; height: 3.5rem; border-radius: 50%; background: var(--header-brand); color: var(--header-white); }
+.quote-success h3 { margin-top: 1.25rem; color: var(--header-brand); font-family: inherit; font-size: 1.5rem; font-weight: 700; }
+.quote-success p { margin-top: .75rem; line-height: 1.65; }
+.quote-success-code { font-weight: 700; }
+.quote-success-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
+@media (min-width: 40rem) {
+  .quote-request { padding: 2rem; }
+  .quote-needs { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .quote-button { transition: transform var(--header-motion); }
+  .quote-button:not(:disabled):hover { transform: translateY(-2px); }
+}

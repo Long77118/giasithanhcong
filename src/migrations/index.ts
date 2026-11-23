@@ -11,6 +11,7 @@ import * as migration_20261120_040000_cloudflare_media from './20261120_040000_c
 import * as migration_20261121_034654_product_detail_content from './20261121_034654_product_detail_content';
 import * as migration_20261122_031937_home_category_shelves from './20261122_031937_home_category_shelves';
 import * as migration_20261122_080626_secondary_hotline from './20261122_080626_secondary_hotline';
+import * as migration_20261123_025728_contact_map_embed from './20261123_025728_contact_map_embed';
 
 export const migrations = [
   {
@@ -77,5 +78,10 @@ export const migrations = [
     up: migration_20261122_080626_secondary_hotline.up,
     down: migration_20261122_080626_secondary_hotline.down,
     name: '20261122_080626_secondary_hotline',
+  },
+  {
+    up: migration_20261123_025728_contact_map_embed.up,
+    down: migration_20261123_025728_contact_map_embed.down,
+    name: '20261123_025728_contact_map_embed'
   },
 ];

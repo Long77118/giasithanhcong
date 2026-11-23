@@ -1,11 +1,17 @@
 import React from 'react';
 import type { Metadata } from 'next';
-import { getSiteSettingsCached } from '@/lib/queries';
+import { MessageCircle, Phone } from 'lucide-react';
+import { getPublishedProductBySlug, getSiteSettingsCached } from '@/lib/queries';
 import { getSiteUrl, isIndexingAllowed } from '@/lib/seo';
 import { resolveOpenGraphImages } from '@/lib/seo-images';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { ContactActions } from '@/components/ContactActions';
 import { QuoteRequestForm } from '@/components/QuoteRequestForm';
+import { ContactInformation } from '@/components/ContactInformation';
+import { ContactMap } from '@/components/ContactMap';
+import { JsonLd } from '@/components/JsonLd';
+import { buildContactPageJsonLd, contactProductSlug, getContactPageDetails } from '@/lib/contact-page';
+import { normalizeContactMapEmbedUrl } from '@/lib/contact-map';
+import './contact.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,8 +20,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const indexingAllowed = isIndexingAllowed();
   const { settings, contact } = await getSiteSettingsCached();
 
-  const title = `Liên hệ & Yêu cầu báo giá sỉ | ${contact.brandName}`;
-  const description = `Gửi yêu cầu báo giá sỉ ly nhựa, hộp thực phẩm, chai PET và bao bì giấy hoặc liên hệ qua Hotline/Zalo ${contact.brandName}.`;
+  const title = `Liên hệ & nhận báo giá sỉ | ${contact.brandName}`;
+  const description = `Liên hệ ${contact.brandName} để trao đổi nhu cầu, quy cách và nhận báo giá theo số lượng.`;
 
   return {
     title,
@@ -35,12 +41,20 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function ContactPage() {
+export default async function ContactPage({ searchParams }: {
+  searchParams: Promise<{ sanpham?: string | string[] }>;
+}) {
   const siteUrl = getSiteUrl();
-  const { contact } = await getSiteSettingsCached();
+  const { contact, settings } = await getSiteSettingsCached();
+  const slug = contactProductSlug((await searchParams).sanpham);
+  const product = slug ? await getPublishedProductBySlug(slug) : null;
+  const { phones, hasDetails, address, directionsHref } = getContactPageDetails(contact);
+  const mapEmbedUrl = normalizeContactMapEmbedUrl(settings?.contactMapEmbedUrl);
+  const phone = phones[0];
 
   return (
-    <div className="site-shell py-8 lg:py-12">
+    <div className="contact-page"><div className="site-shell contact-page-inner">
+      <JsonLd data={buildContactPageJsonLd(siteUrl, contact)} />
       <Breadcrumbs
         siteUrl={siteUrl}
         items={[
@@ -49,59 +63,25 @@ export default async function ContactPage() {
         ]}
       />
 
-      <div className="border-b border-slate-200 pb-6">
-        <h1 className="font-display text-3xl font-bold text-[#0C2340]">
-          Liên hệ & Yêu cầu báo giá bán sỉ
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-600">
-          Gửi danh mục sản phẩm và số lượng dự kiến để nhận báo giá theo bậc số lượng hoặc liên hệ trực tiếp qua các kênh cấu hình bên dưới.
-        </p>
+      <div className="contact-intro">
+        <h1>Liên hệ & nhận báo giá sỉ</h1>
+        <p>Chia sẻ sản phẩm và số lượng bạn cần, bên mình sẽ tư vấn quy cách và báo giá phù hợp.</p>
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-12">
-        <aside className="space-y-6 lg:col-span-5">
-          <div className="rounded-xl border border-slate-200 bg-white p-6">
-            <h2 className="font-display text-lg font-bold text-[#0C2340]">
-              Kênh hỗ trợ trực tiếp
-            </h2>
-            <p className="mt-1.5 text-sm text-slate-600">
-              Thông tin liên hệ được quản lý tập trung từ SiteSettings trong hệ thống quản trị.
-            </p>
-            <div className="mt-5">
-              <ContactActions contact={contact} compact />
-            </div>
+      {(phone || contact.zaloUrl) && <nav className="contact-quick" aria-label="Liên hệ nhanh">
+        {phone && <a className="contact-button contact-button--green" href={phone.href}><Phone size={18} aria-hidden="true" />Gọi tư vấn</a>}
+        {contact.zaloUrl && <a className="contact-button contact-button--amber" href={contact.zaloUrl} target="_blank" rel="noopener noreferrer"><MessageCircle size={18} aria-hidden="true" />Nhắn Zalo</a>}
+      </nav>}
 
-            <dl className="mt-6 space-y-3 border-t border-slate-100 pt-5 text-sm">
-              {contact.email && (
-                <div>
-                  <dt className="text-xs text-slate-500">Email nhận đơn sỉ</dt>
-                  <dd className="font-medium [overflow-wrap:anywhere] text-slate-900">{contact.email}</dd>
-                </div>
-              )}
-              {contact.address && (
-                <div>
-                  <dt className="text-xs text-slate-500">Địa chỉ kho mẫu</dt>
-                  <dd className="text-slate-700">{contact.address}</dd>
-                </div>
-              )}
-              {contact.workingHours && (
-                <div>
-                  <dt className="text-xs text-slate-500">Thời gian làm việc</dt>
-                  <dd className="text-slate-700">{contact.workingHours}</dd>
-                </div>
-              )}
-            </dl>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 text-xs leading-relaxed text-slate-600">
-            {contact.sampleNotice}
-          </div>
-        </aside>
-
-        <div className="lg:col-span-7">
-          <QuoteRequestForm />
+      <div className={`contact-layout${hasDetails ? ' contact-layout--with-details' : ''}`}>
+        <div className="contact-form-column">
+          <QuoteRequestForm key={product?.id ?? 'general'} productId={product?.id} productName={product ? `${product.name} (${product.sku})` : null}
+            defaultQuantity={product?.minOrderQty ? `${product.minOrderQty} ${product.minOrderUnit || 'thùng'}` : ''} />
         </div>
+        <ContactInformation contact={contact} />
       </div>
-    </div>
+      {mapEmbedUrl && address && directionsHref && <ContactMap embedUrl={mapEmbedUrl} address={address}
+        brandName={contact.brandName} directionsHref={directionsHref} />}
+    </div></div>
   );
 }

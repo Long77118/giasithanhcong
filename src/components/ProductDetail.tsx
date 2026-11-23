@@ -89,7 +89,7 @@ export async function ProductDetail({ product, contact, siteUrl, canonical = '',
           )}
           {availability && <p className="product-detail-availability" data-availability={product.availability}>{availability}</p>}
           <ProductContactActions contact={contact} />
-          <a href="#bao-gia" className="product-detail-form-link">Gửi yêu cầu báo giá theo quy cách</a>
+          <a href={preview ? '#bao-gia' : `/lien-he?sanpham=${encodeURIComponent(product.slug)}#bao-gia`} className="product-detail-form-link">Gửi yêu cầu báo giá theo quy cách</a>
           {documents.length > 0 && (
             <details className="product-detail-documents">
               <summary>Tải bảng giá và catalog (PDF)</summary>

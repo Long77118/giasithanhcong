@@ -20,6 +20,7 @@ import { categoryMenuItems } from '@/components/ProductCategoryMenu';
 import { MobileContactDock } from '@/components/MobileContactDock';
 import { getHeaderContact } from '@/lib/header';
 import { publicContentPath } from '@/lib/slug';
+import { QuoteContactProvider } from '@/components/QuoteContactProvider';
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin', 'vietnamese'],
@@ -106,7 +107,7 @@ export default async function FrontendLayout({
         <SiteHeader brandName={contact.brandName} categories={categoryMenuItems(categories)} contact={headerContact}
           featured={featured ? { name: featured.name, href: publicContentPath('products', featured.slug) } : null} />
         <main id="main-content" className="flex-1">
-          {children}
+          <QuoteContactProvider zaloUrl={contact.zaloUrl}>{children}</QuoteContactProvider>
         </main>
         <SiteFooter contact={contact} categories={topCategories} />
         <MobileContactDock contact={headerContact} />

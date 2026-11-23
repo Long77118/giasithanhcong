@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { publicContentPath } from '@/lib/slug';
 import type { ProductCategory } from '@/payload-types';
 import type { ResolvedContactConfig } from '@/lib/contact';
+import { getContactPageDetails } from '@/lib/contact-page';
+import { SiteSampleNotice } from './SiteSampleNotice';
 
 interface SiteFooterProps {
   contact: ResolvedContactConfig;
@@ -10,6 +12,7 @@ interface SiteFooterProps {
 }
 
 export function SiteFooter({ contact, categories }: SiteFooterProps) {
+  const { phones, hasDetails } = getContactPageDetails(contact);
   return (
     <footer className="site-footer border-t border-slate-200 bg-[#0C2340] text-slate-200">
       <div className="site-shell py-12">
@@ -21,9 +24,7 @@ export function SiteFooter({ contact, categories }: SiteFooterProps) {
             <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-300">
               {contact.tagline}
             </p>
-            <p className="mt-4 max-w-lg rounded-lg border border-white/15 bg-white/5 px-3.5 py-2.5 text-xs leading-relaxed text-slate-300">
-              {contact.sampleNotice}
-            </p>
+            <SiteSampleNotice notice={contact.sampleNotice} />
           </div>
 
           <div>
@@ -52,27 +53,22 @@ export function SiteFooter({ contact, categories }: SiteFooterProps) {
             </ul>
           </div>
 
-          <div>
+          {hasDetails && <div>
             <h3 className="font-display text-sm font-semibold text-white">
               Thông tin liên hệ
             </h3>
             <ul className="mt-3 space-y-2.5 text-sm text-slate-300">
-              <li>
-                <span className="text-slate-400">Hotline: </span>
-                {contact.isHotlineConfigured && contact.telHref ? (
+              {phones.map((phone, index) => <li key={phone.href}>
+                <span className="text-slate-400">{index ? 'Hotline 2: ' : 'Hotline: '}</span>
                   <a
-                    href={contact.telHref}
+                    href={phone.href}
                     className="font-mono font-medium tabular-nums text-white hover:underline"
                   >
-                    {contact.hotline}
+                    {phone.label}
                   </a>
-                ) : (
-                  <span className="text-slate-400">Chưa cấu hình</span>
-                )}
-              </li>
-              <li>
+              </li>)}
+              {contact.zaloUrl && <li>
                 <span className="text-slate-400">Zalo: </span>
-                {contact.isZaloConfigured && contact.zaloUrl ? (
                   <a
                     href={contact.zaloUrl}
                     target="_blank"
@@ -81,10 +77,7 @@ export function SiteFooter({ contact, categories }: SiteFooterProps) {
                   >
                     Mở Zalo tư vấn
                   </a>
-                ) : (
-                  <span className="text-slate-400">Chưa cấu hình</span>
-                )}
-              </li>
+              </li>}
               {contact.email && (
                 <li>
                   <span className="text-slate-400">Email: </span>
@@ -105,7 +98,7 @@ export function SiteFooter({ contact, categories }: SiteFooterProps) {
                 <li className="text-xs text-slate-400">{contact.workingHours}</li>
               )}
             </ul>
-          </div>
+          </div>}
         </div>
 
         <div className="mt-10 flex flex-col items-start justify-between gap-4 border-t border-white/10 pt-6 text-xs text-slate-400 sm:flex-row sm:items-center">
