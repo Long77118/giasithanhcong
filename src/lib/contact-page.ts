@@ -1,9 +1,23 @@
 import type { ResolvedContactConfig } from './contact';
 import { getHeaderContact } from './header';
-import { isValidPublicSlug } from './slug';
+import { isValidPublicSlug, withPublicSearchParams, type PublicSearchParams } from './slug';
 
-export function contactProductSlug(value: string | string[] | undefined) {
-  return isValidPublicSlug(value) ? value : null;
+export async function resolveContactProduct<T>(
+  searchParams: PublicSearchParams,
+  findPublishedProduct: (slug: string) => Promise<T | null>,
+  findPublishedRedirect: (slug: string) => Promise<string | null>,
+) {
+  const slug = searchParams.sanpham;
+  if (!isValidPublicSlug(slug)) return { product: null, redirectTo: null };
+
+  const product = await findPublishedProduct(slug);
+  if (product) return { product, redirectTo: null };
+
+  const currentSlug = await findPublishedRedirect(slug);
+  const redirectTo = isValidPublicSlug(currentSlug) && currentSlug !== slug
+    ? withPublicSearchParams('/lien-he', { ...searchParams, sanpham: currentSlug })
+    : null;
+  return { product: null, redirectTo };
 }
 
 export function getContactPageDetails(contact: ResolvedContactConfig) {

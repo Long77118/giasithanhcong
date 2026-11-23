@@ -1,7 +1,8 @@
 import React from 'react';
 import type { Metadata } from 'next';
+import { permanentRedirect } from 'next/navigation';
 import { MessageCircle, Phone } from 'lucide-react';
-import { getPublishedProductBySlug, getSiteSettingsCached } from '@/lib/queries';
+import { getPublishedProductBySlug, getPublishedSlugRedirect, getSiteSettingsCached } from '@/lib/queries';
 import { getSiteUrl, isIndexingAllowed } from '@/lib/seo';
 import { resolveOpenGraphImages } from '@/lib/seo-images';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
@@ -9,8 +10,9 @@ import { QuoteRequestForm } from '@/components/QuoteRequestForm';
 import { ContactInformation } from '@/components/ContactInformation';
 import { ContactMap } from '@/components/ContactMap';
 import { JsonLd } from '@/components/JsonLd';
-import { buildContactPageJsonLd, contactProductSlug, getContactPageDetails } from '@/lib/contact-page';
+import { buildContactPageJsonLd, getContactPageDetails, resolveContactProduct } from '@/lib/contact-page';
 import { normalizeContactMapEmbedUrl } from '@/lib/contact-map';
+import type { PublicSearchParams } from '@/lib/slug';
 import './contact.css';
 
 export const dynamic = 'force-dynamic';
@@ -42,12 +44,15 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ContactPage({ searchParams }: {
-  searchParams: Promise<{ sanpham?: string | string[] }>;
+  searchParams: Promise<PublicSearchParams>;
 }) {
+  const { product, redirectTo } = await resolveContactProduct(
+    await searchParams, getPublishedProductBySlug, slug => getPublishedSlugRedirect('products', slug),
+  );
+  if (redirectTo) permanentRedirect(redirectTo);
+
   const siteUrl = getSiteUrl();
   const { contact, settings } = await getSiteSettingsCached();
-  const slug = contactProductSlug((await searchParams).sanpham);
-  const product = slug ? await getPublishedProductBySlug(slug) : null;
   const { phones, hasDetails, address, directionsHref } = getContactPageDetails(contact);
   const mapEmbedUrl = normalizeContactMapEmbedUrl(settings?.contactMapEmbedUrl);
   const phone = phones[0];
