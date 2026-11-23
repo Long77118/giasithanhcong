@@ -62,6 +62,7 @@ export default buildConfig({
     },
     dateFormat: 'dd/MM/yyyy HH:mm',
     components: {
+      providers: ['/admin/ImageUploadProvider'],
       graphics: {
         Icon: '/admin/Brand#WorkspaceIcon',
         Logo: '/admin/Brand#WorkspaceLogo',

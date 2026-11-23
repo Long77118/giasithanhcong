@@ -3,6 +3,8 @@ import type { CollectionConfig } from 'payload';
 import { isAdmin } from './access';
 import { safeRevalidateTags } from '../lib/revalidate';
 import { isCloudflareTarget } from '../lib/deployment';
+import { imageUploadConfig } from '../lib/image-upload-config';
+import { validateMediaUpload } from '../lib/media-upload-validation';
 
 export const Media: CollectionConfig = {
   slug: 'media',
@@ -18,12 +20,13 @@ export const Media: CollectionConfig = {
     delete: isAdmin,
   },
   hooks: {
+    beforeOperation: [validateMediaUpload],
     afterChange: [() => safeRevalidateTags(['site-settings'])],
     afterDelete: [() => safeRevalidateTags(['site-settings'])],
   },
   upload: {
     staticDir: path.resolve(process.cwd(), 'media'),
-    mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
+    mimeTypes: [...imageUploadConfig.allowedMimeTypes],
     adminThumbnail: isCloudflareTarget() ? undefined : 'thumbnail',
     crop: !isCloudflareTarget(),
     focalPoint: !isCloudflareTarget(),
@@ -49,6 +52,12 @@ export const Media: CollectionConfig = {
     ],
   },
   fields: [
+    {
+      name: 'uploadOptimization',
+      label: 'Tối ưu ảnh',
+      type: 'ui',
+      admin: { disableListColumn: true, components: { Field: '/admin/MediaUploadOptions' } },
+    },
     // R2 injects this same optional field. Keep the Node and Workers database schemas equal.
     { name: '_objectKey', type: 'text', admin: { hidden: true, readOnly: true } },
     {

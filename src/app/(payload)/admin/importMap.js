@@ -29,12 +29,14 @@ import { MetaTitleComponent as MetaTitleComponent_a8a977ebc872c5d5ea7ee689724c08
 import { MetaDescriptionComponent as MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { MetaImageComponent as MetaImageComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { PreviewComponent as PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
+import { default as default_80d7e6521d15a6f5300949ffc475867b } from '../../../admin/MediaUploadOptions'
 import { default as default_1a686461bda724355fb6110eb9ff97a3 } from '../../../admin/HomePromotionLabel'
 import { WorkspaceIcon as WorkspaceIcon_d4751384a7cf3b09ce46117cb8895da1 } from '../../../admin/Brand'
 import { WorkspaceLogo as WorkspaceLogo_d4751384a7cf3b09ce46117cb8895da1 } from '../../../admin/Brand'
 import { LoginFooter as LoginFooter_d4751384a7cf3b09ce46117cb8895da1 } from '../../../admin/Brand'
 import { LoginIntroduction as LoginIntroduction_d4751384a7cf3b09ce46117cb8895da1 } from '../../../admin/Brand'
 import { WorkspaceNavigation as WorkspaceNavigation_d4751384a7cf3b09ce46117cb8895da1 } from '../../../admin/Brand'
+import { default as default_df65993804bf24078a7d001ab54f5331 } from '../../../admin/ImageUploadProvider'
 import { default as default_b1da18705623495fe0da513a008df5f5 } from '../../../admin/Dashboard'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
@@ -71,12 +73,14 @@ export const importMap = {
   "@payloadcms/plugin-seo/client#MetaDescriptionComponent": MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/plugin-seo/client#MetaImageComponent": MetaImageComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/plugin-seo/client#PreviewComponent": PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860,
+  "/admin/MediaUploadOptions#default": default_80d7e6521d15a6f5300949ffc475867b,
   "/admin/HomePromotionLabel#default": default_1a686461bda724355fb6110eb9ff97a3,
   "/admin/Brand#WorkspaceIcon": WorkspaceIcon_d4751384a7cf3b09ce46117cb8895da1,
   "/admin/Brand#WorkspaceLogo": WorkspaceLogo_d4751384a7cf3b09ce46117cb8895da1,
   "/admin/Brand#LoginFooter": LoginFooter_d4751384a7cf3b09ce46117cb8895da1,
   "/admin/Brand#LoginIntroduction": LoginIntroduction_d4751384a7cf3b09ce46117cb8895da1,
   "/admin/Brand#WorkspaceNavigation": WorkspaceNavigation_d4751384a7cf3b09ce46117cb8895da1,
+  "/admin/ImageUploadProvider#default": default_df65993804bf24078a7d001ab54f5331,
   "/admin/Dashboard#default": default_b1da18705623495fe0da513a008df5f5,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }
