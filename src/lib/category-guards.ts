@@ -8,9 +8,9 @@ export const validateCategoryParent: CollectionBeforeChangeHook = async ({ data,
   const invalid = (message: string): never => {
     throw new ValidationError({
       collection: 'product-categories',
-      errors: [{ path: 'parent', message }],
+      errors: [{ path: 'parent', label: 'Danh mục cha', message }],
       req,
-    });
+    }, req.t);
   };
 
   const parent = data.parent;
@@ -20,7 +20,7 @@ export const validateCategoryParent: CollectionBeforeChangeHook = async ({ data,
   if (!Number.isInteger(parentID) || parentID < 1 || parentID > 2_147_483_647) {
     invalid('Chọn một danh mục cha hợp lệ.');
   }
-  if (parentID === originalDoc?.id) invalid('Danh mục không thể tự làm cha của chính nó.');
+  if (parentID === originalDoc?.id) invalid('Bạn đang chọn chính danh mục này. Hãy chọn danh mục khác hoặc để trống.');
 
   const db = await getWriteTransaction(req);
   // Serialize parent changes across requests, so neither of two simultaneous moves can

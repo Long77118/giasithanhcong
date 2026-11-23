@@ -35,8 +35,8 @@ function item(id: string, label: string, hint: string, done: boolean): Item {
 }
 
 function checkAlt(images: SelectedImage[], lookup: ImageLookup): Item {
-  const result = item('alt', 'Văn bản thay thế', 'Thư viện ảnh · Kiểm tra Alt SEO của ảnh đã chọn.', false);
-  if (!images.length) return { ...result, hint: 'Chọn ảnh để kiểm tra Alt SEO.' };
+  const result = item('alt', 'Văn bản thay thế', 'Thư viện ảnh · Kiểm tra ô Văn bản thay thế của ảnh đã chọn.', false);
+  if (!images.length) return { ...result, hint: 'Chọn ảnh để kiểm tra văn bản thay thế.' };
   if (images.some(image => image.alt === undefined)) {
     if (lookup.state === 'checking') return { ...result, state: 'checking', hint: 'Đang kiểm tra ảnh trong thư viện…' };
     if (lookup.state === 'error') return { ...result, state: 'unverified', hint: 'Chưa kiểm tra được ảnh. Kiểm tra kết nối hoặc mở Thư viện ảnh.' };
@@ -94,13 +94,13 @@ export function postChecklist(input: {
   const cover = selectedImage(input.coverImage);
   const words = articleWordCount(input.content);
   return [
-    item('title', 'Tiêu đề bài viết', 'Tab Bài viết Blog', Boolean(text(input.title).trim())),
-    item('excerpt', 'Tóm tắt bài viết', 'Tab Bài viết Blog', Boolean(text(input.excerpt).trim())),
-    item('category', 'Chuyên mục', 'Tab Bài viết Blog', Boolean(referenceId(input.category))),
-    item('image', 'Ảnh đại diện', 'Tab Bài viết Blog', Boolean(cover)),
+    item('title', 'Tiêu đề bài viết', 'Tab Bài viết', Boolean(text(input.title).trim())),
+    item('excerpt', 'Tóm tắt bài viết', 'Tab Bài viết', Boolean(text(input.excerpt).trim())),
+    item('category', 'Chuyên mục', 'Tab Bài viết', Boolean(referenceId(input.category))),
+    item('image', 'Ảnh bìa bài viết', 'Tab Bài viết', Boolean(cover)),
     checkAlt(cover ? [cover] : [], lookup),
     {
-      ...item('content', 'Nội dung bài viết', 'Tab Bài viết Blog · Nội dung cần có văn bản.', words > 0),
+      ...item('content', 'Nội dung bài viết', 'Tab Bài viết · Thêm phần văn bản cho bài viết.', words > 0),
       completedHint: `${words.toLocaleString('vi-VN')} từ`,
     },
     ...seoItems(input.meta),

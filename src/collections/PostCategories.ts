@@ -47,7 +47,7 @@ export const PostCategories: CollectionConfig = {
     },
     {
       name: 'slug',
-      label: 'Đường dẫn (Slug)',
+      label: 'Đường dẫn (slug)',
       type: 'text',
       required: true,
       unique: true,
@@ -66,8 +66,8 @@ export const PostCategories: CollectionConfig = {
       defaultValue: 'published',
       index: true,
       options: [
-        { label: 'Bản nháp (Draft)', value: 'draft' },
-        { label: 'Đã xuất bản (Published)', value: 'published' },
+        { label: 'Bản nháp', value: 'draft' },
+        { label: 'Đã xuất bản', value: 'published' },
       ],
       admin: {
         position: 'sidebar',

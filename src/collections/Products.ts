@@ -19,7 +19,7 @@ export const Products: CollectionConfig = {
     listSearchableFields: ['name', 'sku', 'brandName'],
     preview: (doc) => previewUrl('products', doc.id),
     description:
-      'Nhập lần lượt các tab và bấm Lưu trước khi Xem trước. Xem trước dùng dữ liệu đã lưu, chỉ dành cho quản trị viên; khách không xem được bản nháp.',
+      'Bạn có thể điền lần lượt theo từng tab. Bấm Lưu trước khi Xem trước để kiểm tra bản đã lưu. Chỉ quản trị viên xem được bản nháp.',
   },
   access: {
     read: publishedOrAdmin,
@@ -66,7 +66,7 @@ export const Products: CollectionConfig = {
               required: true,
               admin: {
                 description:
-                  'Tên rõ loại sản phẩm, dung tích hoặc quy cách chính; không nhồi từ khóa.',
+                  'Bạn nên nêu loại sản phẩm, dung tích hoặc quy cách chính để khách dễ nhận ra.',
                 placeholder: 'Ví dụ: Ly nhựa PET 500ml nắp cầu',
               },
             },
@@ -76,7 +76,7 @@ export const Products: CollectionConfig = {
               type: 'text',
               admin: {
                 description:
-                  'Thương hiệu của sản phẩm, không phải tên cửa hàng. Để trống nếu chưa xác định được.',
+                  'Nhập tên thương hiệu ghi trên sản phẩm. Bạn có thể để trống nếu chưa rõ.',
                 placeholder: 'Ví dụ: tên thương hiệu ghi trên bao bì',
               },
             },
@@ -101,7 +101,7 @@ export const Products: CollectionConfig = {
                   admin: {
                     width: '50%',
                     description:
-                      'Mã riêng của từng sản phẩm, không trùng mã đã có. Bản nhân đôi được cấp hậu tố riêng.',
+                      'Mỗi sản phẩm cần một mã riêng. Khi tạo bản sao, hệ thống sẽ thêm đuôi mới vào mã.',
                     placeholder: 'Ví dụ: LY-PET-500-NC',
                   },
                 },
@@ -157,7 +157,7 @@ export const Products: CollectionConfig = {
               admin: {
                 initCollapsed: true,
                 description:
-                  'Ảnh đầu tiên là ảnh chính và ảnh chia sẻ mặc định khi chưa chọn ảnh trong tab SEO. Kéo thả để đổi thứ tự; ghi chú giúp phân biệt góc chụp.',
+                  'Ảnh đầu tiên là ảnh chính và được dùng khi chia sẻ nếu tab SEO chưa có ảnh. Bạn có thể kéo thả để đổi thứ tự và ghi chú để phân biệt góc chụp.',
                 components: { RowLabel: '/admin/ProductRowLabels#ProductImageLabel' },
               },
               fields: [
@@ -170,20 +170,20 @@ export const Products: CollectionConfig = {
                 },
                 {
                   name: 'caption',
-                  label: 'Ghi chú góc chụp / quy cách',
+                  label: 'Ghi chú về góc chụp hoặc quy cách',
                   type: 'text',
                 },
               ],
             },
             {
               name: 'documents',
-              label: 'Bảng giá và catalog (PDF)',
+              label: 'Bảng giá và danh mục sản phẩm (PDF)',
               type: 'upload',
               relationTo: 'documents',
               hasMany: true,
               admin: {
                 description:
-                  'Chọn hoặc tải tài liệu PDF công khai. Không dùng thư viện ảnh cho tài liệu.',
+                  'Chọn từ thư viện tài liệu hoặc tải lên tệp PDF mà khách có thể tải về.',
               },
             },
           ],
@@ -199,13 +199,13 @@ export const Products: CollectionConfig = {
               admin: {
                 initCollapsed: true,
                 description:
-                  'Tên thường dùng: Dung tích, Chất liệu, Màu sắc, Kiểu nắp, Kích thước. Chỉ thêm thông số có dữ liệu; chọn tối đa 4 dòng cho nhãn nhìn nhanh.',
+                  'Thêm thông số mà bạn đã có dữ liệu, ví dụ dung tích, chất liệu, màu sắc, kiểu nắp hoặc kích thước. Chọn tối đa 4 thông số để hiện cạnh tên sản phẩm.',
                 components: { RowLabel: '/admin/ProductRowLabels#ProductSpecLabel' },
               },
               validate: (value: unknown) =>
                 !Array.isArray(value) ||
                 value.filter((item) => item?.showInQuickFacts === true).length <= 4 ||
-                'Chỉ chọn tối đa 4 thông số hiện ở nhãn nhìn nhanh.',
+                'Bạn đã chọn hơn 4 thông số. Hãy bỏ bớt mục hiển thị cạnh tên sản phẩm.',
               fields: [
                 {
                   name: 'label',
@@ -221,11 +221,11 @@ export const Products: CollectionConfig = {
                 },
                 {
                   name: 'showInQuickFacts',
-                  label: 'Hiện ở nhãn nhìn nhanh',
+                  label: 'Hiện cạnh tên sản phẩm',
                   type: 'checkbox',
                   defaultValue: false,
                   admin: {
-                    description: 'Đưa thông số này lên cạnh tiêu đề sản phẩm (tối đa 4 nhãn).',
+                    description: 'Bạn có thể chọn tối đa 4 thông số để khách xem nhanh.',
                   },
                 },
               ],
@@ -254,7 +254,7 @@ export const Products: CollectionConfig = {
                 },
                 {
                   name: 'minOrderUnit',
-                  label: 'Đơn vị MOQ',
+                  label: 'Đơn vị đặt tối thiểu',
                   type: 'text',
                   defaultValue: 'thùng',
                   admin: {
@@ -294,7 +294,7 @@ export const Products: CollectionConfig = {
               type: 'array',
               admin: {
                 initCollapsed: true,
-                description: 'Thêm câu hỏi và câu trả lời thực tế; để trống để ẩn khối.',
+                description: 'Thêm câu hỏi khách thường hỏi và câu trả lời của bạn. Để trống nếu chưa có.',
               },
               fields: [
                 { name: 'question', label: 'Câu hỏi', type: 'text', required: true },
@@ -309,7 +309,7 @@ export const Products: CollectionConfig = {
               admin: {
                 initCollapsed: true,
                 description:
-                  'Chỉ nhận liên kết video YouTube. Trình phát chỉ nạp khi khách bấm xem.',
+                  'Dán liên kết YouTube. Video chỉ tải khi khách bấm xem.',
               },
               fields: [
                 {
@@ -319,7 +319,7 @@ export const Products: CollectionConfig = {
                   required: true,
                   validate: (value: unknown) =>
                     getYouTubeID(value) !== null ||
-                    'Nhập URL video YouTube hợp lệ (watch, youtu.be, shorts hoặc embed).',
+                    'Hãy dán liên kết video YouTube hợp lệ, ví dụ https://youtu.be/VIDEO_ID.',
                 },
                 { name: 'title', label: 'Tiêu đề video', type: 'text', required: true },
                 {
@@ -372,7 +372,7 @@ export const Products: CollectionConfig = {
     },
     {
       name: 'featured',
-      label: 'Sản phẩm nổi bật trang chủ',
+      label: 'Hiện trong sản phẩm nổi bật trên trang chủ',
       type: 'checkbox',
       defaultValue: false,
       hooks: { beforeDuplicate: [() => false] },
@@ -389,8 +389,8 @@ export const Products: CollectionConfig = {
       hooks: { beforeDuplicate: [() => 'draft'] },
       index: true,
       options: [
-        { label: 'Bản nháp (Draft)', value: 'draft' },
-        { label: 'Đã xuất bản (Published)', value: 'published' },
+        { label: 'Bản nháp', value: 'draft' },
+        { label: 'Đã xuất bản', value: 'published' },
       ],
       admin: {
         position: 'sidebar',

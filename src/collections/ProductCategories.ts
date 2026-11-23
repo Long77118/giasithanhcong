@@ -72,7 +72,7 @@ export const ProductCategories: CollectionConfig = {
       type: 'relationship',
       relationTo: 'product-categories',
       admin: {
-        description: 'Để trống nếu đây là danh mục gốc. Không chọn chính danh mục này hoặc danh mục cấp dưới.',
+        description: 'Bạn có thể để trống nếu đây là danh mục gốc. Nếu cần, hãy chọn một danh mục cấp trên.',
       },
     },
     {
@@ -92,8 +92,8 @@ export const ProductCategories: CollectionConfig = {
       defaultValue: 'draft',
       index: true,
       options: [
-        { label: 'Bản nháp (Draft)', value: 'draft' },
-        { label: 'Đã xuất bản (Published)', value: 'published' },
+        { label: 'Bản nháp', value: 'draft' },
+        { label: 'Đã xuất bản', value: 'published' },
       ],
       admin: {
         position: 'sidebar',

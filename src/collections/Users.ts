@@ -11,7 +11,7 @@ export const Users: CollectionConfig = {
   auth: { cookies: { secure: isCloudflareTarget(), sameSite: 'Lax' } },
   admin: {
     group: 'Cài đặt',
-    description: 'Quản lý các tài khoản có quyền truy cập bảng quản trị.',
+    description: 'Quản lý tài khoản có quyền vào trang quản trị.',
     useAsTitle: 'email',
     defaultColumns: ['name', 'email', 'role', 'updatedAt'],
   },

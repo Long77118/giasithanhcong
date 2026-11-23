@@ -7,6 +7,7 @@ import { seoPlugin } from '@payloadcms/plugin-seo';
 import { vi } from '@payloadcms/translations/languages/vi';
 import { r2Storage } from '@payloadcms/storage-r2';
 
+import { adminVietnamese } from './admin/translations';
 import { Users } from './collections/Users';
 import { Media } from './collections/Media';
 import { Documents } from './collections/Documents';
@@ -52,7 +53,11 @@ export default buildConfig({
   },
   i18n: {
     fallbackLanguage: 'vi',
-    supportedLanguages: { vi },
+    // Payload builds the account language picker directly from supported languages.
+    supportedLanguages: {
+      vi: { ...vi, translations: { ...vi.translations, general: { ...vi.translations.general, thisLanguage: 'Tiếng Việt' } } },
+    },
+    translations: { vi: adminVietnamese },
   },
   admin: {
     user: Users.slug,
@@ -149,15 +154,29 @@ export default buildConfig({
           : siteUrl;
       },
       fields: ({ defaultFields }) => [
-        ...defaultFields,
+        ...defaultFields.map((field) => {
+          if (!('name' in field)) return field;
+          switch (field.name) {
+            case 'overview': return { ...field, label: 'Tổng quan SEO' };
+            case 'title': return { ...field, label: 'Tiêu đề SEO' };
+            case 'description': return { ...field, label: 'Mô tả SEO' };
+            case 'image': {
+              if (field.type !== 'upload') return field;
+              (field.admin ??= {}).description = 'Ảnh hiển thị khi chia sẻ liên kết. Ưu tiên ảnh dưới 500 KB để tải nhanh.';
+              return { ...field, label: 'Ảnh chia sẻ' };
+            }
+            case 'preview': return { ...field, label: 'Xem trước kết quả tìm kiếm' };
+            default: return field;
+          }
+        }),
         {
           name: 'canonicalUrl',
-          label: 'Canonical URL tùy chỉnh (tùy chọn)',
+          label: 'Đường dẫn chính thức (canonical, tùy chọn)',
           type: 'text',
           validate: validateCanonicalUrl,
           admin: {
             description:
-              'Ví dụ /san-pham/ly-nhua-pet. Dùng đường dẫn của một trang công khai trên website. Để trống để dùng URL hiện tại.',
+              'Chọn đường dẫn của trang công khai mà bạn muốn công cụ tìm kiếm ưu tiên. Ví dụ /san-pham/ly-nhua-pet. Để trống để dùng đường dẫn hiện tại.',
           },
         },
       ],

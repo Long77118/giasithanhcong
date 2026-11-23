@@ -14,6 +14,7 @@ const slugWriteLocks = {
   products: 3,
   posts: 4,
 } as const;
+const publicSlugLabel = 'Đường dẫn (slug)';
 
 export function generateInitialSlug(titleField: 'name' | 'title'): CollectionBeforeValidateHook {
   return ({ data, operation }) => {
@@ -35,10 +36,10 @@ export const guardPublicSlug: CollectionBeforeChangeHook = async ({ collection, 
   if (operation === 'update' && (slug === undefined || slug === originalDoc?.slug)) return data;
 
   const invalid = (message: string): never => {
-    throw new ValidationError({ collection: namespace, errors: [{ path: 'slug', message }], req });
+    throw new ValidationError({ collection: namespace, errors: [{ path: 'slug', label: publicSlugLabel, message }], req }, req.t);
   };
   if (!isValidPublicSlug(slug)) {
-    invalid(`Slug tối đa ${publicSlugMaxLength} ký tự, chỉ gồm chữ thường a–z, số và dấu gạch ngang đơn giữa các từ.`);
+    invalid(`Hãy dùng tối đa ${publicSlugMaxLength} ký tự gồm chữ thường a–z, số và dấu gạch ngang đơn giữa các từ.`);
   }
 
   const db = await getWriteTransaction(req);
@@ -48,19 +49,19 @@ export const guardPublicSlug: CollectionBeforeChangeHook = async ({ collection, 
   const { rows } = await db.execute(sql`
     SELECT 1 FROM public.content_slug_history WHERE namespace = ${namespace} AND slug = ${slug}
   `);
-  if (rows.length) invalid('Đường dẫn này đã được sử dụng hoặc được giữ lại để chuyển hướng. Hãy chọn slug khác.');
+  if (rows.length) invalid('Đường dẫn này đang được dùng hoặc dành cho chuyển hướng. Hãy chọn đường dẫn khác.');
 
   return data;
 };
 
 export const publicSlugField: TextField = {
   name: 'slug',
-  label: 'Đường dẫn (Slug)',
+  label: publicSlugLabel,
   type: 'text',
   required: true,
   unique: true,
   index: true,
-  admin: { description: 'Ví dụ: ly-nhua-pet-500ml. Đổi slug sẽ chuyển hướng đường dẫn cũ.' },
+  admin: { description: 'Ví dụ ly-nhua-pet-500ml. Nếu bạn đổi đường dẫn, khách mở link cũ sẽ được chuyển sang link mới.' },
   hooks: {
     beforeDuplicate: [
       ({ value }) => {

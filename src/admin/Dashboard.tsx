@@ -3,8 +3,7 @@ import { ArrowRight, ArrowUpRight, Clock3, FileText, ImageOff, Inbox, Package, S
 import type { AdminViewServerProps } from 'payload';
 import { isAdminUser } from '@/collections/access';
 import { dashboardListHref, getDashboardFilters } from '@/lib/admin-dashboard';
-import { QUOTE_WAIT_HOURS } from '@/lib/admin-quotes';
-import type { QuoteRequest } from '@/payload-types';
+import { QUOTE_WAIT_HOURS, quoteStages } from '@/lib/admin-quotes';
 
 const numberFormat = new Intl.NumberFormat('vi-VN');
 const dateFormat = new Intl.DateTimeFormat('vi-VN', {
@@ -12,13 +11,6 @@ const dateFormat = new Intl.DateTimeFormat('vi-VN', {
   timeStyle: 'short',
   timeZone: 'Asia/Ho_Chi_Minh',
 });
-
-const quoteStatuses: Record<QuoteRequest['status'], string> = {
-  new: 'Mới tiếp nhận',
-  contacted: 'Đã liên hệ',
-  quoted: 'Đã gửi báo giá',
-  closed: 'Hoàn tất',
-};
 
 export default async function WorkspaceDashboard({ initPageResult: { req } }: AdminViewServerProps) {
   if (!isAdminUser(req.user)) return null;
@@ -65,7 +57,7 @@ export default async function WorkspaceDashboard({ initPageResult: { req } }: Ad
       <header className="workspace-dashboard__header">
         <div>
           <h1>Việc hôm nay</h1>
-          <p>Ưu tiên báo giá cần phản hồi và nội dung đang chờ hoàn thiện.</p>
+          <p>Bạn có thể xem ngay yêu cầu cần phản hồi và nội dung còn thiếu.</p>
         </div>
       </header>
 
@@ -104,7 +96,7 @@ export default async function WorkspaceDashboard({ initPageResult: { req } }: Ad
       <div className="workspace-dashboard__details">
         <section className="workspace-worklist" aria-labelledby="workspace-recent-title">
           <div className="workspace-section-heading">
-            <h2 id="workspace-recent-title">Báo giá gần đây</h2>
+            <h2 id="workspace-recent-title">Yêu cầu báo giá gần đây</h2>
             <Link href={quotesPath} prefetch={false}>Xem tất cả <ArrowRight size={15} aria-hidden /></Link>
           </div>
           {recentQuotes.docs.length ? (
@@ -116,7 +108,7 @@ export default async function WorkspaceDashboard({ initPageResult: { req } }: Ad
                       <strong>{quote.customerName}</strong>
                       <time dateTime={quote.createdAt}>{dateFormat.format(new Date(quote.createdAt))}</time>
                     </span>
-                    <span className="workspace-status" data-status={quote.status}>{quoteStatuses[quote.status]}</span>
+                    <span className="workspace-status" data-status={quote.status}>{quoteStages.find(stage => stage.value === quote.status)?.label}</span>
                     <ArrowRight size={16} aria-hidden />
                   </Link>
                 </li>

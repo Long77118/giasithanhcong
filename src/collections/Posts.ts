@@ -5,7 +5,7 @@ import { safeRevalidateTags } from '../lib/revalidate';
 import { isAdmin, publishedOrAdmin } from './access';
 import { previewUrl } from '../lib/preview';
 
-const postLabel = 'Bài viết Blog';
+const postLabel = 'Bài viết';
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
@@ -18,7 +18,7 @@ export const Posts: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['title', 'category', 'authorName', 'publishedAt', 'status'],
     preview: (doc) => previewUrl('posts', doc.id),
-    description: 'Bấm Lưu trước khi Xem trước. Chỉ quản trị viên xem được bản nháp đã lưu.',
+    description: 'Bấm Lưu trước khi Xem trước để kiểm tra bản đã lưu. Chỉ quản trị viên xem được bản nháp.',
   },
   access: {
     read: publishedOrAdmin,
@@ -71,7 +71,7 @@ export const Posts: CollectionConfig = {
           },
           {
             name: 'coverImage',
-            label: 'Ảnh đại diện',
+            label: 'Ảnh bìa bài viết',
             type: 'upload',
             relationTo: 'media',
           },
@@ -104,7 +104,7 @@ export const Posts: CollectionConfig = {
               },
               {
                 name: 'author',
-                label: 'Tài khoản tác giả (Nội bộ)',
+                label: 'Tài khoản tác giả (nội bộ)',
                 type: 'relationship',
                 relationTo: 'users',
                 admin: {
@@ -138,8 +138,8 @@ export const Posts: CollectionConfig = {
             defaultValue: 'draft',
             index: true,
             options: [
-              { label: 'Bản nháp (Draft)', value: 'draft' },
-              { label: 'Đã xuất bản (Published)', value: 'published' },
+              { label: 'Bản nháp', value: 'draft' },
+              { label: 'Đã xuất bản', value: 'published' },
             ],
             admin: {
               position: 'sidebar',

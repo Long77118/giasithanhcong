@@ -220,6 +220,39 @@ Thanh bên đọc dữ liệu đang nhập từ Payload. Điểm là tỷ lệ m
 
 Ảnh có dữ liệu alt đi kèm được đọc trực tiếp. Khi trường trả ID, checklist gộp các ID trùng và đọc Alt SEO theo lô tối đa 40 ảnh qua API Media. Nếu API lỗi, mục alt báo “Chưa kiểm tra được ảnh”. Các mục thiếu chỉ ra tên tab hoặc Thư viện ảnh vì Payload 3.93 chưa cung cấp API công khai để chuyển tab và lấy nét trường đang ẩn. Hiệu ứng ở 100% chỉ chạy một lần trong phiên mở form, khi điểm chuyển từ dưới 100% lên 100%, và được bỏ theo thiết lập giảm chuyển động. Sau khi nâng Payload, rà format trường upload, danh sách hàng, và các khoảng SEO mặc định.
 
+### Câu chữ tiếng Việt ở Giai đoạn 5
+
+Các phần ghi đè dùng `i18n.translations.vi` trên bản dịch Payload hiện có. Chuỗi giữ nguyên biến nội suy và thẻ định dạng của Payload. Nhãn SEO lấy từ cấu hình trường, còn chỉ báo ký tự và xem trước dùng bộ khóa `plugin-seo`. Sản phẩm, bài viết và hai nhóm danh mục dùng chung cách gọi trạng thái xuất bản. Yêu cầu báo giá dùng chung nhãn trạng thái giữa Tổng quan, bộ lọc, bảng và form.
+
+| Khu vực | Trước | Sau |
+| --- | --- | --- |
+| Đăng nhập | Đăng nhập bằng email quản trị để bắt đầu. | Dùng email quản trị của bạn để đăng nhập. |
+| Sai thông tin đăng nhập | Lỗi - Email hoặc mật khẩu không chính xác. | Email hoặc mật khẩu chưa đúng. Hãy kiểm tra rồi thử lại. |
+| Quên mật khẩu | Nhập email của bạn để nhận hướng dẫn tạo lại mật khẩu. | Nhập email bạn dùng để đăng nhập. Hướng dẫn đặt lại mật khẩu sẽ được gửi đến email đó. |
+| Đặt lại mật khẩu | Tạo lại mật khẩu | Đặt lại mật khẩu |
+| Tạo Admin đầu tiên | Để bắt đầu, hãy tạo người dùng đầu tiên. | Tạo tài khoản quản trị đầu tiên để bắt đầu. |
+| Điều hướng | Collections / Bảng điều khiển / Cấu hình chung (globals) | Danh sách nội dung / Tổng quan / Cấu hình chung |
+| Tùy chọn tài khoản | Giao diện bảng điều khiển / Vietnamese (Tiếng Việt) | Chế độ màu / Tiếng Việt |
+| Danh sách trống | Không có kết quả. | Chưa có kết quả. Phần hướng dẫn gợi ý đổi từ khóa, xóa bộ lọc hoặc tạo mục mới. |
+| Tiêu đề tạo nội dung | Đang tạo mới `{{label}}` | Tạo `{{label}}` |
+| Thông báo tạo và lưu | `{{label}}` đã được tạo thành công. / Cập nhật thành công. | Đã tạo `{{label}}`. / Đã lưu thay đổi. |
+| Thông báo khi rời form | Thay đổi chưa được lưu lại. Bạn sẽ mất bản chỉnh sửa nếu thoát bây giờ. | Bạn sẽ mất các thay đổi chưa lưu nếu rời trang này. |
+| Hộp thoại xóa hàng loạt | Bạn sắp xóa `{{count}} {{label}}` | Bạn có muốn xóa `{{count}} {{label}}` đã chọn không? |
+| Lỗi dữ liệu | Lỗi - Xin hãy sửa lại những fields không hợp lệ. | Bạn kiểm tra các ô được đánh dấu rồi lưu lại nhé. |
+| Ô bắt buộc | Trường này là bắt buộc. | Hãy điền thông tin này. |
+| Lưu đường dẫn hoặc danh mục cha không hợp lệ | Tiêu đề tiếng Anh có `slug` hoặc `parent`. | Bạn cần kiểm tra ô Đường dẫn (slug) hoặc Danh mục cha. Lỗi dưới ô cho biết cách sửa. |
+| Trạng thái xuất bản | Bản nháp (Draft) / Đã xuất bản (Published) | Bản nháp / Đã xuất bản |
+| Bài viết | Bài viết Blog / Ảnh đại diện | Bài viết / Ảnh bìa bài viết |
+| Ảnh và tài liệu | Văn bản thay thế (Alt SEO) / Chọn một file / _object Key / Prefix | Văn bản thay thế (alt) / Chọn tệp / Mã lưu trữ / Thư mục lưu tệp |
+| Tải nhiều tệp | Tải lên số lượng lớn / Đang tải lên `{{current}}` trong tổng số `{{total}}` | Tải nhiều tệp / Đang tải tệp `{{current}}/{{total}}` |
+| SEO | Title / Description / Meta Image | Tiêu đề SEO / Mô tả SEO / Ảnh chia sẻ |
+| Chỉ báo SEO | `{{current}}/{{max}}` đã đạt | Đạt `{{current}}/{{max}}` mục |
+| Sản phẩm | Bảng giá và catalog (PDF) / Hiện ở nhãn nhìn nhanh / Đơn vị MOQ | Bảng giá và danh mục sản phẩm (PDF) / Hiện cạnh tên sản phẩm / Đơn vị đặt tối thiểu |
+| Báo giá | Sản phẩm lúc gửi / Mới tiếp nhận / Hoàn tất / Đóng | Sản phẩm ghi trong yêu cầu / Mới / Hoàn tất |
+| Cấu hình website | Cấu hình website & Liên hệ / Số Hotline bán sỉ / Ảnh Open Graph mặc định / Fanpage Facebook | Cấu hình website và liên hệ / Số điện thoại bán sỉ / Ảnh chia sẻ mặc định / Trang Facebook |
+
+Giữ cách gọi quen thuộc như SKU, SEO và PDF, kèm tiếng Việt tại các nhãn cần giải nghĩa. Các nhãn trợ năng `Add block`, `Edit link`, `Remove link` của Lexical và `Notifications` của vùng thông báo do thư viện khai báo trực tiếp. Payload 3.93 chưa có khóa cấu hình để dịch các nhãn này. Khi nâng Payload, thử lại các khóa lỗi, hộp thoại một hoặc nhiều mục và các chuỗi SEO có biến nội suy.
+
 | Giai đoạn | Hướng triển khai | Điểm cần xác minh |
 | --- | --- | --- |
 | 1 · Nền tảng | Tách token sáng/tối, component riêng và phần ghi đè Payload. Ánh xạ biến CSS trước, sau đó kiểm tra bảng, tab, trạng thái, toast, modal và toàn bộ nhóm field đã nêu. | Các dải elevation và semantic có nhiều nơi dùng. Đo màu thực sau cascade và kiểm tra lại Lexical, lỗi, disabled, dropdown trong modal. Xác nhận font tiếng Việt và ảnh hưởng bundle. |

@@ -47,7 +47,7 @@ export function LoginIntroduction() {
       </div>
       <div className="workspace-login-title">
         <LoginGreeting />
-        <p>Đăng nhập bằng email quản trị để bắt đầu.</p>
+        <p>Dùng email quản trị của bạn để đăng nhập.</p>
       </div>
     </>
   );

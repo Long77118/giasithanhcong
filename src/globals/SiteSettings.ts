@@ -10,7 +10,7 @@ const validateShelfCategory: RelationshipFieldSingleValidation = (value, { sibli
 
 export const SiteSettings: GlobalConfig = {
   slug: 'site-settings',
-  label: 'Cấu hình website & Liên hệ',
+  label: 'Cấu hình website và liên hệ',
   admin: { group: 'Cài đặt' },
   access: {
     read: () => true,
@@ -39,7 +39,7 @@ export const SiteSettings: GlobalConfig = {
           labels: { singular: 'Danh mục', plural: 'Danh mục' }, type: 'array', maxRows: 6,
           admin: {
             initCollapsed: true,
-            description: 'Kéo để đổi thứ tự, tối đa 6 khối. Để trống sẽ lấy 3 danh mục gốc đã xuất bản đầu tiên. Muốn ẩn toàn bộ, tắt công tắc phía trên. Mỗi khối tự lấy tối đa 12 sản phẩm, 4 sản phẩm mỗi slide; các khối chuyển cùng nhịp.',
+            description: 'Bạn có thể chọn tối đa 6 danh mục và kéo để đổi thứ tự. Để trống sẽ dùng 3 danh mục gốc đã xuất bản đầu tiên. Tắt công tắc phía trên để ẩn toàn bộ. Mỗi khối lấy tối đa 12 sản phẩm và tự chuyển theo nhóm 4 sản phẩm.',
           },
           fields: [
             { name: 'enabled', label: 'Hiển thị khối này', type: 'checkbox', defaultValue: true },
@@ -132,23 +132,23 @@ export const SiteSettings: GlobalConfig = {
       fields: [
         {
           name: 'hotline',
-          label: 'Số Hotline bán sỉ',
+          label: 'Số điện thoại bán sỉ',
           type: 'text',
           admin: {
             width: '50%',
             description:
-              'Để trống nếu chưa cấu hình; giao diện sẽ hiển thị trạng thái chưa cấu hình thay vì dẫn sang đơn vị khác.',
+              'Nhập số chính khách có thể gọi. Nếu để trống, website sẽ báo rằng số điện thoại chưa được thiết lập.',
           },
         },
         {
           name: 'zaloUrl',
-          label: 'Đường dẫn Zalo OA / Zalo tư vấn',
+          label: 'Liên kết Zalo tư vấn',
           type: 'text',
           admin: {
             width: '50%',
             placeholder: 'https://zalo.me/...',
             description:
-              'Chỉ chấp nhận URL https://zalo.me/...; để trống nếu chưa cấu hình.',
+              'Dán liên kết bắt đầu bằng https://zalo.me/ để khách nhắn tin. Bạn có thể để trống nếu chưa có.',
           },
         },
       ],
@@ -159,7 +159,7 @@ export const SiteSettings: GlobalConfig = {
       type: 'text',
       admin: {
         placeholder: 'Ví dụ: 0900 123 456',
-        description: 'Hiển thị cùng hotline chính trong header và menu điện thoại. Để trống để ẩn.',
+        description: 'Hiển thị cạnh số chính ở đầu trang và trong menu điện thoại. Để trống để ẩn.',
       },
     },
     {
@@ -182,7 +182,7 @@ export const SiteSettings: GlobalConfig = {
     },
     {
       name: 'address',
-      label: 'Địa chỉ kho & văn phòng',
+      label: 'Địa chỉ kho và văn phòng',
       type: 'textarea',
     },
     {
@@ -191,11 +191,11 @@ export const SiteSettings: GlobalConfig = {
       type: 'text',
       maxLength: 8000,
       admin: {
-        placeholder: 'Dán link hoặc mã nhúng từ Google Maps',
-        description: 'Trong Google Maps: Chia sẻ → Nhúng bản đồ → Sao chép HTML, rồi dán vào đây. Để trống để ẩn bản đồ. Bản đồ chỉ tải khi khách bấm mở.',
+        placeholder: 'Dán liên kết nhúng hoặc mã HTML từ Google Maps',
+        description: 'Trong Google Maps, mở Chia sẻ → Nhúng bản đồ → Sao chép HTML rồi dán vào đây. Bản đồ chỉ tải khi khách bấm mở. Để trống để ẩn bản đồ.',
       },
       validate: (value: unknown) => value == null || value === '' || normalizeContactMapEmbedUrl(value) !== null
-        || 'Dán mã nhúng Google Maps từ mục Chia sẻ → Nhúng bản đồ, không dùng link chia sẻ rút gọn.',
+        || 'Hãy lấy mã hoặc liên kết nhúng từ Chia sẻ → Nhúng bản đồ trong Google Maps.',
       hooks: { beforeChange: [({ value }) => normalizeContactMapEmbedUrl(value) ?? value] },
     },
     {
@@ -220,24 +220,24 @@ export const SiteSettings: GlobalConfig = {
     },
     {
       name: 'defaultOgImage',
-      label: 'Ảnh Open Graph mặc định',
+      label: 'Ảnh chia sẻ mặc định',
       type: 'upload',
       relationTo: 'media',
     },
     {
       name: 'facebookPages',
-      label: 'Fanpage Facebook',
-      labels: { singular: 'Fanpage Facebook', plural: 'Fanpage Facebook' },
+      label: 'Trang Facebook',
+      labels: { singular: 'trang Facebook', plural: 'trang Facebook' },
       type: 'array',
       admin: {
-        description: 'Các fanpage công khai hiển thị theo thứ tự dưới đây ở cột trái trang chủ.',
+        description: 'Các trang Facebook công khai xuất hiện ở cột trái trang chủ. Bạn có thể kéo để đổi thứ tự.',
         initCollapsed: true,
       },
       fields: [
         { name: 'name', label: 'Tên hiển thị', type: 'text', required: true, maxLength: 100 },
         {
           name: 'url',
-          label: 'Đường dẫn fanpage',
+          label: 'Đường dẫn trang Facebook',
           type: 'text',
           required: true,
           admin: { placeholder: 'https://www.facebook.com/tenfanpage' },

@@ -38,14 +38,14 @@ export function QuoteRowActions({ phone, message, status, endpoint }: Pick<Quote
         toast.error('Yêu cầu đã thay đổi. Danh sách đang được cập nhật.');
         router.refresh();
       } else if (response.status === 401 || response.status === 403) {
-        toast.error('Phiên đăng nhập hoặc quyền đã thay đổi. Hãy đăng nhập lại.');
+        toast.error('Phiên đăng nhập đã hết hạn hoặc bạn chưa có quyền cập nhật. Hãy đăng nhập lại bằng tài khoản quản trị.');
       } else if (response.status === 423) {
-        toast.error('Yêu cầu đang được chỉnh sửa ở cửa sổ khác. Hãy thử lại sau.');
+        toast.error('Yêu cầu đang được mở để chỉnh sửa ở cửa sổ khác. Hãy đóng cửa sổ đó hoặc thử lại sau.');
       } else {
-        toast.error('Chưa thể cập nhật trạng thái. Hãy thử lại.');
+        toast.error('Chưa cập nhật được trạng thái. Hãy tải lại trang rồi thử lại.');
       }
     } catch {
-      toast.error('Mất kết nối. Hãy tải lại danh sách để kiểm tra trạng thái.');
+      toast.error('Chưa kết nối được. Hãy kiểm tra mạng rồi tải lại danh sách để xem trạng thái.');
     } finally {
       setSaving(false);
     }

@@ -35,6 +35,6 @@ export function ProductSpecLabel() {
   return <span className="admin-editor-row-label">
     <span className="admin-editor-row-icon" data-tone="mint"><ListChecks size={14} aria-hidden /></span>
     <strong>{data?.label?.trim() || `Thông số ${(rowNumber ?? 0) + 1}`}</strong>
-    {data?.showInQuickFacts && <span className="admin-editor-row-pill">Nhìn nhanh</span>}
+    {data?.showInQuickFacts && <span className="admin-editor-row-pill">Hiện cạnh tên</span>}
   </span>;
 }

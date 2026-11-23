@@ -9,7 +9,7 @@ export const Documents: CollectionConfig = {
   admin: {
     group: 'Thư viện',
     useAsTitle: 'title',
-    description: 'Tài liệu công khai để khách tải về: catalog và bảng giá dạng PDF.',
+    description: 'Bạn có thể tải lên bảng giá và danh mục sản phẩm dạng PDF để khách tải về.',
   },
   access: { read: () => true, create: isAdmin, update: isAdmin, delete: isAdmin },
   upload: {
@@ -22,11 +22,11 @@ export const Documents: CollectionConfig = {
   },
   fields: [
     // Keep the storage schema identical on local Node and Workers using the existing R2 bucket.
-    { name: '_objectKey', type: 'text', admin: { hidden: true, readOnly: true } },
-    { name: 'prefix', type: 'text', defaultValue: 'documents', admin: { hidden: true, readOnly: true } },
+    { name: '_objectKey', label: 'Mã lưu trữ', type: 'text', admin: { hidden: true, readOnly: true } },
+    { name: 'prefix', label: 'Thư mục lưu tệp', type: 'text', defaultValue: 'documents', admin: { hidden: true, readOnly: true } },
     {
       name: 'title', label: 'Tên tài liệu', type: 'text', required: true,
-      admin: { description: 'Tên hiển thị trên liên kết tải PDF, ví dụ Catalog chai nhựa.' },
+      admin: { description: 'Khách sẽ thấy tên này khi tải PDF, ví dụ Danh mục chai nhựa.' },
     },
   ],
 };

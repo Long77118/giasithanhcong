@@ -9,7 +9,7 @@ import { validateMediaUpload } from '../lib/media-upload-validation';
 export const Media: CollectionConfig = {
   slug: 'media',
   labels: {
-    singular: 'Thư viện ảnh',
+    singular: 'ảnh',
     plural: 'Thư viện ảnh',
   },
   admin: { group: 'Thư viện' },
@@ -59,12 +59,13 @@ export const Media: CollectionConfig = {
       admin: { disableListColumn: true, components: { Field: '/admin/MediaUploadOptions' } },
     },
     // R2 injects this same optional field. Keep the Node and Workers database schemas equal.
-    { name: '_objectKey', type: 'text', admin: { hidden: true, readOnly: true } },
+    { name: '_objectKey', label: 'Mã lưu trữ', type: 'text', admin: { hidden: true, readOnly: true } },
     {
       name: 'alt',
-      label: 'Văn bản thay thế (Alt SEO)',
+      label: 'Văn bản thay thế (alt)',
       type: 'text',
       required: true,
+      admin: { description: 'Mô tả ngắn điều quan trọng trong ảnh để người dùng trình đọc màn hình hiểu được nội dung.' },
     },
     {
       name: 'caption',

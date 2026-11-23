@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload';
 import { advanceQuoteStatus } from '@/lib/admin-quote-endpoint';
+import { quoteStages } from '@/lib/admin-quotes';
 import { isAdmin } from './access';
 
 export const QuoteRequests: CollectionConfig = {
@@ -75,7 +76,7 @@ export const QuoteRequests: CollectionConfig = {
         },
         {
           name: 'companyName',
-          label: 'Tên cửa hàng / Doanh nghiệp (tùy chọn)',
+          label: 'Tên cửa hàng hoặc doanh nghiệp (tùy chọn)',
           type: 'text',
           admin: {
             width: '50%',
@@ -95,7 +96,7 @@ export const QuoteRequests: CollectionConfig = {
         },
         {
           name: 'productNameSnapshot',
-          label: 'Sản phẩm lúc gửi',
+          label: 'Sản phẩm ghi trong yêu cầu',
           type: 'text',
           admin: {
             width: '50%',
@@ -113,14 +114,14 @@ export const QuoteRequests: CollectionConfig = {
     },
     {
       name: 'message',
-      label: 'Nội dung yêu cầu chi tiết',
+      label: 'Nội dung yêu cầu',
       type: 'textarea',
       required: true,
       admin: { rows: 6 },
     },
     {
       name: 'sourceUrl',
-      label: 'Trang nguồn gửi yêu cầu',
+      label: 'Trang khách gửi yêu cầu',
       type: 'text',
       admin: {
         readOnly: true,
@@ -132,12 +133,7 @@ export const QuoteRequests: CollectionConfig = {
       type: 'select',
       required: true,
       defaultValue: 'new',
-      options: [
-        { label: 'Mới tiếp nhận', value: 'new' },
-        { label: 'Đã liên hệ', value: 'contacted' },
-        { label: 'Đã gửi báo giá', value: 'quoted' },
-        { label: 'Hoàn tất / Đóng', value: 'closed' },
-      ],
+      options: [...quoteStages],
       admin: {
         position: 'sidebar',
         components: { Cell: '/admin/QuoteCells#QuoteStatusCell' },
