@@ -5,25 +5,16 @@ import { getRelatedPublishedPosts } from '@/lib/queries';
 import { buildArticleJsonLd } from '@/lib/seo';
 import { resolvePublicImageUrl } from '@/lib/seo-images';
 import { publicContentPath } from '@/lib/slug';
+import { articleReadingMinutes, extractArticleHeadings, formatArticleDate } from '@/lib/article-content';
 import { catalogCardSizes, threeColumnCardSizes } from '@/lib/storefront-image-sizes';
 import { Breadcrumbs } from './Breadcrumbs';
-import { ContactActions } from './ContactActions';
+import { ArticleToc } from './ArticleToc';
 import { LexicalContent } from './LexicalContent';
 import { MediaImage, resolveMediaUrl } from './MediaImage';
 import { PostCard } from './PostCard';
 import { ProductCard } from './ProductCard';
 import { JsonLd } from './JsonLd';
-
-function formatDateVi(iso?: string | null) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  return new Intl.DateTimeFormat('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(d);
-}
+import './post-detail.css';
 
 export async function PostDetail({ post, contact, siteUrl, preview = false }: {
   post: Post;
@@ -55,12 +46,21 @@ export async function PostDetail({ post, contact, siteUrl, preview = false }: {
   const relatedProducts = (post.relatedProducts ?? [])
     .filter((p): p is Product => Boolean(p && typeof p === 'object'))
     .filter((p) => p.status === 'published');
+  const headings = extractArticleHeadings(post.content);
+  const hasToc = headings.filter(({ level }) => level === 2).length >= 2;
+  const sidebarProducts = relatedProducts.slice(0, 2);
+  const hasSidebar = hasToc || sidebarProducts.length > 0 || Boolean(contact.zaloUrl);
+  const author = post.authorName?.trim();
+  const initial = author ? Array.from(author)[0].toLocaleUpperCase('vi') : '';
+  const publishedDate = formatArticleDate(post.publishedAt);
+  const updatedDate = Date.parse(post.updatedAt) - Date.parse(post.publishedAt ?? '') > 86_400_000
+    ? formatArticleDate(post.updatedAt) : '';
 
   return (
-    <>
+    <div className="article-page">
       {!preview && <JsonLd data={articleJsonLd} />}
 
-      <article className="site-shell py-8 lg:py-12">
+      <article className="site-shell article-shell">
         <Breadcrumbs
           siteUrl={siteUrl}
           structuredData={!preview}
@@ -71,32 +71,25 @@ export async function PostDetail({ post, contact, siteUrl, preview = false }: {
           ]}
         />
 
-        <header className="mx-auto max-w-[52rem] border-b border-slate-200 pb-6 [overflow-wrap:anywhere]">
-          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-            {categoryObj && (
-              <Link
-                href={`/blog?category=${encodeURIComponent(categoryObj.slug)}`}
-                className="font-semibold text-[#B45309] hover:underline"
-              >
-                {categoryObj.name}
-              </Link>
-            )}
-            {categoryObj && <span aria-hidden="true">·</span>}
-            <time dateTime={post.publishedAt}>{formatDateVi(post.publishedAt)}</time>
-            <span aria-hidden="true">·</span>
-            <span>Tác giả: {post.authorName}</span>
+        <header className="article-intro">
+          {categoryObj && (
+            <Link className="article-category" href={`/blog?category=${encodeURIComponent(categoryObj.slug)}`}>
+              {categoryObj.name}
+            </Link>
+          )}
+          <h1>{post.title}</h1>
+          {post.excerpt?.trim() && <p className="article-excerpt">{post.excerpt}</p>}
+          <div className="article-meta">
+            {author && <span className="article-byline"><span className="article-avatar" aria-hidden="true">{initial}</span><strong>{author}</strong></span>}
+            {publishedDate && <time dateTime={post.publishedAt}>{publishedDate}</time>}
+            <span>{articleReadingMinutes(post.content)} phút đọc</span>
+            {updatedDate && <time dateTime={post.updatedAt}>Cập nhật {updatedDate}</time>}
           </div>
-
-          <h1 className="mt-3 font-display text-3xl font-bold leading-tight text-[#0C2340] text-balance sm:text-4xl">
-            {post.title}
-          </h1>
-
-          <p className="mt-4 text-base leading-relaxed text-slate-600">
-            {post.excerpt}
-          </p>
         </header>
 
-        <div className="mx-auto mt-8 aspect-[16/9] max-w-[72rem] overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+        {hasToc && <ArticleToc headings={headings} mobile />}
+
+        {coverResolved.url && <div className="article-cover">
           <MediaImage
             media={post.coverImage}
             prefer="hero"
@@ -104,34 +97,54 @@ export async function PostDetail({ post, contact, siteUrl, preview = false }: {
             sizes="(min-width: 75rem) 1152px, (min-width: 40rem) calc(100vw - 50px), calc(100vw - 34px)"
             fallbackTitle={post.title}
           />
-        </div>
+        </div>}
 
-        <div className="mx-auto mt-8 max-w-[52rem] rounded-xl border border-slate-200 bg-white p-4 sm:p-10">
-          <LexicalContent data={post.content} />
-        </div>
-
-        {/* Contact CTA box */}
-        <div className="mx-auto mt-8 max-w-[52rem] rounded-xl border border-slate-200 bg-white p-4 sm:p-8">
-          <h2 className="font-display text-lg font-bold text-[#0C2340]">
-            Cần tư vấn quy cách bao bì phù hợp mô hình quán?
-          </h2>
-          <p className="mt-1.5 text-sm text-slate-600">
-            Trao đổi trực tiếp với đội ngũ hỗ trợ hoặc gửi yêu cầu nhận mẫu và bảng giá sỉ.
-          </p>
-          <div className="mt-4">
-            <ContactActions contact={contact} quoteHref="/lien-he#bao-gia" />
+        <div className={hasSidebar ? 'article-grid article-grid--with-aside' : 'article-grid'}>
+          <div className="article-main">
+            <LexicalContent data={post.content} variant="article" headings={headings} />
           </div>
+          {hasSidebar && (
+            <aside className="article-aside" aria-label="Thông tin trong bài">
+              {hasToc && <ArticleToc headings={headings} />}
+              {sidebarProducts.length > 0 && (
+                <section className="article-tile article-products">
+                  <h2>Sản phẩm trong bài</h2>
+                  <ul>
+                    {sidebarProducts.map((product) => {
+                      const media = product.images?.find(({ image }) => resolveMediaUrl(image, 'thumbnail').url)?.image;
+                      return <li key={product.id}>
+                        <Link className="article-product" href={publicContentPath('products', product.slug)}>
+                          {media && <span className="article-product-image" aria-hidden="true">
+                            <MediaImage media={media} prefer="thumbnail" sizes="56px" />
+                          </span>}
+                          <span className="article-product-copy">
+                            <strong>{product.name}</strong>
+                            <span>Báo giá <span aria-hidden="true">→</span></span>
+                          </span>
+                        </Link>
+                      </li>;
+                    })}
+                  </ul>
+                </section>
+              )}
+              {contact.zaloUrl && <section className="article-tile article-zalo">
+                <h2>Trao đổi qua Zalo</h2>
+                <a className="article-button" href={contact.zaloUrl} target="_blank" rel="noopener noreferrer">Nhắn Zalo tư vấn</a>
+              </section>}
+            </aside>
+          )}
         </div>
+
       </article>
 
-      {relatedProducts.length > 0 && (
+      {relatedProducts.length > 2 && (
         <section className="border-t border-slate-200 bg-white">
           <div className="site-shell py-12">
             <h2 className="font-display text-2xl font-bold text-[#0C2340]">
               Sản phẩm đề cập trong bài viết
             </h2>
             <div className="catalog-grid mt-6">
-              {relatedProducts.map((product) => (
+              {relatedProducts.slice(2).map((product) => (
                 <ProductCard key={product.id} product={product} sizes={catalogCardSizes} />
               ))}
             </div>
@@ -151,6 +164,6 @@ export async function PostDetail({ post, contact, siteUrl, preview = false }: {
           </div>
         </section>
       )}
-    </>
+    </div>
   );
 }

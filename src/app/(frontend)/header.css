@@ -1,7 +1,10 @@
 @import './header-tokens.css';
 
-.site-header {
+:root {
   --header-bar-height: 4.5rem;
+}
+
+.site-header {
   position: sticky;
   top: calc(-1 * var(--header-top-offset, 0px));
   z-index: 30;
@@ -111,7 +114,7 @@ body:has(.site-header):has(.site-contact-dock) { padding-bottom: calc(4.75rem + 
 body:has(.site-contact-dock) .product-detail-dock { display: none; }
 
 @media (min-width: 80rem) {
-  .site-header { --header-bar-height: 4.75rem; }
+  :root { --header-bar-height: 4.75rem; }
   .site-header-top { display: block; }
   .site-header-top-inner { display: flex; min-height: 6rem; align-items: center; gap: 1rem; padding-block: .75rem; }
   .site-wordmark { flex: none; max-width: 15rem; }
