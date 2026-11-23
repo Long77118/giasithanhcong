@@ -1,5 +1,7 @@
 import { getYouTubeID, youTubeEmbedUrl, youTubeThumbnailUrl } from './youtube';
 import { resolvePublicImageUrl } from './seo-images';
+import type { ResolvedContactConfig } from './contact';
+import { getHeaderContact } from './header';
 
 export interface SeoEnv {
   APP_URL?: string;
@@ -12,6 +14,25 @@ export interface SeoEnv {
 export function getSiteUrl(env: SeoEnv = process.env): string {
   const raw = env.APP_URL || env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   return raw.replace(/\/+$/, '');
+}
+
+export function organizationJsonLdId(siteUrl: string) {
+  return `${siteUrl}/#organization`;
+}
+
+export function buildOrganizationJsonLd(siteUrl: string, contact: ResolvedContactConfig) {
+  const { phones, email } = getHeaderContact(contact);
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': organizationJsonLdId(siteUrl),
+    name: contact.brandName,
+    url: siteUrl,
+    description: contact.tagline,
+    ...(phones.length ? { telephone: phones.map(phone => phone.label) } : {}),
+    ...(email ? { email } : {}),
+    ...(contact.address ? { address: contact.address } : {}),
+  };
 }
 
 /**

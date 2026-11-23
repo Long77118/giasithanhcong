@@ -3,6 +3,7 @@ import test from 'node:test';
 import { resolveContactConfig } from './contact';
 import { buildContactPageJsonLd, getContactPageDetails, resolveContactProduct } from './contact-page';
 import { serializeJsonLd } from './json-ld';
+import { buildOrganizationJsonLd } from './seo';
 
 test('contact opens the general form without a lookup for absent or malformed product slugs', async () => {
   const unexpectedLookup = async () => assert.fail('No product lookup was expected');
@@ -56,17 +57,18 @@ test('contact data hides missing groups, deduplicates phones and encodes directi
   assert.equal(getContactPageDetails(resolveContactConfig({ secondaryHotline: '0900000002' })).phones.length, 1);
 });
 
-test('contact structured data includes only configured facts and remains safe in a script', () => {
-  const empty = buildContactPageJsonLd('https://example.test', resolveContactConfig({ brandName: 'Công Ty A' }));
+test('contact structured data references the homepage Organization and keeps configured hours as text', () => {
+  const siteUrl = 'https://example.test';
+  const empty = buildContactPageJsonLd(siteUrl, resolveContactConfig({ brandName: 'Công Ty A' }));
   assert.equal(empty['@type'], 'ContactPage');
-  assert.deepEqual(Object.keys(empty.mainEntity).sort(), ['@type', 'name', 'url']);
-  const contact = resolveContactConfig({ brandName: '</script><script>bad</script>', hotline: '0900000001',
-    secondaryHotline: '0900000002', email: 'hello@example.test', address: 'Địa chỉ thật', workingHours: 'Thứ 2 – Thứ 6: 08:00 – 17:00' });
-  const schema = buildContactPageJsonLd('https://example.test', contact);
-  assert.equal(schema.mainEntity.email, contact.email);
-  assert.equal(schema.mainEntity.address, contact.address);
-  assert.deepEqual(schema.mainEntity.telephone, [contact.hotline, contact.secondaryHotline]);
-  assert.equal(schema.mainEntity.description, `Giờ làm việc: ${contact.workingHours}`);
-  assert.doesNotMatch(JSON.stringify(schema), /geo|aggregateRating|priceRange|openingHoursSpecification/);
+  assert.equal(empty['@id'], `${siteUrl}/lien-he#contact-page`);
+  assert.equal(empty.url, `${siteUrl}/lien-he`);
+  assert.equal('description' in empty, false);
+  const contact = resolveContactConfig({
+    brandName: '</script><script>bad</script>', workingHours: 'Thứ 2 – Thứ 6: 08:00 – 17:00',
+  });
+  const schema = buildContactPageJsonLd(siteUrl, contact);
+  assert.deepEqual(schema.mainEntity, { '@id': buildOrganizationJsonLd(siteUrl, contact)['@id'] });
+  assert.equal(schema.description, `Giờ làm việc: ${contact.workingHours}`);
   assert.doesNotMatch(serializeJsonLd(schema), /<script|<\/script/);
 });

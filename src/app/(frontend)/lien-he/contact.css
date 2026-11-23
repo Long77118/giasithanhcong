@@ -54,6 +54,10 @@
 .contact-map-close { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 2.75rem; padding: .5rem .75rem; border-radius: var(--header-pill); font-weight: 600; cursor: pointer; }
 .contact-map-stage iframe { flex: 1; width: 100%; min-height: 0; border: 0; }
 .contact-map :is(button, a):focus-visible { outline: 3px solid var(--header-brand); outline-offset: -4px; }
+@media (width < 64rem) {
+  body:has(#main-content > .contact-page) { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  body:has(#main-content > .contact-page) .site-contact-dock { display: none; }
+}
 @media (max-width: 39.999rem) {
   .contact-channel-list { padding-inline: 1.25rem; }
   .contact-channel { gap: .625rem; }

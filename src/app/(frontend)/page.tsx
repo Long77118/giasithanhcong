@@ -8,7 +8,7 @@ import {
   getPublishedPosts,
   getSiteSettingsCached,
 } from '@/lib/queries';
-import { getSiteUrl, isIndexingAllowed } from '@/lib/seo';
+import { buildOrganizationJsonLd, getSiteUrl, isIndexingAllowed } from '@/lib/seo';
 import { resolveOpenGraphImages } from '@/lib/seo-images';
 import { normalizeFacebookPageUrl } from '@/lib/facebook-page';
 import { PostCard } from '@/components/PostCard';
@@ -70,26 +70,9 @@ export default async function HomePage() {
     return pageUrl && label ? [{ id: id ?? String(index), name: label, url: pageUrl }] : [];
   });
 
-  const orgJsonLd: Record<string, unknown> = {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: contact.brandName,
-    url: siteUrl,
-    description: contact.tagline,
-  };
-  if (contact.hotline) orgJsonLd.telephone = contact.hotline;
-  if (contact.email) orgJsonLd.email = contact.email;
-  if (contact.address) {
-    orgJsonLd.address = {
-      '@type': 'PostalAddress',
-      streetAddress: contact.address,
-      addressCountry: 'VN',
-    };
-  }
-
   return (
     <div className="home-page">
-      <JsonLd data={orgJsonLd} />
+      <JsonLd data={buildOrganizationJsonLd(siteUrl, contact)} />
 
       <div className="site-shell home-layout">
         <div className="home-entry">
