@@ -1,8 +1,11 @@
-import type { GlobalConfig } from 'payload';
+import type { GlobalConfig, RelationshipFieldSingleValidation } from 'payload';
 import { safeRevalidateTags } from '../lib/revalidate';
 import { isAdmin } from '../collections/access';
 import { normalizeFacebookPageUrl } from '../lib/facebook-page';
 import { normalizeHomePromotionHref } from '../lib/home-promotions';
+
+const validateShelfCategory: RelationshipFieldSingleValidation = (value, { siblingData }) =>
+  Boolean(value) || (siblingData as { enabled?: boolean } | undefined)?.enabled === false || 'Chọn danh mục cho khối đang hiển thị.';
 
 export const SiteSettings: GlobalConfig = {
   slug: 'site-settings',
@@ -23,6 +26,33 @@ export const SiteSettings: GlobalConfig = {
     ],
   },
   fields: [
+    {
+      label: 'Trang chủ · Kệ sản phẩm theo danh mục',
+      type: 'collapsible',
+      fields: [
+        {
+          name: 'homeCategoryShelvesEnabled', label: 'Hiển thị kệ danh mục trên trang chủ', type: 'checkbox', defaultValue: true,
+        },
+        {
+          name: 'homeCategoryShelves', label: 'Các danh mục hiển thị',
+          labels: { singular: 'Danh mục', plural: 'Danh mục' }, type: 'array', maxRows: 6,
+          admin: {
+            initCollapsed: true,
+            description: 'Kéo để đổi thứ tự, tối đa 6 khối. Để trống sẽ lấy 3 danh mục gốc đã xuất bản đầu tiên. Muốn ẩn toàn bộ, tắt công tắc phía trên. Mỗi khối tự lấy tối đa 12 sản phẩm, 4 sản phẩm mỗi slide; các khối chuyển cùng nhịp.',
+          },
+          fields: [
+            { name: 'enabled', label: 'Hiển thị khối này', type: 'checkbox', defaultValue: true },
+            {
+              name: 'category', label: 'Chọn danh mục sản phẩm', type: 'relationship', relationTo: 'product-categories',
+              filterOptions: { status: { equals: 'published' } },
+              validate: validateShelfCategory,
+              admin: { description: 'Bao gồm sản phẩm thuộc danh mục con đã xuất bản. Khối không có sản phẩm sẽ tự ẩn.' },
+            },
+            { name: 'title', label: 'Tiêu đề riêng (tùy chọn)', type: 'text', maxLength: 80, admin: { description: 'Để trống để dùng tên danh mục hiện tại.' } },
+          ],
+        },
+      ],
+    },
     {
       label: 'Trang chủ · Banner theo nhu cầu',
       type: 'collapsible',

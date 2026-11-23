@@ -3,7 +3,9 @@
 @layer components {
   .site-shell {
     width: 100%;
+    max-width: var(--site-max-width);
     min-width: 0;
+    margin-inline: auto;
     padding-inline: var(--site-gutter);
   }
 
@@ -34,8 +36,6 @@
   @media (min-width: 40rem) { .catalog-grid { --catalog-columns: 2; } }
   @media (min-width: 64rem) { .catalog-grid { --catalog-columns: 3; } }
   @media (min-width: 80rem) { .catalog-grid { --catalog-columns: 4; } }
-  @media (min-width: 108rem) { .catalog-grid { --catalog-columns: 5; } }
-  @media (min-width: 144rem) { .catalog-grid { --catalog-columns: 6; } }
 
   .lexical-content { color: #334155; font-size: 1rem; line-height: 1.75; overflow-wrap: anywhere; }
   .lexical-content p { margin: 0.875rem 0; }
@@ -69,12 +69,14 @@
 
 @layer base {
   html {
+    --site-max-width: 90rem;
+    /* Fluid sizes stop growing with the centered shell when zooming out. */
+    --site-fluid-unit: min(1vw, calc(var(--site-max-width) / 100));
     --site-gutter: 1rem;
     scroll-behavior: smooth;
   }
 
   @media (min-width: 40rem) { html { --site-gutter: 1.5rem; } }
-  @media (min-width: 100rem) { html { --site-gutter: 2rem; } }
   @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
   body {

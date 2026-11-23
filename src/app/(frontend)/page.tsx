@@ -4,7 +4,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import {
-  getFeaturedProductsCached,
   getPublishedCategoriesCached,
   getPublishedPosts,
   getSiteSettingsCached,
@@ -12,14 +11,15 @@ import {
 import { getSiteUrl, isIndexingAllowed } from '@/lib/seo';
 import { resolveOpenGraphImages } from '@/lib/seo-images';
 import { normalizeFacebookPageUrl } from '@/lib/facebook-page';
-import { featuredCardSizes } from '@/lib/storefront-image-sizes';
-import { ProductCard } from '@/components/ProductCard';
 import { PostCard } from '@/components/PostCard';
 import { JsonLd } from '@/components/JsonLd';
 import { FacebookFanpages } from '@/components/FacebookFanpages';
 import { HomeCategoryShortcuts } from '@/components/HomeCategoryShortcuts';
 import { HomeBanner } from '@/components/HomeBanner';
 import { HomePromotions } from '@/components/HomePromotions';
+import { HomeServiceStrip } from '@/components/HomeServiceStrip';
+import { HomeProductSelection } from '@/components/HomeProductSelection';
+import { HomeCategoryShelves } from '@/components/HomeCategoryShelves';
 import './home.css';
 
 export const dynamic = 'force-dynamic';
@@ -57,11 +57,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
   const siteUrl = getSiteUrl();
-  const [{ settings, contact }, categories, featuredProducts, latestPosts] =
+  const [{ settings, contact }, categories, latestPosts] =
     await Promise.all([
       getSiteSettingsCached(),
       getPublishedCategoriesCached(),
-      getFeaturedProductsCached(4),
       getPublishedPosts({ page: 1, limit: 3 }),
     ]);
 
@@ -99,25 +98,13 @@ export default async function HomePage() {
             <HomeCategoryShortcuts categories={categories} />
           </div>
 
-          <HomePromotions items={settings?.homePromotions} />
+          <HomeServiceStrip contact={contact} />
 
-          <section aria-labelledby="featured-heading" className="home-featured">
-            <div className="home-section-heading">
-              <h2 id="featured-heading">Sản phẩm nổi bật</h2>
-              <Link href="/san-pham" className="home-more">
-                Xem tất cả <ArrowRight size={17} aria-hidden="true" />
-              </Link>
-            </div>
-            {featuredProducts.length ? (
-              <div className="home-product-grid">
-                {featuredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} sizes={featuredCardSizes} variant="featured" />
-                ))}
-              </div>
-            ) : (
-              <p className="home-empty">Hiện chưa có sản phẩm nổi bật.</p>
-            )}
-          </section>
+          <HomeProductSelection zaloUrl={contact.zaloUrl} />
+
+          <HomeCategoryShelves settings={settings} categories={categories} />
+
+          <HomePromotions items={settings?.homePromotions} />
         </div>
 
         <aside aria-labelledby="home-advice-heading" className="home-advice">

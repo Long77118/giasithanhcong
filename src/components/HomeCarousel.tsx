@@ -2,6 +2,7 @@
 
 import { Children, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { carouselOffset, readCarouselPosition } from '@/lib/carousel-position';
 
 export function HomeCarousel({
   children,
@@ -18,7 +19,9 @@ export function HomeCarousel({
   const viewport = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
   const scrollAnimation = useRef<Animation | null>(null);
-  const drag = useRef<{ x: number; y: number; scroll: number; moved: boolean } | null>(null);
+  const drag = useRef<{ x: number; y: number; scroll: number; moved: boolean; pointerId: number } | null>(null);
+  const categoryOffsets = useRef<number[]>([]);
+  const categoryPosition = useRef({ index: 0, progress: 0 });
   const suppressClick = useRef(false);
   const resumeAt = useRef(0);
   const pointerDown = useRef(false);
@@ -26,6 +29,26 @@ export function HomeCarousel({
   const [scrollable, setScrollable] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const interval = variant === 'banner' ? 5000 : 2800;
+
+  function rememberCategoryPosition(left = viewport.current?.scrollLeft ?? 0) {
+    if (!looping || !categoryOffsets.current.length) return;
+    const position = readCarouselPosition(categoryOffsets.current, left);
+    categoryPosition.current = { ...position, index: position.index % items.length };
+  }
+
+  function cancelDrag() {
+    const tracking = drag.current;
+    const element = viewport.current;
+    drag.current = null;
+    pointerDown.current = false;
+    if (!element) return;
+    if (tracking?.moved) suppressClick.current = true;
+    if (tracking && element.hasPointerCapture(tracking.pointerId)) element.releasePointerCapture(tracking.pointerId);
+    delete element.dataset.dragging;
+    if (variant === 'banner') {
+      for (const slide of track.current?.children ?? []) (slide as HTMLElement).style.removeProperty('opacity');
+    }
+  }
 
   function stopCategoryScroll() {
     const animation = scrollAnimation.current;
@@ -38,6 +61,8 @@ export function HomeCarousel({
     scrollAnimation.current = null;
     animation.cancel();
     element.scrollTo({ left: visiblePosition, behavior: 'instant' });
+    rememberCategoryPosition(visiblePosition);
+    delete element.dataset.animating;
   }
 
   function scrollCategoryTo(target: number, instant = false, duration = 900) {
@@ -49,6 +74,7 @@ export function HomeCarousel({
     const destination = Math.max(0, Math.min(target, element.scrollWidth - element.clientWidth));
     if (instant || typeof rail.animate !== 'function') {
       element.scrollTo({ left: destination, behavior: 'instant' });
+      rememberCategoryPosition(destination);
       delete element.dataset.animating;
       return;
     }
@@ -65,6 +91,7 @@ export function HomeCarousel({
     animation.onfinish = () => {
       if (scrollAnimation.current !== animation) return;
       scrollAnimation.current = null;
+      rememberCategoryPosition();
       delete element.dataset.animating;
     };
   }
@@ -128,13 +155,26 @@ export function HomeCarousel({
     const element = viewport.current;
     const rail = track.current;
     if (!element || !rail) return;
+    let previousWidth = -1;
     const resize = new ResizeObserver(() => {
       if (!element.isConnected) return;
+      const width = element.getBoundingClientRect().width;
+      if (width === previousWidth) return;
+      previousWidth = width;
       stopCategoryScroll();
+      cancelDrag();
       setScrollable(variant === 'banner' ? items.length > 1 : element.scrollWidth > element.clientWidth + 2);
       if (looping) {
-        element.scrollLeft = (rail.children[items.length * 2] as HTMLElement).offsetLeft;
+        categoryOffsets.current = Array.from(rail.children, child => (child as HTMLElement).offsetLeft);
+        element.scrollTo({
+          left: carouselOffset(categoryOffsets.current, {
+            ...categoryPosition.current,
+            index: items.length * 2 + categoryPosition.current.index,
+          }),
+          behavior: 'instant',
+        });
       }
+      resumeAt.current = Date.now() + interval;
       delete element.dataset.animating;
     });
     resize.observe(element);
@@ -155,6 +195,7 @@ export function HomeCarousel({
       }
     };
     const onScroll = () => {
+      if (!scrollAnimation.current) rememberCategoryPosition();
       clearTimeout(settleTimer);
       settleTimer = setTimeout(normalizeLoop, 180);
     };
@@ -215,7 +256,8 @@ export function HomeCarousel({
         pointerDown.current = false;
         resumeAt.current = Date.now() + interval;
       }}
-      onWheel={() => {
+      onWheel={(event) => {
+        if (event.ctrlKey || event.metaKey) return;
         stopCategoryScroll();
         resumeAt.current = Date.now() + interval;
       }}
@@ -236,8 +278,10 @@ export function HomeCarousel({
         onPointerDown={(event) => {
           suppressClick.current = false;
           if (variant === 'categories') stopCategoryScroll();
+          if (!event.isPrimary) { cancelDrag(); return; }
+          if (event.ctrlKey || event.metaKey || event.altKey) return;
           if ((event.pointerType !== 'mouse' && variant !== 'banner') || event.button !== 0) return;
-          drag.current = { x: event.clientX, y: event.clientY, scroll: event.currentTarget.scrollLeft, moved: false };
+          drag.current = { x: event.clientX, y: event.clientY, scroll: event.currentTarget.scrollLeft, moved: false, pointerId: event.pointerId };
         }}
         onPointerMove={(event) => {
           const tracking = drag.current;

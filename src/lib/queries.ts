@@ -16,6 +16,7 @@ import { createCanonicalResolver, type CanonicalDocument } from './canonical';
 import { parsePublicContentPath, publicContentPath, type PublicContentCollection } from './slug';
 import { isCloudflareTarget } from './deployment';
 import { canPreview } from './preview';
+import { getHomeProductGroupFilters } from './home-product-groups';
 
 // Trial Workers always read current CMS data. Node retains its tag-invalidated cache.
 // A production shared cache can be added after choosing cache storage and revalidation bindings.
@@ -191,6 +192,49 @@ export const getFeaturedProductsCached = unstable_cache(
   },
   ['featured-products'],
   { tags: ['catalog', 'products'], revalidate: 300 },
+);
+
+export const getHomeProductSelectionCached = unstable_cache(
+  async () => {
+    const [payload, categories] = await Promise.all([getClient(), getPublishedCategoriesCached()]);
+    return Promise.all(getHomeProductGroupFilters(categories).map(async ({ id, label, where }) => {
+      const result = await payload.find({
+        collection: 'products',
+        where,
+        sort: ['-featured', '-updatedAt', '-id'],
+        limit: 10,
+        depth: 1,
+        select: {
+          name: true, slug: true, images: true, specs: true, packagingSpec: true,
+          minOrderQty: true, minOrderUnit: true, featured: true,
+        },
+        overrideAccess: false,
+      });
+      return { id, label, products: result.docs, totalDocs: result.totalDocs };
+    }));
+  },
+  ['home-product-selection'],
+  { tags: ['catalog', 'products', 'categories'], revalidate: 300 },
+);
+
+export const getHomeCategoryShelfCached = unstable_cache(
+  async (categoryID: number) => {
+    const [payload, categories] = await Promise.all([getClient(), getPublishedCategoriesCached()]);
+    const ids = categorySubtreeIDs(categoryID, categories);
+    if (!ids.length) return { products: [], totalDocs: 0 };
+    const result = await payload.find({
+      collection: 'products',
+      where: { status: { equals: 'published' }, category: { in: ids } },
+      sort: ['-featured', '-updatedAt', '-id'],
+      limit: 12,
+      depth: 1,
+      select: { name: true, slug: true, images: true, packagingSpec: true, minOrderQty: true, minOrderUnit: true },
+      overrideAccess: false,
+    });
+    return { products: result.docs, totalDocs: result.totalDocs };
+  },
+  ['home-category-shelf'],
+  { tags: ['catalog', 'products', 'categories'], revalidate: 300 },
 );
 
 export interface ProductCatalogFilter {

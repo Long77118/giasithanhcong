@@ -15,6 +15,7 @@ Bản nền tảng (audit-ready) cho website giới thiệu sản phẩm bao bì
 - **Cơ sở dữ liệu**: PostgreSQL qua `@payloadcms/db-postgres` (Drizzle + `node-postgres` Pool cấu hình theo Object Method với các biến `SQL_HOST`, `SQL_DB_NAME`, `SQL_USER`, `SQL_PASSWORD`).
 - **Rich Text & SEO**: `@payloadcms/richtext-lexical` + `@payloadcms/plugin-seo`.
 - **Styling**: Tailwind CSS v4 (`@tailwindcss/postcss`).
+- **Khung giao diện public**: header, nội dung và footer dùng chung `.site-shell` căn giữa, tối đa `90rem` (1.440 px ở cỡ chữ mặc định). Kích thước linh hoạt dùng `--site-fluid-unit` và dừng tăng theo khung; giảm zoom bằng trình duyệt sẽ thu nhỏ nội dung và tăng khoảng trống hai bên. Điện thoại vẫn dùng các mốc responsive; danh sách sản phẩm tối đa 4 cột.
 - **Validation**: `zod` cho kiểm tra dữ liệu đầu vào form báo giá phía server.
 
 ---
@@ -148,6 +149,14 @@ Do repository không lưu mật khẩu hay tài khoản mặc định:
 Website chỉ có vai trò `admin`, có thể có nhiều tài khoản Admin. Chỉ Admin của collection `users` được vào quản trị, tạo/sửa/xóa nội dung, ảnh, tài khoản, cấu hình website, quản lý yêu cầu báo giá và mở khóa tài khoản. Đăng nhập/gia hạn phiên từ vai trò cũ không phải Admin bị từ chối; phiên cũ cũng không có quyền quản trị qua REST/GraphQL. Khách vẫn xem nội dung đã xuất bản, ảnh, thông tin liên hệ public và gửi form báo giá.
 
 Migration `20261117_144020_admin_only` loại `editor` khỏi enum PostgreSQL. Migration giữ nguyên Admin hiện có, không đổi mật khẩu và không tự nâng Editor lên Admin. Nếu database khác còn tài khoản không phải Admin, migration dừng và rollback: cần rà soát, thu hồi các tài khoản đó trước khi chạy lại; chỉ cấp Admin cho người đã được chủ website xác nhận.
+
+### Kệ sản phẩm theo danh mục trên trang chủ
+
+Trong **Cấu hình website & Liên hệ → Trang chủ · Kệ sản phẩm theo danh mục**, bật/tắt toàn mục, thêm tối đa 6 danh mục và kéo để đổi thứ tự. Mỗi khối có công tắc riêng và tiêu đề tùy chọn. Để danh sách trống sẽ dùng 3 danh mục gốc đã xuất bản đầu tiên; tắt công tắc toàn mục để ẩn hoàn toàn.
+
+Mỗi khối lấy tối đa 12 sản phẩm đã xuất bản (gồm danh mục con công khai), ưu tiên sản phẩm nổi bật, hiển thị 4 sản phẩm mỗi slide. Khi có đúng 4 sản phẩm, slide luân phiên thứ tự của 4 mẫu; danh mục dưới 4 mẫu giữ nguyên số mẫu thực tế. Khối rỗng hoặc danh mục nháp/đã xóa tự ẩn. Toàn nhóm dùng chung một timer 2,5 giây và chuyển ngang đồng thời, dừng khi hover/focus/thao tác trên bất kỳ khối nào, khi không có khối trong màn hình, tab trình duyệt bị ẩn hoặc người dùng chọn giảm chuyển động. Không có thanh điều khiển hay liên kết cuối khung; bấm tiêu đề để mở danh mục. Vuốt hoặc phím mũi tên chuyển cả nhóm; phím cách trên vùng slide bật/tắt tự chuyển.
+
+Khi cập nhật bản này lên môi trường khác, chạy `npm run db:migrate` trước khi khởi động để áp dụng `20261122_031937_home_category_shelves`. Migration chỉ bổ sung cấu hình kệ danh mục trong SiteSettings.
 
 ### Các lệnh vận hành chính
 

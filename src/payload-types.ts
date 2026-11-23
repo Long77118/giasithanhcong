@@ -134,23 +134,69 @@ export interface UserAuthOperations {
   };
 }
 /**
+ * Nhập lần lượt các tab và bấm Lưu trước khi Xem trước. Xem trước dùng dữ liệu đã lưu, chỉ dành cho quản trị viên; khách không xem được bản nháp.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "products".
  */
 export interface Product {
   id: number;
+  /**
+   * Tên rõ loại sản phẩm, dung tích hoặc quy cách chính; không nhồi từ khóa.
+   */
   name: string;
   /**
-   * Điền thương hiệu của sản phẩm. Để trống nếu chưa xác định được.
+   * Thương hiệu của sản phẩm, không phải tên cửa hàng. Để trống nếu chưa xác định được.
    */
   brandName?: string | null;
   /**
    * Ví dụ: ly-nhua-pet-500ml. Đổi slug sẽ chuyển hướng đường dẫn cũ.
    */
   slug: string;
+  /**
+   * Mã riêng của từng sản phẩm, không trùng mã đã có. Bản nhân đôi được cấp hậu tố riêng.
+   */
   sku: string;
   category: number | ProductCategory;
+  /**
+   * Viết khoảng 150–200 ký tự, nêu loại sản phẩm, công dụng và quy cách chính.
+   */
   shortDescription: string;
+  /**
+   * Tình trạng hiện tại của sản phẩm. Có thể để trống để ẩn nhãn.
+   */
+  availability?: ('in_stock' | 'made_to_order' | 'discontinued') | null;
+  /**
+   * Ảnh đầu tiên là ảnh chính và ảnh chia sẻ mặc định khi chưa chọn ảnh trong tab SEO. Kéo thả để đổi thứ tự; ghi chú giúp phân biệt góc chụp.
+   */
+  images?:
+    | {
+        image: number | Media;
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Chọn hoặc tải tài liệu PDF công khai. Không dùng thư viện ảnh cho tài liệu.
+   */
+  documents?: (number | Document)[] | null;
+  /**
+   * Tên thường dùng: Dung tích, Chất liệu, Màu sắc, Kiểu nắp, Kích thước. Chỉ thêm thông số có dữ liệu; chọn tối đa 4 dòng cho nhãn nhìn nhanh.
+   */
+  specs?:
+    | {
+        label: string;
+        value: string;
+        /**
+         * Đưa thông số này lên cạnh tiêu đề sản phẩm (tối đa 4 nhãn).
+         */
+        showInQuickFacts?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  packagingSpec: string;
+  minOrderQty?: number | null;
+  minOrderUnit?: string | null;
   description?: {
     root: {
       type: string;
@@ -166,10 +212,6 @@ export interface Product {
     };
     [k: string]: unknown;
   } | null;
-  /**
-   * Tình trạng hiện tại của sản phẩm. Có thể để trống để ẩn nhãn.
-   */
-  availability?: ('in_stock' | 'made_to_order' | 'discontinued') | null;
   /**
    * Mỗi mục là một ưu điểm đã được xác nhận của sản phẩm.
    */
@@ -189,10 +231,6 @@ export interface Product {
       }[]
     | null;
   /**
-   * Chọn hoặc tải tài liệu PDF công khai. Không dùng thư viện ảnh cho tài liệu.
-   */
-  documents?: (number | Document)[] | null;
-  /**
    * Chỉ nhận liên kết video YouTube. Trình phát chỉ nạp khi khách bấm xem.
    */
   videos?:
@@ -210,37 +248,11 @@ export interface Product {
         id?: string | null;
       }[]
     | null;
+  relatedProducts?: (number | Product)[] | null;
   /**
    * Chọn các bài viết hỗ trợ khách tìm hiểu sản phẩm. Chỉ bài đã xuất bản được hiển thị.
    */
   relatedPosts?: (number | Post)[] | null;
-  images?:
-    | {
-        image: number | Media;
-        caption?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Thông số hiển thị trong bảng; chọn tối đa 4 thông số cho nhãn nhìn nhanh cạnh tiêu đề.
-   */
-  specs?:
-    | {
-        label: string;
-        value: string;
-        /**
-         * Đưa thông số này lên cạnh tiêu đề sản phẩm (tối đa 4 nhãn).
-         */
-        showInQuickFacts?: boolean | null;
-        id?: string | null;
-      }[]
-    | null;
-  packagingSpec: string;
-  minOrderQty?: number | null;
-  minOrderUnit?: string | null;
-  relatedProducts?: (number | Product)[] | null;
-  featured?: boolean | null;
-  status: 'draft' | 'published';
   meta?: {
     title?: string | null;
     description?: string | null;
@@ -253,6 +265,8 @@ export interface Product {
      */
     canonicalUrl?: string | null;
   };
+  featured?: boolean | null;
+  status: 'draft' | 'published';
   updatedAt: string;
   createdAt: string;
 }
@@ -364,6 +378,8 @@ export interface Document {
   focalY?: number | null;
 }
 /**
+ * Bấm Lưu trước khi Xem trước. Chỉ quản trị viên xem được bản nháp đã lưu.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "posts".
  */
@@ -583,28 +599,7 @@ export interface ProductsSelect<T extends boolean = true> {
   sku?: T;
   category?: T;
   shortDescription?: T;
-  description?: T;
   availability?: T;
-  benefits?: T;
-  applications?: T;
-  faq?:
-    | T
-    | {
-        question?: T;
-        answer?: T;
-        id?: T;
-      };
-  documents?: T;
-  videos?:
-    | T
-    | {
-        youtubeUrl?: T;
-        title?: T;
-        description?: T;
-        thumbnail?: T;
-        id?: T;
-      };
-  relatedPosts?: T;
   images?:
     | T
     | {
@@ -612,6 +607,7 @@ export interface ProductsSelect<T extends boolean = true> {
         caption?: T;
         id?: T;
       };
+  documents?: T;
   specs?:
     | T
     | {
@@ -623,9 +619,27 @@ export interface ProductsSelect<T extends boolean = true> {
   packagingSpec?: T;
   minOrderQty?: T;
   minOrderUnit?: T;
+  description?: T;
+  benefits?: T;
+  applications?: T;
+  faq?:
+    | T
+    | {
+        question?: T;
+        answer?: T;
+        id?: T;
+      };
+  videos?:
+    | T
+    | {
+        youtubeUrl?: T;
+        title?: T;
+        description?: T;
+        thumbnail?: T;
+        id?: T;
+      };
   relatedProducts?: T;
-  featured?: T;
-  status?: T;
+  relatedPosts?: T;
   meta?:
     | T
     | {
@@ -634,6 +648,8 @@ export interface ProductsSelect<T extends boolean = true> {
         image?: T;
         canonicalUrl?: T;
       };
+  featured?: T;
+  status?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -862,6 +878,24 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
  */
 export interface SiteSetting {
   id: number;
+  homeCategoryShelvesEnabled?: boolean | null;
+  /**
+   * Kéo để đổi thứ tự, tối đa 6 khối. Để trống sẽ lấy 3 danh mục gốc đã xuất bản đầu tiên. Muốn ẩn toàn bộ, tắt công tắc phía trên. Mỗi khối tự lấy tối đa 12 sản phẩm, 4 sản phẩm mỗi slide; các khối chuyển cùng nhịp.
+   */
+  homeCategoryShelves?:
+    | {
+        enabled?: boolean | null;
+        /**
+         * Bao gồm sản phẩm thuộc danh mục con đã xuất bản. Khối không có sản phẩm sẽ tự ẩn.
+         */
+        category?: (number | null) | ProductCategory;
+        /**
+         * Để trống để dùng tên danh mục hiện tại.
+         */
+        title?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   /**
    * Tối đa 4 ô bên dưới dải danh mục. Kéo các ô để đổi thứ tự hiển thị.
    */
@@ -923,6 +957,15 @@ export interface SiteSetting {
  * via the `definition` "site-settings_select".
  */
 export interface SiteSettingsSelect<T extends boolean = true> {
+  homeCategoryShelvesEnabled?: T;
+  homeCategoryShelves?:
+    | T
+    | {
+        enabled?: T;
+        category?: T;
+        title?: T;
+        id?: T;
+      };
   homePromotions?:
     | T
     | {
