@@ -20,10 +20,10 @@ export function PostCard({
   post,
   sizes = fourColumnCardSizes,
   variant = 'default',
-}: { post: Post; sizes?: string; variant?: 'default' | 'feature' | 'brief' }) {
+}: { post: Post; sizes?: string; variant?: 'default' | 'feature' | 'brief' | 'related' }) {
   const postPath = publicContentPath('posts', post.slug);
 
-  if (variant !== 'default') {
+  if (variant === 'feature' || variant === 'brief') {
     const feature = variant === 'feature';
     return (
       <article className={feature ? 'home-story home-story-feature' : 'home-story home-story-brief'}>
@@ -48,6 +48,25 @@ export function PostCard({
       : null;
 
   const dateText = formatVietnameseDate(post.publishedAt);
+
+  if (variant === 'related') {
+    return (
+      <article className="article-post-card">
+        <Link href={postPath} aria-label={post.title}>
+          {post.coverImage && typeof post.coverImage === 'object' && post.coverImage.url && (
+            <div className="article-post-card-image">
+              <MediaImage media={post.coverImage} prefer="card" sizes={sizes} />
+            </div>
+          )}
+          <div className="article-post-card-copy">
+            {categoryObj && <span className="article-post-card-category">{categoryObj.name}</span>}
+            <h3>{post.title}</h3>
+            {dateText && <time dateTime={post.publishedAt}>{dateText}</time>}
+          </div>
+        </Link>
+      </article>
+    );
+  }
 
   return (
     <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition-all duration-150 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">

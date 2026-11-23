@@ -133,37 +133,43 @@ export async function PostDetail({ post, contact, siteUrl, preview = false }: {
               </section>}
             </aside>
           )}
+          <div className="article-end">
+            {author && <div className="article-tile article-author">
+              <span className="article-avatar" aria-hidden="true">{initial}</span>
+              <div>
+                <p>Biên tập bởi <strong>{author}</strong></p>
+                {contact.brandName.trim() && <p>{contact.brandName}</p>}
+              </div>
+            </div>}
+            <section className="article-tile article-quote">
+              <h2>Cần báo giá theo số lượng?</h2>
+              <Link className="article-button" href="/lien-he#bao-gia">Nhận báo giá</Link>
+            </section>
+          </div>
         </div>
 
-      </article>
-
-      {relatedProducts.length > 2 && (
-        <section className="border-t border-slate-200 bg-white">
-          <div className="site-shell py-12">
-            <h2 className="font-display text-2xl font-bold text-[#0C2340]">
-              Sản phẩm đề cập trong bài viết
-            </h2>
-            <div className="catalog-grid mt-6">
+        {relatedProducts.length > 2 && (
+          <section className="article-related article-related-products">
+            <h2>Sản phẩm đề cập trong bài viết</h2>
+            <div className="catalog-grid">
               {relatedProducts.slice(2).map((product) => (
                 <ProductCard key={product.id} product={product} sizes={catalogCardSizes} />
               ))}
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )}
 
-      {relatedPosts.length > 0 && (
-        <section className="site-shell py-12">
-          <h2 className="font-display text-2xl font-bold text-[#0C2340]">
-            Bài viết cùng chuyên mục
-          </h2>
-          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {relatedPosts.map((other) => (
-              <PostCard key={other.id} post={other} sizes={threeColumnCardSizes} />
-            ))}
-          </div>
-        </section>
-      )}
+        {relatedPosts.length > 0 && (
+          <section className="article-related">
+            <h2>Bài viết cùng chuyên mục</h2>
+            <div className="article-related-grid">
+              {relatedPosts.map((other) => (
+                <PostCard key={other.id} post={other} sizes={threeColumnCardSizes} variant="related" />
+              ))}
+            </div>
+          </section>
+        )}
+      </article>
     </div>
   );
 }
