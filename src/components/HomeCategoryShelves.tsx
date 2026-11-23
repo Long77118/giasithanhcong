@@ -16,11 +16,15 @@ export async function HomeCategoryShelves({ settings, categories }: { settings: 
 
   return (
     <section className="home-shelves" aria-labelledby="home-shelves-heading" id="ke-danh-muc">
-      <div className="home-shop-heading">
-        <h2 id="home-shelves-heading">Khám phá từng danh mục</h2>
-        <p>Tìm thêm mẫu trong từng nhóm bao bì.</p>
-      </div>
-      <HomeCategorySliderGroup canRotate={populated.some(shelf => shelf.products.length >= 4)}>
+      <HomeCategorySliderGroup
+        canRotate={populated.some(shelf => shelf.products.length >= 4)}
+        heading={(
+          <div className="home-shop-heading">
+            <h2 id="home-shelves-heading">Khám phá từng danh mục</h2>
+            <p>Tìm thêm mẫu trong từng nhóm bao bì.</p>
+          </div>
+        )}
+      >
         {populated.map(({ category, title, products, totalDocs }) => (
           <article className="home-shelf" key={category.id}>
             <header className="home-shelf-heading">

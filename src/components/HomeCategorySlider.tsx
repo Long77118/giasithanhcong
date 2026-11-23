@@ -1,10 +1,14 @@
 'use client';
 
 import { Children, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Pause, Play } from 'lucide-react';
+import { shouldAutoplayHomeShelves } from '@/lib/home-shelf-autoplay';
 
 const ShelfMotion = createContext({ step: 0, autoplay: false });
+// Give visitors enough time to read all four product rows before the next slide.
+const SHELF_AUTOPLAY_INTERVAL_MS = 5000;
 
-export function HomeCategorySliderGroup({ children, canRotate }: { children: ReactNode; canRotate: boolean }) {
+export function HomeCategorySliderGroup({ heading, children, canRotate }: { heading: ReactNode; children: ReactNode; canRotate: boolean }) {
   const root = useRef<HTMLDivElement>(null);
   const gesture = useRef<{ x: number; y: number; id: number } | null>(null);
   const suppressClick = useRef(false);
@@ -16,9 +20,10 @@ export function HomeCategorySliderGroup({ children, canRotate }: { children: Rea
   const [focused, setFocused] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [paused, setPaused] = useState(false);
-  const autoplay = canRotate && visible && pageVisible && !reducedMotion && !hovered && !focused && !dragging && !paused;
+  const autoplay = shouldAutoplayHomeShelves({ canRotate, visible, pageVisible, reducedMotion, hovered, focused, dragging, paused });
   const motion = useMemo(() => ({ step, autoplay }), [step, autoplay]);
   const move = useCallback((direction: number) => setStep(current => current + direction), []);
+  const togglePaused = () => setPaused(current => !current);
 
   useEffect(() => {
     if (!canRotate || !root.current) return;
@@ -48,12 +53,27 @@ export function HomeCategorySliderGroup({ children, canRotate }: { children: Rea
 
   useEffect(() => {
     if (!autoplay) return;
-    const timer = setInterval(() => move(1), 2500);
+    const timer = setInterval(() => move(1), SHELF_AUTOPLAY_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [autoplay, move]);
 
   return (
     <ShelfMotion value={motion}>
+      <div className="home-shelves-heading">
+        {heading}
+        {canRotate && (
+          <button
+            type="button"
+            className="home-shelves-autoplay"
+            aria-label="Dừng / Chạy tiếp chế độ tự chuyển kệ sản phẩm"
+            aria-pressed={paused}
+            onClick={togglePaused}
+          >
+            {paused ? <Play size={16} aria-hidden="true" /> : <Pause size={16} aria-hidden="true" />}
+            {paused ? 'Chạy tiếp' : 'Dừng'}
+          </button>
+        )}
+      </div>
       <div
         ref={root}
         className="home-shelves-grid"
@@ -76,7 +96,7 @@ export function HomeCategorySliderGroup({ children, canRotate }: { children: Rea
             move(event.key === 'ArrowRight' ? 1 : -1);
           } else if (event.key === ' ') {
             event.preventDefault();
-            setPaused(current => !current);
+            if (!reducedMotion && !event.repeat) togglePaused();
           }
         }}
         onPointerDown={event => {
@@ -104,7 +124,12 @@ export function HomeCategorySliderGroup({ children, canRotate }: { children: Rea
           if (Math.abs(dx) >= 40 && Math.abs(dx) > Math.abs(event.clientY - start.y)) move(dx < 0 ? 1 : -1);
         }}
         onPointerCancel={() => { gesture.current = null; setDragging(false); }}
-        onLostPointerCapture={() => { gesture.current = null; setDragging(false); }}
+        onLostPointerCapture={event => {
+          // A touched child loses its implicit capture when the grid takes over the same swipe.
+          if (event.target !== event.currentTarget || gesture.current?.id !== event.pointerId) return;
+          gesture.current = null;
+          setDragging(false);
+        }}
         onClickCapture={event => {
           if (!suppressClick.current || event.detail === 0) return;
           event.preventDefault();
