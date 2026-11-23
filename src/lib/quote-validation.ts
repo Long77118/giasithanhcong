@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isValidPublicSlug, publicContentPath, withPublicSearchParams } from './slug';
 
 const vietnamesePhoneRegex = /^(?:\+?84|0)(?:\d){8,10}$/;
 
@@ -45,6 +46,16 @@ export const quoteRequestSchema = z.object({
 });
 
 export type QuoteRequestValidated = z.infer<typeof quoteRequestSchema>;
+
+export function resolveQuoteSourceUrl(pathname: QuoteRequestValidated['sourceUrl'], publishedProductSlug?: string) {
+  const slug = isValidPublicSlug(publishedProductSlug) ? publishedProductSlug : undefined;
+  if (pathname === '/lien-he') {
+    return withPublicSearchParams(pathname, { sanpham: slug });
+  }
+  if (pathname === '/gioi-thieu') return pathname;
+  if (slug && pathname === publicContentPath('products', slug)) return pathname;
+  return undefined;
+}
 
 export interface QuoteValidationResult {
   ok: boolean;

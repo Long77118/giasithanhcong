@@ -5,7 +5,7 @@ import { getSqlExecutor } from '@/lib/db-transaction';
 import { readQuoteJson } from '@/lib/quote-body';
 import { getQuoteClient } from '@/lib/quote-client';
 import { consumeQuoteSubmission } from '@/lib/quote-rate-limit';
-import { validateQuoteSubmission } from '@/lib/quote-validation';
+import { resolveQuoteSourceUrl, validateQuoteSubmission } from '@/lib/quote-validation';
 
 export async function GET() {
   return NextResponse.json(
@@ -68,6 +68,7 @@ export async function POST(req: Request) {
     }
 
     let resolvedProductId: number | undefined;
+    let resolvedProductSlug: string | undefined;
     let productNameSnapshot = input.productNameSnapshot || undefined;
 
     if (input.productId !== null && input.productId !== undefined && input.productId !== '') {
@@ -85,9 +86,11 @@ export async function POST(req: Request) {
           depth: 0,
           overrideAccess: false,
         });
-        if (found.docs[0]) {
-          resolvedProductId = found.docs[0].id;
-          productNameSnapshot = `${found.docs[0].name} (${found.docs[0].sku})`;
+        const product = found.docs[0];
+        if (product) {
+          resolvedProductId = product.id;
+          resolvedProductSlug = product.slug;
+          productNameSnapshot = `${product.name} (${product.sku})`;
         }
       }
     }
@@ -104,7 +107,7 @@ export async function POST(req: Request) {
         email: input.email || undefined,
         companyName: input.companyName || undefined,
         message: input.message,
-        sourceUrl: input.sourceUrl || undefined,
+        sourceUrl: resolveQuoteSourceUrl(input.sourceUrl, resolvedProductSlug),
         status: 'new',
       },
     });
