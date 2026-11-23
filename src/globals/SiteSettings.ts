@@ -11,7 +11,7 @@ const validateShelfCategory: RelationshipFieldSingleValidation = (value, { sibli
 export const SiteSettings: GlobalConfig = {
   slug: 'site-settings',
   label: 'Cấu hình website & Liên hệ',
-  admin: { group: 'Hệ thống' },
+  admin: { group: 'Cài đặt' },
   access: {
     read: () => true,
     update: isAdmin,

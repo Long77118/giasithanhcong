@@ -7,7 +7,7 @@ export const Documents: CollectionConfig = {
   slug: 'documents',
   labels: { singular: 'Tài liệu PDF', plural: 'Tài liệu PDF' },
   admin: {
-    group: 'Nội dung',
+    group: 'Thư viện',
     useAsTitle: 'title',
     description: 'Tài liệu công khai để khách tải về: catalog và bảng giá dạng PDF.',
   },

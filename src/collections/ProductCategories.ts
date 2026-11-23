@@ -12,7 +12,7 @@ export const ProductCategories: CollectionConfig = {
     plural: 'Danh mục sản phẩm',
   },
   admin: {
-    group: 'Danh mục hàng',
+    group: 'Danh mục và nội dung',
     useAsTitle: 'name',
     defaultColumns: ['name', 'slug', 'parent', 'status', 'displayOrder'],
   },

@@ -11,7 +11,7 @@ export const PostCategories: CollectionConfig = {
     plural: 'Chuyên mục bài viết',
   },
   admin: {
-    group: 'Nội dung',
+    group: 'Danh mục và nội dung',
     useAsTitle: 'name',
     defaultColumns: ['name', 'slug', 'status'],
   },

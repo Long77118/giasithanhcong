@@ -79,11 +79,11 @@ export default buildConfig({
     },
   },
   collections: [
+    QuoteRequests,
     Products,
     ProductCategories,
     Posts,
     PostCategories,
-    QuoteRequests,
     Media,
     Documents,
     Users,

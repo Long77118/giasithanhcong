@@ -12,7 +12,7 @@ export const Posts: CollectionConfig = {
     plural: 'Bài viết Blog',
   },
   admin: {
-    group: 'Nội dung',
+    group: 'Danh mục và nội dung',
     useAsTitle: 'title',
     defaultColumns: ['title', 'category', 'authorName', 'publishedAt', 'status'],
     preview: (doc) => previewUrl('posts', doc.id),

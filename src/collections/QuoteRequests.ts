@@ -8,7 +8,7 @@ export const QuoteRequests: CollectionConfig = {
     plural: 'Yêu cầu báo giá',
   },
   admin: {
-    group: 'Kinh doanh',
+    group: 'Bán hàng',
     useAsTitle: 'customerName',
     defaultColumns: [
       'customerName',

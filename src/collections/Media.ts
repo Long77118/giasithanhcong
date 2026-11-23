@@ -12,7 +12,7 @@ export const Media: CollectionConfig = {
     singular: 'Thư viện ảnh',
     plural: 'Thư viện ảnh',
   },
-  admin: { group: 'Nội dung' },
+  admin: { group: 'Thư viện' },
   access: {
     read: () => true,
     create: isAdmin,

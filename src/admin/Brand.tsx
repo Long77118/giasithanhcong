@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import type { Payload } from 'payload';
 import { getSiteSettingsCached } from '@/lib/queries';
 import { OverviewLink } from './OverviewLink';
+import { LoginGreeting } from './LoginGreeting';
 
 export function WorkspaceIcon() {
   return <Image className="workspace-mark" src="/admin-assets/mark.png" alt="" width={40} height={40} unoptimized />;
@@ -36,8 +37,8 @@ export function LoginIntroduction() {
     <>
       <div className="workspace-login-art">
         <Image
-          alt="Hộp kraft, ly giấy và ly nhựa dùng cho bao bì thực phẩm"
-          src="/admin-assets/packaging-studio.webp"
+          alt=""
+          src="/admin-assets/packaging-illustration.svg"
           fill
           sizes="(max-width: 820px) 100vw, 50vw"
           unoptimized
@@ -45,8 +46,8 @@ export function LoginIntroduction() {
         />
       </div>
       <div className="workspace-login-title">
-        <h1>Đăng nhập quản trị</h1>
-        <p>Dùng email của tài khoản quản trị để tiếp tục.</p>
+        <LoginGreeting />
+        <p>Đăng nhập bằng email quản trị để bắt đầu.</p>
       </div>
     </>
   );

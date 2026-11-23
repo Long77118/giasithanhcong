@@ -1,12 +1,14 @@
 import Link from 'next/link';
-import { ArrowRight, ArrowUpRight, FileText, Inbox, Package, Plus, UsersRound } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Clock3, FileText, ImageOff, Inbox, Package, Search } from 'lucide-react';
 import type { AdminViewServerProps } from 'payload';
 import { isAdminUser } from '@/collections/access';
+import { dashboardListHref, getDashboardFilters, QUOTE_WAIT_HOURS } from '@/lib/admin-dashboard';
 import type { QuoteRequest } from '@/payload-types';
 
 const numberFormat = new Intl.NumberFormat('vi-VN');
 const dateFormat = new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'short',
+  timeStyle: 'short',
   timeZone: 'Asia/Ho_Chi_Minh',
 });
 
@@ -24,11 +26,15 @@ export default async function WorkspaceDashboard({ initPageResult: { req } }: Ad
   const adminPath = payload.config.routes.admin;
   const quotesPath = `${adminPath}/collections/quote-requests`;
   const context = { req, overrideAccess: false } as const;
-  const [products, posts, users, newQuotes, recentQuotes] = await Promise.all([
-    payload.count({ collection: 'products', ...context }),
-    payload.count({ collection: 'posts', ...context }),
-    payload.count({ collection: 'users', ...context }),
-    payload.count({ collection: 'quote-requests', where: { status: { equals: 'new' } }, ...context }),
+  const filters = getDashboardFilters(new Date());
+  const newQuotesHref = dashboardListHref(adminPath, 'quote-requests', filters.newQuotes);
+  const [newQuotes, waitingQuotes, productDrafts, postDrafts, missingImages, missingSeoDescription, recentQuotes] = await Promise.all([
+    payload.count({ collection: 'quote-requests', where: filters.newQuotes, ...context }),
+    payload.count({ collection: 'quote-requests', where: filters.waitingQuotes, ...context }),
+    payload.count({ collection: 'products', where: filters.drafts, ...context }),
+    payload.count({ collection: 'posts', where: filters.drafts, ...context }),
+    payload.count({ collection: 'products', where: filters.missingImages, ...context }),
+    payload.count({ collection: 'products', where: filters.missingSeoDescription, ...context }),
     payload.find({
       collection: 'quote-requests',
       sort: ['-createdAt', '-id'],
@@ -40,22 +46,26 @@ export default async function WorkspaceDashboard({ initPageResult: { req } }: Ad
     }),
   ]);
 
-  const destinations = [
-    { label: 'Sản phẩm', collection: 'products', count: products.totalDocs, icon: Package, action: 'Thêm sản phẩm' },
-    { label: 'Bài viết', collection: 'posts', count: posts.totalDocs, icon: FileText, action: 'Viết bài mới' },
-    { label: 'Tài khoản quản trị', collection: 'users', count: users.totalDocs, icon: UsersRound, action: 'Thêm tài khoản' },
+  const tasks = [
+    { label: 'Sản phẩm đang nháp', href: dashboardListHref(adminPath, 'products', filters.drafts), count: productDrafts.totalDocs, icon: Package },
+    { label: 'Bài viết đang nháp', href: dashboardListHref(adminPath, 'posts', filters.drafts), count: postDrafts.totalDocs, icon: FileText },
+    { label: 'Sản phẩm thiếu ảnh', href: dashboardListHref(adminPath, 'products', filters.missingImages), count: missingImages.totalDocs, icon: ImageOff },
+    { label: 'Sản phẩm thiếu mô tả SEO', href: dashboardListHref(adminPath, 'products', filters.missingSeoDescription), count: missingSeoDescription.totalDocs, icon: Search },
+  ];
+  const shortcuts = [
+    { label: 'Thêm sản phẩm', href: `${adminPath}/collections/products/create`, icon: Package },
+    { label: 'Viết bài', href: `${adminPath}/collections/posts/create`, icon: FileText },
+    { label: 'Xem yêu cầu mới', href: newQuotesHref, icon: Inbox },
+    { label: 'Xem website', href: '/', icon: ArrowUpRight, external: true },
   ];
 
   return (
     <main className="workspace-dashboard" id="workspace-main">
       <header className="workspace-dashboard__header">
         <div>
-          <h1>Tổng quan</h1>
-          <p>Quản lý danh mục, nội dung và yêu cầu báo giá.</p>
+          <h1>Việc hôm nay</h1>
+          <p>Ưu tiên báo giá cần phản hồi và nội dung đang chờ hoàn thiện.</p>
         </div>
-        <Link className="workspace-website-link" href="/" target="_blank" rel="noopener noreferrer">
-          Xem website <ArrowUpRight size={16} aria-hidden />
-        </Link>
       </header>
 
       <div className="workspace-dashboard__top">
@@ -65,15 +75,21 @@ export default async function WorkspaceDashboard({ initPageResult: { req } }: Ad
             <h2 id="workspace-quote-count">Yêu cầu báo giá mới</h2>
           </div>
           <div className="workspace-spotlight__count">{numberFormat.format(newQuotes.totalDocs)}</div>
-          <Link href={quotesPath + '?where%5Bstatus%5D%5Bequals%5D=new'}>
+          <Link href={newQuotesHref} prefetch={false}>
             Xem yêu cầu mới <ArrowRight size={17} aria-hidden />
+          </Link>
+          <Link className="workspace-quote-wait" href={dashboardListHref(adminPath, 'quote-requests', filters.waitingQuotes)} prefetch={false}>
+            <Clock3 size={17} aria-hidden />
+            <span>Chờ quá {QUOTE_WAIT_HOURS} giờ</span>
+            <strong>{numberFormat.format(waitingQuotes.totalDocs)}</strong>
+            <ArrowRight size={16} aria-hidden />
           </Link>
         </section>
 
-        <ul className="workspace-metrics" aria-label="Dữ liệu website">
-          {destinations.map(({ label, collection, count, icon: Icon }) => (
-            <li key={collection}>
-              <Link href={`${adminPath}/collections/${collection}`}>
+        <ul className="workspace-metrics" aria-label="Nội dung cần hoàn thiện">
+          {tasks.map(({ label, href, count, icon: Icon }) => (
+            <li key={href}>
+              <Link href={href} prefetch={false}>
                 <span className="workspace-tile-icon"><Icon size={19} aria-hidden /></span>
                 <span className="workspace-metrics__label">{label}</span>
                 <strong>{numberFormat.format(count)}</strong>
@@ -88,13 +104,13 @@ export default async function WorkspaceDashboard({ initPageResult: { req } }: Ad
         <section className="workspace-worklist" aria-labelledby="workspace-recent-title">
           <div className="workspace-section-heading">
             <h2 id="workspace-recent-title">Báo giá gần đây</h2>
-            <Link href={quotesPath}>Xem tất cả <ArrowRight size={15} aria-hidden /></Link>
+            <Link href={quotesPath} prefetch={false}>Xem tất cả <ArrowRight size={15} aria-hidden /></Link>
           </div>
           {recentQuotes.docs.length ? (
             <ul className="workspace-recent">
               {recentQuotes.docs.map(quote => (
                 <li key={quote.id}>
-                  <Link href={`${quotesPath}/${quote.id}`}>
+                  <Link href={`${quotesPath}/${quote.id}`} prefetch={false}>
                     <span className="workspace-recent__name">
                       <strong>{quote.customerName}</strong>
                       <time dateTime={quote.createdAt}>{dateFormat.format(new Date(quote.createdAt))}</time>
@@ -107,23 +123,27 @@ export default async function WorkspaceDashboard({ initPageResult: { req } }: Ad
             </ul>
           ) : (
             <div className="workspace-empty">
-              <span className="workspace-tile-icon"><Inbox size={21} aria-hidden /></span>
-              <p>Chưa có yêu cầu báo giá.</p>
+              <svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true" fill="none">
+                <circle cx="24" cy="24" r="23" fill="var(--workspace-lavender)" />
+                <path d="m13 22 11 4 11-4v13l-11 4-11-4V22Zm0 0-4-5 12-4 3 5 3-5 12 4-4 5m-11 4v13" stroke="var(--workspace-sticker-ink)" strokeWidth="2" strokeLinejoin="round" />
+                <path d="M24 6v3m-8 0 2 2m14-2-2 2" stroke="var(--workspace-sticker-ink)" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              <div><strong>Chưa có yêu cầu báo giá.</strong><p>Khi khách gửi yêu cầu, bạn sẽ thấy ở đây.</p></div>
             </div>
           )}
         </section>
 
         <section className="workspace-quick" aria-labelledby="workspace-quick-title">
           <div className="workspace-section-heading">
-            <h2 id="workspace-quick-title">Tạo nhanh</h2>
+            <h2 id="workspace-quick-title">Thao tác nhanh</h2>
           </div>
           <ul>
-            {destinations.map(({ collection, action, icon: Icon }) => (
-              <li key={collection}>
-                <Link href={`${adminPath}/collections/${collection}/create`}>
+            {shortcuts.map(({ href, label, icon: Icon, external }) => (
+              <li key={href}>
+                <Link href={href} prefetch={false} target={external ? '_blank' : undefined} rel={external ? 'noopener noreferrer' : undefined}>
                   <span className="workspace-tile-icon"><Icon size={17} aria-hidden /></span>
-                  <span>{action}</span>
-                  <Plus size={16} aria-hidden />
+                  <span>{label}</span>
+                  {!external && <ArrowRight size={16} aria-hidden />}
                 </Link>
               </li>
             ))}

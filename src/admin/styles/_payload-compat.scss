@@ -14,6 +14,34 @@
   transition: background-color var(--workspace-control-motion) ease, color var(--workspace-control-motion) ease;
 }
 
+/* The native nav has no per-link icon slot. Payload assigns these IDs on both active and linked rows. */
+.nav .nav__link::before {
+  content: '';
+  flex: 0 0 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--workspace-nav-icon, none) center / 15px 15px no-repeat var(--workspace-nav-chip, var(--workspace-lavender));
+}
+
+.nav #nav-quote-requests {
+  --workspace-nav-chip: var(--workspace-coral);
+  --workspace-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F1A3D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-6l-2 3h-4l-2-3H2'/%3E%3Cpath d='M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'/%3E%3C/svg%3E");
+}
+
+.nav :is(#nav-products, #nav-product-categories, #nav-posts, #nav-post-categories) {
+  --workspace-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F1A3D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 7.5 12 3 4 7.5v9l8 4.5 8-4.5zM4 7.5l8 4.5 8-4.5M12 12v9'/%3E%3C/svg%3E");
+}
+
+.nav :is(#nav-media, #nav-documents) {
+  --workspace-nav-chip: var(--workspace-sun);
+  --workspace-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F1A3D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/%3E%3C/svg%3E");
+}
+
+.nav :is(#nav-users, #nav-global-site-settings) {
+  --workspace-nav-chip: var(--workspace-mint);
+  --workspace-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F1A3D' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M5 6h14M5 12h14M5 18h14M9 4v4m6 2v4m-4 2v4'/%3E%3C/svg%3E");
+}
+
 .nav .nav__link:is(:hover, .active, :has(.nav__link-indicator)) {
   color: var(--workspace-ink);
   background: var(--workspace-soft);

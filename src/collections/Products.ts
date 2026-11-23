@@ -13,7 +13,7 @@ export const Products: CollectionConfig = {
     plural: 'Sản phẩm bán sỉ',
   },
   admin: {
-    group: 'Danh mục hàng',
+    group: 'Danh mục và nội dung',
     useAsTitle: 'name',
     defaultColumns: ['sku', 'name', 'category', 'minOrderQty', 'featured', 'status', 'updatedAt'],
     listSearchableFields: ['name', 'sku', 'brandName'],

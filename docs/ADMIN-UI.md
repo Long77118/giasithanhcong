@@ -192,6 +192,18 @@ Các selector cần rà thêm ở lần nâng cấp gồm `.checkbox-input__inpu
 
 Kiểm tra Giai đoạn 1 trên Chromium với bản build Node ghi nhận nút đăng nhập đạt 7,56:1 ở chế độ sáng và 7,90:1 ở chế độ tối. Đã mở danh sách, tab, trường ngày, Lexical, drawer chọn ảnh và hộp thoại xác nhận trong hai chế độ. Toast lỗi slug có chuỗi hệ thống tiếng Anh và sẽ được rà trong Giai đoạn 5. Kiểm tra trên Workers và ma trận trợ năng đầy đủ thuộc Giai đoạn 6.
 
+Trong Giai đoạn 2, bốn nhóm menu dùng `admin.group` và nút thu gọn của Payload. Chip trang trí trong menu theo các ID `#nav-quote-requests`, `#nav-products`, `#nav-product-categories`, `#nav-posts`, `#nav-post-categories`, `#nav-media`, `#nav-documents`, `#nav-users` và `#nav-global-site-settings`. Kiểm tra các ID và chip sau khi nâng Payload. Trang Đăng nhập dùng giờ thiết bị sau khi trang tương tác được, với các mốc 11:00, 14:00 và 18:00. Form và liên kết quay về website nằm ở các điểm gắn hiện có.
+
+Trang Việc hôm nay dùng sáu phép đếm tại cơ sở dữ liệu và lấy tối đa năm yêu cầu gần nhất. Mọi truy vấn tùy biến đi qua request Payload hiện tại với `overrideAccess: false`. Số đếm và URL danh sách dùng cùng bộ lọc.
+
+| Chỉ số | Điều kiện |
+| --- | --- |
+| Báo giá mới | Trạng thái `new`. |
+| Chờ quá 24 giờ | Trạng thái `new` và thời điểm tạo trước mốc 24 giờ. |
+| Sản phẩm hoặc bài viết đang nháp | Trạng thái `draft` trên từng danh sách tương ứng. |
+| Sản phẩm thiếu ảnh | Bộ ảnh trống hoặc có dòng không còn liên kết tới ảnh. |
+| Sản phẩm thiếu mô tả SEO | Trường mô tả trong tab SEO chưa có dữ liệu hoặc là chuỗi rỗng. Mô tả tự sinh từ nội dung sản phẩm không được tính là mô tả đã điền. |
+
 | Giai đoạn | Hướng triển khai | Điểm cần xác minh |
 | --- | --- | --- |
 | 1 · Nền tảng | Tách token sáng/tối, component riêng và phần ghi đè Payload. Ánh xạ biến CSS trước, sau đó kiểm tra bảng, tab, trạng thái, toast, modal và toàn bộ nhóm field đã nêu. | Các dải elevation và semantic có nhiều nơi dùng. Đo màu thực sau cascade và kiểm tra lại Lexical, lỗi, disabled, dropdown trong modal. Xác nhận font tiếng Việt và ảnh hưởng bundle. |
