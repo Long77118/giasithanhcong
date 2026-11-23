@@ -204,6 +204,10 @@ Trang Việc hôm nay dùng sáu phép đếm tại cơ sở dữ liệu và l�
 | Sản phẩm thiếu ảnh | Bộ ảnh trống hoặc có dòng không còn liên kết tới ảnh. |
 | Sản phẩm thiếu mô tả SEO | Trường mô tả trong tab SEO chưa có dữ liệu hoặc là chuỗi rỗng. Mô tả tự sinh từ nội dung sản phẩm không được tính là mô tả đã điền. |
 
+Giai đoạn 3 dùng cell chính thức của Payload cho tên khách, sản phẩm, trạng thái, thời gian và thao tác nhanh. Bộ lọc nhanh thay các điều kiện cột hiện tại, giữ từ khóa tìm kiếm và đưa danh sách về trang đầu. “Chờ lâu” dùng cùng mốc 24 giờ với Tổng quan. Thời gian tuyệt đối của yêu cầu được hiển thị theo giờ Việt Nam. Sau khi nâng Payload, kiểm tra lại kích thước cột và checkbox chọn hàng ở selector `.collection-list__tables .table:has(.admin-quote-actions)`.
+
+Chuyển trạng thái nhanh đi theo từng bước và gửi trạng thái đang thấy lên endpoint của collection. Endpoint yêu cầu Admin, khóa bản ghi PostgreSQL trong giao dịch và đối chiếu trạng thái trước khi ghi qua Payload với `overrideAccess: false`. Khi một cửa sổ khác đã cập nhật, danh sách được tải lại và người dùng nhận thông báo. Bảng và form dùng các thành phần trình bày. Phần ghi chú nội bộ đã được bỏ khỏi phạm vi theo xác nhận của chủ dự án.
+
 | Giai đoạn | Hướng triển khai | Điểm cần xác minh |
 | --- | --- | --- |
 | 1 · Nền tảng | Tách token sáng/tối, component riêng và phần ghi đè Payload. Ánh xạ biến CSS trước, sau đó kiểm tra bảng, tab, trạng thái, toast, modal và toàn bộ nhóm field đã nêu. | Các dải elevation và semantic có nhiều nơi dùng. Đo màu thực sau cascade và kiểm tra lại Lexical, lỗi, disabled, dropdown trong modal. Xác nhận font tiếng Việt và ảnh hưởng bundle. |

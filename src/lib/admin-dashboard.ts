@@ -1,11 +1,9 @@
 import type { Where } from 'payload';
-
-// A new request needs a follow-up after 24 elapsed hours without first contact.
-export const QUOTE_WAIT_HOURS = 24;
+import { quoteWaitingCutoff } from './admin-quotes';
 
 export function getDashboardFilters(now: Date) {
   const newQuotes = { status: { equals: 'new' } };
-  const waitCutoff = new Date(now.getTime() - QUOTE_WAIT_HOURS * 60 * 60 * 1000).toISOString();
+  const waitCutoff = new Date(quoteWaitingCutoff(now.getTime())).toISOString();
   return {
     newQuotes,
     waitingQuotes: { and: [newQuotes, { createdAt: { less_than: waitCutoff } }] },

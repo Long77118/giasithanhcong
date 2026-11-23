@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { ArrowRight, ArrowUpRight, Clock3, FileText, ImageOff, Inbox, Package, Search } from 'lucide-react';
 import type { AdminViewServerProps } from 'payload';
 import { isAdminUser } from '@/collections/access';
-import { dashboardListHref, getDashboardFilters, QUOTE_WAIT_HOURS } from '@/lib/admin-dashboard';
+import { dashboardListHref, getDashboardFilters } from '@/lib/admin-dashboard';
+import { QUOTE_WAIT_HOURS } from '@/lib/admin-quotes';
 import type { QuoteRequest } from '@/payload-types';
 
 const numberFormat = new Intl.NumberFormat('vi-VN');

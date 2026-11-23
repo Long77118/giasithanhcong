@@ -1,0 +1,120 @@
+.admin-quote-filters,
+.admin-quote-contact-actions,
+.admin-quote-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.admin-quote-filters { margin-block: 0.25rem 1rem; }
+
+.admin-quote-filters button,
+.admin-quote-contact-actions :is(a, button),
+.admin-quote-advance {
+  min-height: 2.75rem;
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid var(--workspace-control-line);
+  border-radius: var(--style-radius-s);
+  background: var(--workspace-surface);
+  color: var(--workspace-ink);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.admin-quote-filters button[aria-pressed='true'] {
+  border-color: var(--workspace-accent);
+  box-shadow: inset 0 -2px var(--workspace-accent);
+  background: var(--workspace-soft);
+}
+
+.admin-quote-filters button:hover,
+.admin-quote-contact-actions :is(a, button):hover { background: var(--workspace-soft); }
+
+.admin-quote-actions { display: grid; gap: 0.35rem; justify-items: start; min-width: max-content; }
+.admin-quote-contact-actions :is(a, button) { min-width: 2.75rem; padding: 0.35rem; }
+
+.admin-quote-advance {
+  background: var(--workspace-primary);
+  color: var(--workspace-primary-ink);
+  border-color: transparent;
+}
+
+.admin-quote-advance:hover { background: var(--workspace-primary-hover); }
+.admin-quote-advance:disabled { cursor: wait; }
+.admin-quote-customer { font-weight: 700; text-underline-offset: 0.18em; overflow-wrap: anywhere; }
+.admin-quote-product { display: block; min-width: 8rem; max-width: 23ch; overflow-wrap: anywhere; }
+.admin-quote-status .workspace-status { white-space: nowrap; }
+
+.admin-quote-waiting {
+  padding: 0.2em 0.6em;
+  border-radius: 999px;
+  background: var(--workspace-warning-bg);
+  color: var(--workspace-warning-ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.admin-quote-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.admin-quote-progress {
+  padding: 1rem;
+  border: 1px solid var(--workspace-line);
+  border-radius: var(--workspace-radius-panel);
+  background: var(--workspace-surface);
+  margin-block-end: 1.5rem;
+}
+
+.admin-quote-progress h2 { margin: 0 0 0.8rem; font-size: 1.15rem; }
+
+.admin-quote-progress ol {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-quote-progress li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem;
+  border-block-end: 2px solid var(--workspace-line);
+  font-weight: 600;
+}
+
+.admin-quote-progress li[aria-current='step'] { border-block-end-color: var(--workspace-accent); }
+
+.admin-quote-progress-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: var(--workspace-soft);
+}
+
+.admin-quote-progress [aria-current='step'] .admin-quote-progress-mark {
+  color: var(--workspace-sticker-ink);
+  background: var(--workspace-lavender);
+}
+
+.admin-quote-progress [aria-current='step'][data-stage='new'] .admin-quote-progress-mark { background: var(--workspace-coral); }
+.admin-quote-progress [aria-current='step'][data-stage='contacted'] .admin-quote-progress-mark { background: var(--workspace-sun); }
+.admin-quote-progress [aria-current='step'][data-stage='closed'] .admin-quote-progress-mark { background: var(--workspace-mint); }

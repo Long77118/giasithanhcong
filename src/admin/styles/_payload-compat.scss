@@ -148,6 +148,33 @@ html:has(nextjs-portal) .nav__controls {
   background: var(--workspace-soft);
 }
 
+/* Give the standard quote columns predictable room and leave narrow screens horizontally scrollable. */
+.collection-list__tables .table:has(.admin-quote-actions) table:has(thead th:nth-child(8):last-child) {
+  width: 100%;
+  min-width: 1040px;
+  table-layout: fixed;
+}
+
+.collection-list__tables .table:has(.admin-quote-actions) table :is(th, td) {
+  min-width: 0;
+  padding-inline: 0.65rem;
+}
+
+.collection-list__tables .table:has(.admin-quote-actions) .sort-column { gap: 0.35rem; }
+
+.collection-list__tables .table:has(.admin-quote-actions) .sort-column__label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+}
+
+.collection-list__tables .table:has(.admin-quote-actions) #heading-_select { width: 42px; }
+.collection-list__tables .table:has(.admin-quote-actions) #heading-phone { width: 119px; }
+.collection-list__tables .table:has(.admin-quote-actions) #heading-quantity { width: 94px; }
+.collection-list__tables .table:has(.admin-quote-actions) #heading-status { width: 131px; }
+.collection-list__tables .table:has(.admin-quote-actions) #heading-createdAt { width: 140px; }
+.collection-list__tables .table:has(.admin-quote-actions) #heading-quoteWorkflow { width: 198px; }
+
 .cell-role .selected--admin {
   display: inline-flex;
   padding: 3px 9px;

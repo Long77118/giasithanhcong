@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import { advanceQuoteStatus } from '@/lib/admin-quote-endpoint';
 import { isAdmin } from './access';
 
 export const QuoteRequests: CollectionConfig = {
@@ -10,15 +11,18 @@ export const QuoteRequests: CollectionConfig = {
   admin: {
     group: 'Bán hàng',
     useAsTitle: 'customerName',
+    components: { beforeListTable: ['/admin/QuoteWorkflows#QuoteQuickFilters'] },
     defaultColumns: [
       'customerName',
       'phone',
-      'quantity',
       'productNameSnapshot',
+      'quantity',
       'status',
       'createdAt',
+      'quoteWorkflow',
     ],
   },
+  endpoints: [advanceQuoteStatus],
   access: {
     // Public visitors submit via POST /api/bao-gia (validated + anti-spam + Local API).
     // Direct collection read/list/update/delete/create via Payload REST API requires an admin account.
@@ -29,32 +33,22 @@ export const QuoteRequests: CollectionConfig = {
   },
   fields: [
     {
-      name: 'product',
-      label: 'Sản phẩm quan tâm',
-      type: 'relationship',
-      relationTo: 'products',
-    },
-    {
-      name: 'productNameSnapshot',
-      label: 'Tên / Mã sản phẩm tại thời điểm gửi',
-      type: 'text',
-    },
-    {
-      name: 'quantity',
-      label: 'Số lượng dự kiến',
-      type: 'text',
-      required: true,
+      name: 'quoteWorkflow',
+      label: 'Thao tác nhanh',
+      type: 'ui',
+      admin: { components: { Field: '/admin/QuoteWorkflows#QuoteStageField', Cell: '/admin/QuoteCells#QuoteActionsCell' } },
     },
     {
       type: 'row',
       fields: [
         {
           name: 'customerName',
-          label: 'Tên khách hàng / Người liên hệ',
+          label: 'Khách hàng',
           type: 'text',
           required: true,
           admin: {
             width: '50%',
+            components: { Cell: '/admin/QuoteCells#QuoteCustomerCell' },
           },
         },
         {
@@ -90,10 +84,39 @@ export const QuoteRequests: CollectionConfig = {
       ],
     },
     {
+      type: 'row',
+      fields: [
+        {
+          name: 'product',
+          label: 'Sản phẩm quan tâm',
+          type: 'relationship',
+          relationTo: 'products',
+          admin: { width: '50%' },
+        },
+        {
+          name: 'productNameSnapshot',
+          label: 'Sản phẩm lúc gửi',
+          type: 'text',
+          admin: {
+            width: '50%',
+            description: 'Tên và mã sản phẩm tại thời điểm khách gửi yêu cầu.',
+            components: { Cell: '/admin/QuoteCells#QuoteProductCell' },
+          },
+        },
+      ],
+    },
+    {
+      name: 'quantity',
+      label: 'Số lượng',
+      type: 'text',
+      required: true,
+    },
+    {
       name: 'message',
       label: 'Nội dung yêu cầu chi tiết',
       type: 'textarea',
       required: true,
+      admin: { rows: 6 },
     },
     {
       name: 'sourceUrl',
@@ -105,7 +128,7 @@ export const QuoteRequests: CollectionConfig = {
     },
     {
       name: 'status',
-      label: 'Trạng thái xử lý',
+      label: 'Trạng thái',
       type: 'select',
       required: true,
       defaultValue: 'new',
@@ -117,7 +140,15 @@ export const QuoteRequests: CollectionConfig = {
       ],
       admin: {
         position: 'sidebar',
+        components: { Cell: '/admin/QuoteCells#QuoteStatusCell' },
       },
+    },
+    {
+      name: 'createdAt',
+      label: 'Thời gian nhận',
+      type: 'date',
+      index: true,
+      admin: { disableBulkEdit: true, hidden: true, components: { Cell: '/admin/QuoteCells#QuoteDateCell' } },
     },
   ],
 };

@@ -1,3 +1,10 @@
+import { QuoteStageField as QuoteStageField_460ea9d37efbd05682881168b8037a2f } from '../../../admin/QuoteWorkflows'
+import { QuoteActionsCell as QuoteActionsCell_e075ddbd631de7f9502f2e4971d8c2a6 } from '../../../admin/QuoteCells'
+import { QuoteCustomerCell as QuoteCustomerCell_e075ddbd631de7f9502f2e4971d8c2a6 } from '../../../admin/QuoteCells'
+import { QuoteProductCell as QuoteProductCell_e075ddbd631de7f9502f2e4971d8c2a6 } from '../../../admin/QuoteCells'
+import { QuoteStatusCell as QuoteStatusCell_e075ddbd631de7f9502f2e4971d8c2a6 } from '../../../admin/QuoteCells'
+import { QuoteDateCell as QuoteDateCell_e075ddbd631de7f9502f2e4971d8c2a6 } from '../../../admin/QuoteCells'
+import { QuoteQuickFilters as QuoteQuickFilters_460ea9d37efbd05682881168b8037a2f } from '../../../admin/QuoteWorkflows'
 import { default as default_0b4330d73a678c4b89b1d6b9a3d18943 } from '../../../admin/ProductShortDescription'
 import { ProductImageLabel as ProductImageLabel_ebe8827f95a493f251c5504dddec40a4 } from '../../../admin/ProductRowLabels'
 import { ProductSpecLabel as ProductSpecLabel_ebe8827f95a493f251c5504dddec40a4 } from '../../../admin/ProductRowLabels'
@@ -42,6 +49,13 @@ import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } f
 
 /** @type import('payload').ImportMap */
 export const importMap = {
+  "/admin/QuoteWorkflows#QuoteStageField": QuoteStageField_460ea9d37efbd05682881168b8037a2f,
+  "/admin/QuoteCells#QuoteActionsCell": QuoteActionsCell_e075ddbd631de7f9502f2e4971d8c2a6,
+  "/admin/QuoteCells#QuoteCustomerCell": QuoteCustomerCell_e075ddbd631de7f9502f2e4971d8c2a6,
+  "/admin/QuoteCells#QuoteProductCell": QuoteProductCell_e075ddbd631de7f9502f2e4971d8c2a6,
+  "/admin/QuoteCells#QuoteStatusCell": QuoteStatusCell_e075ddbd631de7f9502f2e4971d8c2a6,
+  "/admin/QuoteCells#QuoteDateCell": QuoteDateCell_e075ddbd631de7f9502f2e4971d8c2a6,
+  "/admin/QuoteWorkflows#QuoteQuickFilters": QuoteQuickFilters_460ea9d37efbd05682881168b8037a2f,
   "/admin/ProductShortDescription#default": default_0b4330d73a678c4b89b1d6b9a3d18943,
   "/admin/ProductRowLabels#ProductImageLabel": ProductImageLabel_ebe8827f95a493f251c5504dddec40a4,
   "/admin/ProductRowLabels#ProductSpecLabel": ProductSpecLabel_ebe8827f95a493f251c5504dddec40a4,
