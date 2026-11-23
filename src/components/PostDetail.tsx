@@ -59,6 +59,7 @@ export async function PostDetail({ post, contact, siteUrl, preview = false }: {
   return (
     <div className="article-page">
       {!preview && <JsonLd data={articleJsonLd} />}
+      {!preview && <div className="article-progress" aria-hidden="true" />}
 
       <article className="site-shell article-shell">
         <Breadcrumbs

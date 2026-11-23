@@ -1,9 +1,30 @@
 .article-page {
-  --article-sticky-top: calc(var(--header-bar-height) + var(--preview-banner-height, 0px) + 1.25rem);
+  --article-sticky-top: calc(var(--header-bar-height) + var(--preview-banner-height, 0px) + var(--article-progress-height, 0px) + 1.25rem);
   --article-measure: 46.25rem;
   --article-rail: 20.625rem;
   background: var(--header-surface);
   color: var(--header-ink);
+}
+
+.article-progress { display: none; }
+@supports (animation-timeline: scroll(root)) {
+  @media (prefers-reduced-motion: no-preference) {
+    body:has(.article-progress) { --article-progress-height: 4px; padding-block-start: var(--article-progress-height); }
+    body:has(.article-progress) .site-header { top: calc(var(--article-progress-height) - var(--header-top-offset, 0px)); }
+    .article-progress {
+      position: fixed;
+      z-index: 31;
+      inset: 0 0 auto;
+      display: block;
+      height: var(--article-progress-height);
+      background: var(--header-quote);
+      pointer-events: none;
+      transform-origin: left;
+      animation: article-read-progress 1ms linear both;
+      animation-timeline: scroll(root);
+    }
+    @keyframes article-read-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  }
 }
 
 .site-shell.article-shell { max-width: calc(72rem + 2 * var(--site-gutter)); padding-block: 1.5rem 4rem; }
