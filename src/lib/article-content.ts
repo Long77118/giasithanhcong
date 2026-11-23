@@ -41,10 +41,14 @@ export function extractArticleHeadings(data: unknown): ArticleHeading[] {
   return headings;
 }
 
-export function articleReadingMinutes(data: unknown): number {
+export function articleWordCount(data: unknown): number {
   const text = textOf(asRecord(data)?.root, ' ');
   const words = text.match(/[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*/gu);
-  return Math.max(1, Math.ceil((words?.length ?? 0) / 200));
+  return words?.length ?? 0;
+}
+
+export function articleReadingMinutes(data: unknown): number {
+  return Math.max(1, Math.ceil(articleWordCount(data) / 200));
 }
 
 export function formatArticleDate(iso?: string | null): string {

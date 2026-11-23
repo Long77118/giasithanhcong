@@ -41,6 +41,9 @@ test('Installed SEO plugin appends an unnamed SEO tab and preserves sidebar fiel
   if(fields[0].type !== 'tabs') throw new Error('Missing tabs');
   assert.deepEqual(fields[0].tabs.map(tab=>tab.label),['Cơ bản','Hình ảnh','Thông số và đóng gói','Nội dung','Liên kết','SEO']);
   assert.ok(fields[0].tabs.every(tab=>!('name' in tab)));
-  const sidebar=fields.slice(1).filter(field=>'name' in field).map(field=>'name' in field ? field.name : '');
+  const checklist = fields[1];
+  assert.equal(checklist.type, 'ui');
+  assert.equal(checklist.admin?.position, 'sidebar');
+  const sidebar=fields.slice(1).filter(field=>field.type !== 'ui' && 'name' in field).map(field=>'name' in field ? field.name : '');
   assert.deepEqual(sidebar,['featured','status']);
 });

@@ -36,6 +36,8 @@ import { MetaTitleComponent as MetaTitleComponent_a8a977ebc872c5d5ea7ee689724c08
 import { MetaDescriptionComponent as MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { MetaImageComponent as MetaImageComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { PreviewComponent as PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
+import { ProductChecklistField as ProductChecklistField_05893b079d24e11800fd7f71054274da } from '../../../admin/EditorChecklist'
+import { PostChecklistField as PostChecklistField_05893b079d24e11800fd7f71054274da } from '../../../admin/EditorChecklist'
 import { default as default_80d7e6521d15a6f5300949ffc475867b } from '../../../admin/MediaUploadOptions'
 import { default as default_1a686461bda724355fb6110eb9ff97a3 } from '../../../admin/HomePromotionLabel'
 import { WorkspaceIcon as WorkspaceIcon_d4751384a7cf3b09ce46117cb8895da1 } from '../../../admin/Brand'
@@ -87,6 +89,8 @@ export const importMap = {
   "@payloadcms/plugin-seo/client#MetaDescriptionComponent": MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/plugin-seo/client#MetaImageComponent": MetaImageComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/plugin-seo/client#PreviewComponent": PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860,
+  "/admin/EditorChecklist#ProductChecklistField": ProductChecklistField_05893b079d24e11800fd7f71054274da,
+  "/admin/EditorChecklist#PostChecklistField": PostChecklistField_05893b079d24e11800fd7f71054274da,
   "/admin/MediaUploadOptions#default": default_80d7e6521d15a6f5300949ffc475867b,
   "/admin/HomePromotionLabel#default": default_1a686461bda724355fb6110eb9ff97a3,
   "/admin/Brand#WorkspaceIcon": WorkspaceIcon_d4751384a7cf3b09ce46117cb8895da1,

@@ -366,6 +366,11 @@ export const Products: CollectionConfig = {
       ],
     },
     {
+      name: 'editorChecklist',
+      type: 'ui',
+      admin: { position: 'sidebar', disableListColumn: true, components: { Field: '/admin/EditorChecklist#ProductChecklistField' } },
+    },
+    {
       name: 'featured',
       label: 'Sản phẩm nổi bật trang chủ',
       type: 'checkbox',

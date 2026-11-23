@@ -1,0 +1,126 @@
+.admin-checklist {
+  padding: 1rem;
+  margin-block-end: 1.3rem;
+  border: 1px solid var(--workspace-line);
+  border-radius: var(--workspace-radius-panel);
+  color: var(--workspace-ink);
+  background: var(--workspace-surface);
+}
+
+.admin-checklist-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 0.8rem;
+}
+
+.admin-checklist-header h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.admin-checklist-header h2 svg { color: var(--workspace-accent); }
+
+.admin-checklist-header strong {
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  color: var(--workspace-info-ink);
+  background: var(--workspace-info-bg);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-checklist progress {
+  display: block;
+  width: 100%;
+  height: 0.62rem;
+  margin-block: 0.8rem 0.45rem;
+  border: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  appearance: none;
+  accent-color: var(--workspace-primary);
+  color: var(--workspace-primary);
+  background: var(--workspace-soft);
+}
+
+.admin-checklist progress::-webkit-progress-bar { background: var(--workspace-soft); }
+.admin-checklist progress::-webkit-progress-value { background: var(--workspace-primary); }
+.admin-checklist progress::-moz-progress-bar { background: var(--workspace-primary); }
+.admin-checklist-summary { margin: 0; color: var(--workspace-muted); }
+
+.admin-checklist ul {
+  margin: 0.8rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-checklist li {
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  gap: 0.55rem;
+  align-items: start;
+  padding-block: 0.5rem;
+  border-top: 1px solid var(--workspace-line);
+}
+
+.admin-checklist li:last-child { padding-block-end: 0; }
+.admin-checklist-label { display: block; font-weight: 600; }
+.admin-checklist small { display: block; color: var(--workspace-muted); line-height: 1.45; }
+
+.admin-checklist-icon,
+.admin-editor-row-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+}
+
+.admin-checklist-icon { color: var(--workspace-muted); background: var(--workspace-soft); }
+.admin-checklist [data-state='done'] .admin-checklist-icon { color: var(--workspace-success-ink); background: var(--workspace-success-bg); }
+.admin-checklist [data-state='unverified'] .admin-checklist-icon { color: var(--workspace-warning-ink); background: var(--workspace-warning-bg); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .admin-checklist [data-celebrate='true'] { animation: admin-checklist-complete 420ms ease-out both; }
+}
+
+@keyframes admin-checklist-complete {
+  40% { transform: scale(1.12) rotate(-3deg); }
+}
+
+.admin-editor-row-label {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  color: var(--workspace-ink);
+  overflow-wrap: anywhere;
+}
+
+.admin-editor-row-icon { color: var(--workspace-sticker-ink); }
+.admin-editor-row-icon[data-tone='purple'] { background: var(--workspace-lavender); }
+.admin-editor-row-icon[data-tone='mint'] { background: var(--workspace-mint); }
+.admin-editor-row-icon[data-tone='sun'] { background: var(--workspace-sun); }
+
+.admin-editor-row-pill {
+  display: inline-block;
+  padding: 0.12rem 0.48rem;
+  border-radius: 999px;
+  background: var(--workspace-info-bg);
+  color: var(--workspace-info-ink);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.admin-editor-row-pill[data-kind='muted'] { background: var(--workspace-soft); color: var(--workspace-ink); }
+.admin-editor-row-pill[data-kind='warning'] { background: var(--workspace-warning-bg); color: var(--workspace-warning-ink); }
+.admin-editor-row-pill[data-kind='done'] { background: var(--workspace-success-bg); color: var(--workspace-success-ink); }
+.admin-editor-description p { margin-block: 0.35rem; }

@@ -208,6 +208,18 @@ Giai đoạn 3 dùng cell chính thức của Payload cho tên khách, sản ph�
 
 Chuyển trạng thái nhanh đi theo từng bước và gửi trạng thái đang thấy lên endpoint của collection. Endpoint yêu cầu Admin, khóa bản ghi PostgreSQL trong giao dịch và đối chiếu trạng thái trước khi ghi qua Payload với `overrideAccess: false`. Khi một cửa sổ khác đã cập nhật, danh sách được tải lại và người dùng nhận thông báo. Bảng và form dùng các thành phần trình bày. Phần ghi chú nội bộ đã được bỏ khỏi phạm vi theo xác nhận của chủ dự án.
 
+### Checklist biên tập ở Giai đoạn 4
+
+Thanh bên đọc dữ liệu đang nhập từ Payload. Điểm là tỷ lệ mục đạt, làm tròn xuống và chỉ lên 100% khi mọi mục đạt. Checklist là gợi ý biên tập. Các quy tắc lưu và xuất bản vẫn do biểu mẫu hiện có quyết định.
+
+| Phạm vi | Điều kiện đánh dấu hoàn thành |
+| --- | --- |
+| Sản phẩm | Có tên và SKU, danh mục, mô tả ngắn từ 150–200 ký tự theo hướng dẫn đang có, ảnh ở dòng đầu tiên, Alt SEO trên mỗi ảnh đã chọn, ít nhất một cặp tên và giá trị thông số, và quy cách đóng gói. |
+| Bài viết | Có tiêu đề, tóm tắt, chuyên mục, ảnh đại diện, Alt SEO trên ảnh đại diện và văn bản thật trong Lexical. Số từ dùng chung cách đếm với thời gian đọc. Dự án chưa có yêu cầu về số từ tối thiểu, nên một nội dung có văn bản đã đạt mục này. |
+| SEO trên cả hai form | Tiêu đề 50–60 ký tự và mô tả 100–150 ký tự theo chỉ báo của `@payloadcms/plugin-seo` 3.93.0. Khoảng trắng ở hai đầu được bỏ trước khi đếm. Điểm dùng giá trị đang có trong tab SEO vì đây là phần người biên tập có thể kiểm tra. |
+
+Ảnh có dữ liệu alt đi kèm được đọc trực tiếp. Khi trường trả ID, checklist gộp các ID trùng và đọc Alt SEO theo lô tối đa 40 ảnh qua API Media. Nếu API lỗi, mục alt báo “Chưa kiểm tra được ảnh”. Các mục thiếu chỉ ra tên tab hoặc Thư viện ảnh vì Payload 3.93 chưa cung cấp API công khai để chuyển tab và lấy nét trường đang ẩn. Hiệu ứng ở 100% chỉ chạy một lần trong phiên mở form, khi điểm chuyển từ dưới 100% lên 100%, và được bỏ theo thiết lập giảm chuyển động. Sau khi nâng Payload, rà format trường upload, danh sách hàng, và các khoảng SEO mặc định.
+
 | Giai đoạn | Hướng triển khai | Điểm cần xác minh |
 | --- | --- | --- |
 | 1 · Nền tảng | Tách token sáng/tối, component riêng và phần ghi đè Payload. Ánh xạ biến CSS trước, sau đó kiểm tra bảng, tab, trạng thái, toast, modal và toàn bộ nhóm field đã nêu. | Các dải elevation và semantic có nhiều nơi dùng. Đo màu thực sau cascade và kiểm tra lại Lexical, lỗi, disabled, dropdown trong modal. Xác nhận font tiếng Việt và ảnh hưởng bundle. |
