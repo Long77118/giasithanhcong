@@ -1,0 +1,127 @@
+/* The two themes use Payload's html[data-theme] preference. */
+:root {
+  --workspace-canvas: #fff9f0;
+  --workspace-surface: #fff;
+  --workspace-side: #fffcf7;
+  --workspace-ink: #1f1a3d;
+  --workspace-muted: #574d70;
+  --workspace-line: #e5dded;
+  --workspace-control-line: #8c7fa2;
+  --workspace-ring: #5939c6;
+  --workspace-soft: #ede5f8;
+  --workspace-accent: #5533c4;
+  --workspace-primary: #5736c9;
+  --workspace-primary-hover: #4526a7;
+  --workspace-primary-ink: #fff;
+  --workspace-hero: #5736c9;
+  --workspace-hero-text: #fff;
+  --workspace-shadow: 0 12px 28px #1f1a3d26;
+  --workspace-error-bg: #fff0eb;
+  --workspace-error-ink: #9a3328;
+  --workspace-warning-bg: #fff5cc;
+  --workspace-warning-ink: #735205;
+  --workspace-success-bg: #e1faf0;
+  --workspace-success-ink: #12664f;
+  --workspace-info-bg: #f0e9ff;
+  --workspace-info-ink: #5533c4;
+  --workspace-lavender: #baa7ff;
+  --workspace-violet: #7c5cff;
+  --workspace-coral: #ff6b57;
+  --workspace-sun: #ffc93c;
+  --workspace-mint: #2fd6a5;
+  --workspace-sticker-ink: #1f1a3d;
+  --workspace-radius-panel: 16px;
+  --workspace-radius-hero: 24px;
+  --workspace-control-motion: 150ms;
+}
+
+:root[data-theme='dark'] {
+  --workspace-canvas: #18132b;
+  --workspace-surface: #241c38;
+  --workspace-side: #211a33;
+  --workspace-ink: #f7f1ff;
+  --workspace-muted: #c8bcdb;
+  --workspace-line: #3c3151;
+  --workspace-control-line: #7e7198;
+  --workspace-ring: #c7acff;
+  --workspace-soft: #382b55;
+  --workspace-accent: #c8b5ff;
+  --workspace-primary: #baa7ff;
+  --workspace-primary-hover: #d1c2ff;
+  --workspace-primary-ink: #1f1a3d;
+  --workspace-hero: #baa7ff;
+  --workspace-hero-text: #1f1a3d;
+  --workspace-shadow: 0 12px 28px #0c081ab3;
+  --workspace-error-bg: #452632;
+  --workspace-error-ink: #ff9c8f;
+  --workspace-warning-bg: #46341f;
+  --workspace-warning-ink: #ffd978;
+  --workspace-success-bg: #1c3b38;
+  --workspace-success-ink: #75e8c0;
+  --workspace-info-bg: #342851;
+  --workspace-info-ink: #c8b5ff;
+}
+
+html:root {
+  --font-body: var(--font-admin-vietnam, "Segoe UI Variable"), "Segoe UI", system-ui, sans-serif;
+  --gutter-h: clamp(18px, 3.1vw, 48px);
+  --style-radius-s: 8px;
+  --style-radius-m: 12px;
+  --style-radius-l: 20px;
+  --accessibility-outline: 2px solid var(--workspace-ring);
+  --accessibility-outline-offset: 3px;
+  --theme-bg: var(--workspace-canvas);
+  --theme-input-bg: var(--workspace-surface);
+  --theme-text: var(--workspace-ink);
+  --theme-border-color: var(--workspace-line);
+  --theme-overlay: #18132b99;
+  --theme-elevation-0: var(--workspace-surface);
+  --theme-elevation-50: var(--workspace-side);
+  --theme-elevation-100: var(--workspace-soft);
+  --theme-elevation-150: var(--workspace-line);
+  --theme-elevation-200: var(--workspace-control-line);
+  --theme-elevation-250: var(--workspace-control-line);
+  --theme-elevation-300: var(--workspace-muted);
+  --theme-elevation-350: var(--workspace-muted);
+  --theme-elevation-400: var(--workspace-muted);
+  --theme-elevation-450: var(--workspace-muted);
+  --theme-elevation-500: var(--workspace-muted);
+  --theme-elevation-550: var(--workspace-muted);
+  --theme-elevation-600: var(--workspace-muted);
+  --theme-elevation-650: var(--workspace-muted);
+  --theme-elevation-700: var(--workspace-ink);
+  --theme-elevation-750: var(--workspace-ink);
+  --theme-elevation-800: var(--workspace-ink);
+  --theme-elevation-850: var(--workspace-ink);
+  --theme-elevation-900: var(--workspace-ink);
+  --theme-elevation-950: var(--workspace-ink);
+  --theme-elevation-1000: var(--workspace-ink);
+  --theme-success-50: var(--workspace-success-bg);
+  --theme-success-100: var(--workspace-success-bg);
+  --theme-success-250: var(--workspace-success-ink);
+  --theme-success-400: var(--workspace-ring);
+  --theme-success-500: var(--workspace-success-ink);
+  --theme-success-600: var(--workspace-success-ink);
+  --theme-success-800: var(--workspace-success-ink);
+  --theme-warning-50: var(--workspace-warning-bg);
+  --theme-warning-100: var(--workspace-warning-bg);
+  --theme-warning-250: var(--workspace-warning-ink);
+  --theme-warning-600: var(--workspace-warning-ink);
+  --theme-warning-800: var(--workspace-warning-ink);
+  --theme-error-50: var(--workspace-error-bg);
+  --theme-error-100: var(--workspace-error-bg);
+  --theme-error-250: var(--workspace-error-ink);
+  --theme-error-400: var(--workspace-error-ink);
+  --theme-error-500: var(--workspace-error-ink);
+  --theme-error-600: var(--workspace-error-ink);
+  --theme-error-800: var(--workspace-error-ink);
+}
+
+:where(a, button, input, textarea, select):focus-visible {
+  outline: var(--accessibility-outline);
+  outline-offset: var(--accessibility-outline-offset);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --workspace-control-motion: 0ms; }
+}

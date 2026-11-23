@@ -4,10 +4,18 @@ import config from '@payload-config';
 import '@payloadcms/next/css';
 import type { ServerFunctionClient } from 'payload';
 import { handleServerFunctions, RootLayout } from '@payloadcms/next/layouts';
+import { Be_Vietnam_Pro } from 'next/font/google';
 import React from 'react';
 
 import { importMap } from './admin/importMap.js';
 import './custom.scss';
+
+const adminFont = Be_Vietnam_Pro({
+  subsets: ['latin', 'vietnamese'],
+  weight: ['400', '600', '700'],
+  variable: '--font-admin-vietnam',
+  display: 'swap',
+});
 
 type Args = {
   children: React.ReactNode;
@@ -23,7 +31,7 @@ const serverFunction: ServerFunctionClient = async function (args) {
 };
 
 const Layout = ({ children }: Args) => (
-  <RootLayout config={config} importMap={importMap} serverFunction={serverFunction}>
+  <RootLayout config={config} htmlProps={{ className: adminFont.variable }} importMap={importMap} serverFunction={serverFunction}>
     {children}
   </RootLayout>
 );

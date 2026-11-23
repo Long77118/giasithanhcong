@@ -186,6 +186,12 @@ Kiểm kê từ `src/app/(payload)/custom.scss` và chỉ ra chỗ trộn select
 
 ## Kế hoạch và điểm cần xác minh
 
+Giai đoạn 1 tập trung biến màu và ánh xạ Payload trong `_tokens.scss`, phần trình bày của component riêng trong `_workspace.scss`, và selector nội bộ trong `_payload-compat.scss` tại `src/admin/styles/`. Layout Payload gắn Be Vietnam Pro qua `RootLayout.htmlProps`, với ba mức 400, 600, 700 và tập ký tự tiếng Việt. Kiểm tra lại dòng gắn font nếu cần sinh lại layout khi nâng Payload.
+
+Các selector cần rà thêm ở lần nâng cấp gồm `.checkbox-input__input`, `.checkbox-input--checked .checkbox-input__icon`, `.tabs-field__tab-button`, `.tabs-field__tab-button--active`, `.confirmation-modal__wrapper` và các lớp toast trong `.payload-toast-container`. Kiểm tra `.drawer__content` và `.drawer__blur-bg` ở chế độ giảm chuyển động. Các quy tắc này nằm chung trong `_payload-compat.scss`.
+
+Kiểm tra Giai đoạn 1 trên Chromium với bản build Node ghi nhận nút đăng nhập đạt 7,56:1 ở chế độ sáng và 7,90:1 ở chế độ tối. Đã mở danh sách, tab, trường ngày, Lexical, drawer chọn ảnh và hộp thoại xác nhận trong hai chế độ. Toast lỗi slug có chuỗi hệ thống tiếng Anh và sẽ được rà trong Giai đoạn 5. Kiểm tra trên Workers và ma trận trợ năng đầy đủ thuộc Giai đoạn 6.
+
 | Giai đoạn | Hướng triển khai | Điểm cần xác minh |
 | --- | --- | --- |
 | 1 · Nền tảng | Tách token sáng/tối, component riêng và phần ghi đè Payload. Ánh xạ biến CSS trước, sau đó kiểm tra bảng, tab, trạng thái, toast, modal và toàn bộ nhóm field đã nêu. | Các dải elevation và semantic có nhiều nơi dùng. Đo màu thực sau cascade và kiểm tra lại Lexical, lỗi, disabled, dropdown trong modal. Xác nhận font tiếng Việt và ảnh hưởng bundle. |
