@@ -29,3 +29,24 @@ export function normalizeFacebookPageUrl(value: unknown): string | null {
   }
   return `${facebookOrigin}/${username}`;
 }
+
+export const facebookPageFrameDimensions = { minWidth: 180, maxWidth: 500, height: 320 } as const;
+
+export function facebookPageFrameWidth(availableWidth: number): number | null {
+  const { minWidth, maxWidth } = facebookPageFrameDimensions;
+  if (!Number.isFinite(availableWidth) || availableWidth < minWidth) return null;
+  return Math.min(maxWidth, Math.floor(availableWidth));
+}
+
+export function facebookPagePluginUrl(pageUrl: string, width: number): string {
+  const query = new URLSearchParams({
+    href: pageUrl,
+    tabs: 'timeline',
+    width: String(width),
+    height: String(facebookPageFrameDimensions.height),
+    adapt_container_width: 'true',
+    show_facepile: 'false',
+    locale: 'vi_VN',
+  });
+  return `${facebookOrigin}/plugins/page.php?${query}`;
+}

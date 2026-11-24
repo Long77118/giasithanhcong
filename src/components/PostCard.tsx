@@ -32,7 +32,7 @@ export function PostCard({
             <MediaImage
               media={post.coverImage}
               prefer={feature ? 'card' : 'thumbnail'}
-              sizes={feature ? '(min-width: 80rem) 38vw, 100vw' : '(min-width: 80rem) 26vw, 8rem'}
+              sizes={feature ? '(min-width: 64rem) 41vw, 100vw' : '(min-width: 64rem) 31vw, 8rem'}
               fallbackTitle={post.title}
             />
           </div>

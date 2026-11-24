@@ -230,7 +230,7 @@ export const SiteSettings: GlobalConfig = {
       labels: { singular: 'trang Facebook', plural: 'trang Facebook' },
       type: 'array',
       admin: {
-        description: 'Các trang Facebook công khai xuất hiện ở cột trái trang chủ. Bạn có thể kéo để đổi thứ tự.',
+        description: 'Các trang Facebook công khai xuất hiện bên dưới mục bài viết trên trang chủ. Bạn có thể kéo để đổi thứ tự.',
         initCollapsed: true,
       },
       fields: [

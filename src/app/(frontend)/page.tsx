@@ -90,31 +90,35 @@ export default async function HomePage() {
           <HomePromotions items={settings?.homePromotions} />
         </div>
 
-        <aside aria-labelledby="home-advice-heading" className="home-advice">
-          <h2 id="home-advice-heading">Cần tư vấn chọn bao bì?</h2>
-          <Link href="/lien-he#bao-gia" className="home-more">
-            Nhận tư vấn <ArrowRight size={16} aria-hidden="true" />
-          </Link>
-          <Image src="/images/home/advice-bowl.webp" width={360} height={240} sizes="(min-width: 64rem) 120px, 32vw" alt="" />
-        </aside>
-
-        <section aria-labelledby="home-blog-heading" className="home-posts">
-          <div className="home-section-heading">
-            <h2 id="home-blog-heading">Kinh nghiệm chọn bao bì</h2>
-            <Link href="/blog" className="home-more">
-              Xem blog <ArrowRight size={17} aria-hidden="true" />
+        <div className="home-editorial">
+          <aside aria-labelledby="home-advice-heading" className="home-advice">
+            <h2 id="home-advice-heading">Cần tư vấn chọn bao bì?</h2>
+            <Link href="/lien-he#bao-gia" className="home-more">
+              Nhận tư vấn <ArrowRight size={16} aria-hidden="true" />
             </Link>
-          </div>
-          {latestPosts.docs.length ? (
-            <div className="home-stories">
-              {latestPosts.docs.map((post, index) => (
-                <PostCard key={post.id} post={post} variant={index === 0 ? 'feature' : 'brief'} />
-              ))}
+            <Image src="/images/home/advice-bowl.webp" width={360} height={240} sizes="(min-width: 64rem) 120px, 32vw" alt="" />
+          </aside>
+
+          <section aria-labelledby="home-blog-heading" className="home-posts">
+            <div className="home-section-heading">
+              <h2 id="home-blog-heading">Kinh nghiệm chọn bao bì</h2>
             </div>
-          ) : (
-            <p className="home-empty">Chưa có bài viết nào được xuất bản.</p>
-          )}
-        </section>
+            {latestPosts.docs.length ? (
+              <div className="home-stories">
+                {latestPosts.docs.map((post, index) => (
+                  <PostCard key={post.id} post={post} variant={index === 0 ? 'feature' : 'brief'} />
+                ))}
+              </div>
+            ) : (
+              <p className="home-empty">Chưa có bài viết nào được xuất bản.</p>
+            )}
+            <div className="home-posts-footer">
+              <Link href="/blog" className="home-more home-posts-more">
+                Xem tất cả bài viết <ArrowRight size={17} aria-hidden="true" />
+              </Link>
+            </div>
+          </section>
+        </div>
 
         {facebookPages.length > 0 && <FacebookFanpages pages={facebookPages} />}
       </div>
