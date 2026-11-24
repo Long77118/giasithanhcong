@@ -4,3 +4,15 @@
 @use "../../admin/styles/payload-compat";
 @use "../../admin/styles/quotes";
 @use "../../admin/styles/editor-checklist";
+
+/* Only the Payload layout loads this stylesheet. Preserve CSS animation end events. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}

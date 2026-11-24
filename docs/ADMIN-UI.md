@@ -263,3 +263,68 @@ Giữ cách gọi quen thuộc như SKU, SEO và PDF, kèm tiếng Việt tại 
 | 6 · Rà soát | Chạy ma trận kiểm thử bàn phím, độ tương phản, giảm chuyển động, kích thước nhỏ, Node production và xác nhận phần có thể thử trên Workers. | Kiểm tra các luồng đăng nhập/quên mật khẩu, menu, báo giá, form Sản phẩm/Bài viết, Lexical, tải một/nhiều ảnh, PDF và sáng/tối. Lưu ảnh trước/sau của các màn hình đã đổi ngoài repo. |
 
 Khi triển khai, kiểm tra trực tiếp ở desktop 1.440 px, máy tính bảng khoảng 768 px và điện thoại khoảng 390 px. Dùng `Tab`, `Shift+Tab`, `Enter`, `Space` và `Esc` trên luồng phù hợp. Chuyển theme bằng tùy chọn tài khoản Payload, lặp lại với giảm chuyển động. Bản Node local và Cloudflare Workers cần xác minh riêng ở bước rà soát.
+
+## Giai đoạn 6 · Rà soát và checklist nâng cấp
+
+### Tương phản và chuyển động
+
+Chạy `node scripts/check-admin-contrast.mjs` để đọc trực tiếp biến màu trong `_tokens.scss`. Script đo 29 cặp mỗi chế độ và trả mã lỗi nếu có cặp dưới ngưỡng. Dùng ngưỡng 4,5:1 cho chữ thường và 3:1 cho dấu hiệu cần thiết của điều khiển. Các ngưỡng lấy từ [WCAG 2.2 · Tương phản chữ](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html) và [WCAG 2.2 · Tương phản phi văn bản](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html).
+
+| Cặp màu chính | Sáng | Tối |
+| --- | ---: | ---: |
+| Chữ chính trên nền trang | 15,75:1 | 16,27:1 |
+| Chữ phụ trên nền trang | 7,43:1 | 10,00:1 |
+| Chữ trên nút chính | 7,56:1 | 7,90:1 |
+| Chữ trên chip báo giá thấp nhất | 5,88:1 | 5,88:1 |
+| Chữ trên cảnh báo | 6,53:1 | 8,72:1 |
+| Viền ô nhập trên nền trang | 3,54:1 | 4,03:1 |
+| Vòng focus trên nền vùng chọn | 6,07:1 | 6,55:1 |
+| Thanh checklist trên nền vùng chọn | 6,18:1 | 6,12:1 |
+
+Đạt 58/58 phép đo màu chủ đề. Phép đo này bao phủ các cặp được liệt kê trong script. Khi bật giảm chuyển động, stylesheet của nhóm route Payload tắt transition, bỏ độ trễ và bỏ cuộn mượt. Animation CSS còn 0,01 ms để giữ sự kiện kết thúc cho thư viện. Hiệu ứng mừng đạt 100% vẫn chỉ được tạo khi người dùng cho phép chuyển động.
+
+Kiểm tra màu thực tế trong Chromium cho thấy chữ gợi ý SEO trên nền sáng tăng từ 2,69:1 lên 7,43:1. Cùng vùng ở chế độ tối đạt 10,00:1. Màu chữ và nền của các chip thiếu, ngắn, gần đạt, đạt và quá dài đều vượt 4,5:1 ở cả hai chế độ sau khi áp dụng lớp tương thích.
+
+### Kiểm thử trên bản Node production
+
+| Luồng | Kiểm thử |
+| --- | --- |
+| Đăng nhập và Quên mật khẩu | Dùng `Tab` và `Shift+Tab` qua các ô, gửi thông tin thử bằng `Enter`, kiểm tra thông báo lỗi và mở trang Quên mật khẩu bằng bàn phím. |
+| Menu, Tổng quan và báo giá | Mở menu bằng `Space`, thu gọn nhóm, chọn Báo giá, bật/tắt bộ lọc bằng bàn phím, truy cập ô nội dung yêu cầu và mở form sản phẩm từ đường tắt Tổng quan. |
+| Form và Lexical | Đi từ tab đến trường nhập, xem vòng focus, thử các ngưỡng tiêu đề SEO, mở menu `/` và dùng `Esc`. |
+| Ảnh và PDF | Dùng bàn phím đổi tùy chọn ảnh, lưu ảnh đơn, đọc bảng dung lượng và đóng. Lưu một lô gồm ảnh lớn được nén và ảnh nhỏ giữ kích thước. Tải PDF từ admin rồi đọc lại đúng loại tệp và dung lượng qua HTTP. |
+| Hiển thị | Đo chiều rộng trang ở 390, 768 và 1.440 px trong hai theme. Các bảng rộng cuộn bên trong khung. Các nút chính được kiểm tra có chiều cao từ 44 px trên màn hình nhỏ. Khi bật giảm chuyển động, các phần tử hiển thị trong ma trận có thời lượng CSS tối đa 0,01 ms. |
+
+Ở màn hình nhỏ, toast sau khi lưu ảnh có thể che một phần bảng kết quả trong thời gian thông báo còn hiện. Bảng kết quả vẫn nằm trên trang sau khi toast biến mất và nút Đóng thao tác được bằng bàn phím. Liên kết minh họa trong khung xem trước SEO và một số nhãn trợ năng được tạo bên trong plugin, cần rà lại khi nâng phiên bản.
+
+### Selector cần rà thêm khi nâng Payload
+
+| Selector | Phần giao diện cần thử lại |
+| --- | --- |
+| `.template-default`, `.template-default__nav-toggler-wrapper`, `.template-default__nav-toggler`, `.hamburger`, `.app-header__mobile-nav-toggler` | Ở tối đa 768 px, nút gốc có thể Tab phải hiện trong thanh trên với vòng focus nằm trọn trong nút. Nút trùng của Payload giữ chỗ ở thanh trên. Mở và đóng bằng `Space` hoặc `Enter`, sau đó kiểm tra vị trí focus và cuộn ngang khi chọn mục menu. |
+| `.doc-controls__controls`, `.doc-controls__controls .btn`, `.template-minimal form .btn--style-primary`, `.bulk-upload--actions-bar__buttons .btn`, `.bulk-upload--actions-bar__controls .btn` | Đo nút Lưu, nút thao tác chính trong màn hình xác thực và nút chuyển ảnh trong drawer ở 390 và 768 px. Payload chuyển cụm Lưu của drawer xuống chân màn hình ở kích thước nhỏ. |
+| `.field-type .rs__control:has(input:focus-visible)`, `.tabs-field__tab-button:focus-visible` | Tab vào relationship và select, kiểm tra vòng focus ở cả hai chế độ. Đổi tab trên điện thoại, kiểm tra vòng focus bên trong vùng cuộn ngang. |
+| `#field-meta` và selector thuộc tính `style` trong nhóm SEO | Plugin SEO 3.93 đặt màu gợi ý, màu chip, độ co và ngắt dòng bằng inline style. Thử thiếu, ngắn, gần đạt, đạt, quá dài, và cả hai trạng thái ảnh. Ưu tiên API style chính thức nếu bản mới cung cấp. |
+
+### Checklist trước khi chấp nhận bản nâng cấp
+
+- **Xác thực và điều hướng**. Kiểm tra đăng nhập đúng và sai, trang Quên mật khẩu, gửi và nhận email thật trên staging, đặt lại mật khẩu, đăng xuất và tạo Admin đầu tiên trên database trống dành cho kiểm thử. Mở menu bằng bàn phím, kiểm tra nhóm thu gọn và dùng đường tắt ở Tổng quan.
+- **Danh sách và báo giá**. Kiểm tra tìm kiếm, lọc, cuộn bảng, chọn hàng, focus khi đóng hộp thoại, sao chép số và nội dung. Chuyển trạng thái bằng bản ghi thử, kiểm tra hai phiên chỉnh sửa đồng thời và đối chiếu với chi tiết.
+- **Sản phẩm và Bài viết**. Mở bản cũ, tạo nháp, lưu và kiểm tra lỗi trùng đường dẫn. Đi qua tab bằng `Tab` và `Shift+Tab`, mở select bằng bàn phím. Kiểm tra checklist, tab SEO, xem trước, menu `/` của Lexical và drawer chèn ảnh/liên kết.
+- **Thư viện ảnh và PDF**. Tải một ảnh lớn và hai ảnh trong cùng một lô. Kiểm tra độ nét, alt, chuyển dòng, hộp kết quả và nút đóng bằng bàn phím. Tải PDF rồi mở hoặc tải xuống tệp đã lưu.
+- **Hiển thị và trợ năng**. Chạy script màu. Lặp lại bằng theme sáng/tối, chiều rộng 390/768/1.440 px, bàn phím, giảm chuyển động và trình đọc màn hình. Kiểm tra thêm trên thiết bị iOS và Android khi nghiệm thu staging.
+- **Node và Workers**. Chạy lint, typecheck, test và build. Chạy CI OpenNext trên Linux, sau đó thử đăng nhập, lưu nội dung, tải ảnh và PDF qua R2 trên staging. Đối chiếu phiên bản Next.js, Payload, Lexical và SEO trước khi bỏ hoặc đổi selector tương thích.
+
+### Mốc bàn giao
+
+| Giai đoạn | Commit |
+| --- | --- |
+| 0 · Khảo sát và quy chuẩn | `f7a2a66` |
+| 1 · Giao diện sáng và tối | `b9f6832` |
+| 2 · Menu, Đăng nhập, Việc hôm nay | `094c8d4` |
+| 3 · Tiếp nhận và xử lý báo giá | `15bedf9` |
+| 4 · Checklist sản phẩm và bài viết | `58081c7` |
+| 5 · Câu chữ tiếng Việt | `883cd52` |
+| 6 · Trợ năng và kiểm thử | `fix(admin): improve keyboard and responsive accessibility` |
+
+Kiểm tra cấu hình tĩnh Cloudflare đạt. `npm run cf:build` dừng tại esbuild trên Windows vì thiếu quyền đọc thư mục cha khi phân giải `open-next.config.ts`. Chạy lại pipeline OpenNext trên Linux và xác minh luồng admin trên staging có Hyperdrive và R2. Kiểm thử trên trình đọc màn hình, thiết bị iOS/Android thật, gửi email khôi phục và tạo Admin từ database trống là các bước bàn giao thủ công.

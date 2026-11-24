@@ -204,6 +204,12 @@ html:has(nextjs-portal) .nav__controls {
   border-color: var(--workspace-ring);
 }
 
+/* React Select focuses its text input and sets outline: 0 !important on the surrounding control. */
+.field-type .rs__control:has(input:focus-visible) {
+  outline: var(--accessibility-outline) !important;
+  outline-offset: var(--accessibility-outline-offset);
+}
+
 .checkbox-input__input { border-color: var(--workspace-control-line); }
 .checkbox-input--checked .checkbox-input__icon { color: var(--workspace-accent); }
 
@@ -224,6 +230,38 @@ html:has(nextjs-portal) .nav__controls {
 }
 
 .tabs-field__tab-button--active::after { background: var(--workspace-ring); }
+
+/* The native horizontal tab scroller clips an outside outline. */
+.tabs-field__tab-button:focus-visible { outline-offset: -3px; }
+
+/* SEO 3.93 has inline colors and a non-wrapping character count without style slots. */
+#field-meta div:is([style*='color: rgb(154, 154, 154)'], [style*='color:#9a9a9a' i]) {
+  color: var(--workspace-muted) !important;
+}
+
+#field-meta div[style*='background-color:']:is([style*='padding: 4px 6px'], [style*='padding:4px 6px']) {
+  border-radius: var(--style-radius-s) !important;
+  background-color: var(--seo-indicator-bg, var(--workspace-warning-bg)) !important;
+  color: var(--seo-indicator-ink, var(--workspace-warning-ink)) !important;
+}
+
+#field-meta div:is([style*='background-color: green'], [style*='background-color:green']) {
+  --seo-indicator-bg: var(--workspace-success-bg);
+  --seo-indicator-ink: var(--workspace-success-ink);
+}
+
+#field-meta div:is([style*='background-color: red'], [style*='background-color:red']) {
+  --seo-indicator-bg: var(--workspace-error-bg);
+  --seo-indicator-ink: var(--workspace-error-ink);
+}
+
+#field-meta div:is([style*='white-space: nowrap'], [style*='white-space:nowrap']):has(> small):not([style*='background-color:']) {
+  flex-shrink: 1 !important;
+  white-space: normal !important;
+  line-height: 1.35 !important;
+}
+
+#field-meta div:is([style*='pointer-events: none'], [style*='pointer-events:none']) { overflow-wrap: anywhere; }
 
 /* Payload renders these elements in its own portals. Keep dismissal and focus handling native. */
 .confirmation-modal__wrapper {
@@ -254,15 +292,6 @@ html:has(nextjs-portal) .nav__controls {
   box-shadow: var(--workspace-shadow);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .nav .nav__link,
-  .btn,
-  .drawer__content,
-  .drawer__blur-bg,
-  .payload-toast-container .toast-content {
-    transition-duration: 0ms;
-  }
-}
 /* Login uses the native Payload form, including reset and validation. */
 .login.template-minimal {
   position: relative;
@@ -319,6 +348,51 @@ html:has(nextjs-portal) .nav__controls {
   .login .login__brand {
     margin-bottom: 19px;
   }
+}
+
+@media (max-width: 768px) {
+  /* The native nav can move the form grid past the viewport while closing. */
+  .template-default { overflow-x: clip; }
+
+  /* Payload hides the tabbable template button here and shows a header duplicate with tabindex=-1. */
+  .template-default__nav-toggler-wrapper {
+    width: calc(var(--gutter-h) + 44px);
+    padding-inline-start: var(--gutter-h);
+  }
+
+  .template-default__nav-toggler {
+    justify-content: center;
+    inline-size: 44px;
+    block-size: 44px;
+    border-radius: var(--style-radius-s);
+  }
+
+  .template-default__nav-toggler:focus-visible { outline-offset: -3px; }
+
+  .template-default__nav-toggler-wrapper .hamburger {
+    display: grid;
+    place-items: center;
+    inline-size: 28px;
+    block-size: 28px;
+    background: transparent;
+  }
+
+  .app-header__mobile-nav-toggler {
+    visibility: hidden;
+    flex: 0 0 44px;
+  }
+
+  .doc-controls__controls {
+    padding-block: 5px;
+  }
+
+  :is(.doc-controls__controls .btn, .list-header .list-create-new-doc__create-new-button,
+      .template-minimal form .btn--style-primary, .bulk-upload--actions-bar__buttons .btn,
+      .bulk-upload--actions-bar__controls .btn) {
+    min-height: 44px;
+  }
+
+  .bulk-upload--actions-bar__controls .btn { min-width: 44px; }
 }
 
 @media (max-width: 700px) {
