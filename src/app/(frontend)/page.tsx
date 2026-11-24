@@ -1,6 +1,5 @@
 import React from 'react';
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import {
@@ -11,6 +10,8 @@ import {
 import { buildOrganizationJsonLd, getSiteUrl, isIndexingAllowed } from '@/lib/seo';
 import { resolveOpenGraphImages } from '@/lib/seo-images';
 import { normalizeFacebookPageUrl } from '@/lib/facebook-page';
+import { homeNewsCategoryTones } from '@/lib/home-news';
+import { homeNewsCoverSizes } from '@/lib/storefront-image-sizes';
 import { PostCard } from '@/components/PostCard';
 import { JsonLd } from '@/components/JsonLd';
 import { FacebookFanpages } from '@/components/FacebookFanpages';
@@ -61,7 +62,7 @@ export default async function HomePage() {
     await Promise.all([
       getSiteSettingsCached(),
       getPublishedCategoriesCached(),
-      getPublishedPosts({ page: 1, limit: 3 }),
+      getPublishedPosts({ page: 1, limit: 5 }),
     ]);
 
   const facebookPages = (settings?.facebookPages ?? []).flatMap(({ id, name, url }, index) => {
@@ -69,6 +70,18 @@ export default async function HomePage() {
     const label = name?.trim();
     return pageUrl && label ? [{ id: id ?? String(index), name: label, url: pageUrl }] : [];
   });
+  const categoryTones = homeNewsCategoryTones(latestPosts.docs.flatMap(({ category }) =>
+    category && typeof category === 'object' ? [category.id] : [],
+  ));
+  const [leadStory, ...otherStories] = latestPosts.docs.map((post, index, posts) => (
+    <PostCard
+      key={post.id}
+      post={post}
+      variant={index === 0 ? 'feature' : 'brief'}
+      sizes={homeNewsCoverSizes(posts.length, index)}
+      categoryTone={post.category && typeof post.category === 'object' ? categoryTones.get(post.category.id) : undefined}
+    />
+  ));
 
   return (
     <div className="home-page">
@@ -90,35 +103,22 @@ export default async function HomePage() {
           <HomePromotions items={settings?.homePromotions} />
         </div>
 
-        <div className="home-editorial">
-          <aside aria-labelledby="home-advice-heading" className="home-advice">
-            <h2 id="home-advice-heading">Cần tư vấn chọn bao bì?</h2>
-            <Link href="/lien-he#bao-gia" className="home-more">
-              Nhận tư vấn <ArrowRight size={16} aria-hidden="true" />
+        <section aria-labelledby="home-blog-heading" className="home-posts">
+          <div className="home-section-heading">
+            <h2 id="home-blog-heading">Kinh nghiệm chọn bao bì</h2>
+            <Link href="/blog" className="home-more home-posts-more">
+              Xem tất cả bài viết <ArrowRight size={17} aria-hidden="true" />
             </Link>
-            <Image src="/images/home/advice-bowl.webp" width={360} height={240} sizes="(min-width: 64rem) 120px, 32vw" alt="" />
-          </aside>
-
-          <section aria-labelledby="home-blog-heading" className="home-posts">
-            <div className="home-section-heading">
-              <h2 id="home-blog-heading">Kinh nghiệm chọn bao bì</h2>
+          </div>
+          {leadStory ? (
+            <div className="home-stories" data-count={latestPosts.docs.length}>
+              {leadStory}
+              {otherStories.length > 0 && <div className="home-stories-secondary">{otherStories}</div>}
             </div>
-            {latestPosts.docs.length ? (
-              <div className="home-stories">
-                {latestPosts.docs.map((post, index) => (
-                  <PostCard key={post.id} post={post} variant={index === 0 ? 'feature' : 'brief'} />
-                ))}
-              </div>
-            ) : (
-              <p className="home-empty">Chưa có bài viết nào được xuất bản.</p>
-            )}
-            <div className="home-posts-footer">
-              <Link href="/blog" className="home-more home-posts-more">
-                Xem tất cả bài viết <ArrowRight size={17} aria-hidden="true" />
-              </Link>
-            </div>
-          </section>
-        </div>
+          ) : (
+            <p className="home-empty">Chưa có bài viết nào được xuất bản.</p>
+          )}
+        </section>
 
         {facebookPages.length > 0 && <FacebookFanpages pages={facebookPages} />}
       </div>

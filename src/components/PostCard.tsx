@@ -1,9 +1,11 @@
 import React from 'react';
 import Link from 'next/link';
+import { ArrowRight, ArrowUpRight, Newspaper } from 'lucide-react';
 import { publicContentPath } from '@/lib/slug';
 import { fourColumnCardSizes } from '@/lib/storefront-image-sizes';
+import type { HomeNewsCategoryTone } from '@/lib/home-news';
 import type { Post, PostCategory } from '@/payload-types';
-import { MediaImage } from './MediaImage';
+import { MediaImage, resolveMediaUrl } from './MediaImage';
 
 function formatVietnameseDate(iso?: string | null): string {
   if (!iso) return '';
@@ -20,27 +22,9 @@ export function PostCard({
   post,
   sizes = fourColumnCardSizes,
   variant = 'default',
-}: { post: Post; sizes?: string; variant?: 'default' | 'feature' | 'brief' | 'related' }) {
+  categoryTone,
+}: { post: Post; sizes?: string; variant?: 'default' | 'feature' | 'brief' | 'related'; categoryTone?: HomeNewsCategoryTone }) {
   const postPath = publicContentPath('posts', post.slug);
-
-  if (variant === 'feature' || variant === 'brief') {
-    const feature = variant === 'feature';
-    return (
-      <article className={feature ? 'home-story home-story-feature' : 'home-story home-story-brief'}>
-        <Link href={postPath}>
-          <div className="home-story-image">
-            <MediaImage
-              media={post.coverImage}
-              prefer={feature ? 'card' : 'thumbnail'}
-              sizes={feature ? '(min-width: 64rem) 41vw, 100vw' : '(min-width: 64rem) 31vw, 8rem'}
-              fallbackTitle={post.title}
-            />
-          </div>
-          <h3>{post.title}</h3>
-        </Link>
-      </article>
-    );
-  }
 
   const categoryObj =
     post.category && typeof post.category === 'object'
@@ -48,6 +32,42 @@ export function PostCard({
       : null;
 
   const dateText = formatVietnameseDate(post.publishedAt);
+
+  if (variant === 'feature' || variant === 'brief') {
+    const feature = variant === 'feature';
+    const titleId = `home-story-title-${post.id}`;
+    return (
+      <article className={feature ? 'home-story home-story-feature' : 'home-story home-story-brief'} data-tone={categoryTone}>
+        <Link href={postPath} className="home-story-link" aria-labelledby={titleId}>
+          <div className="home-story-image">
+            {resolveMediaUrl(post.coverImage).url ? (
+              <MediaImage media={post.coverImage} prefer="card" sizes={sizes} />
+            ) : (
+              <div className="home-story-placeholder" aria-hidden="true">
+                <Newspaper />
+              </div>
+            )}
+            <span className="home-story-corner" aria-hidden="true"><ArrowUpRight size={17} /></span>
+          </div>
+          <div className="home-story-content">
+            {(categoryObj?.name || dateText) && (
+              <div className="home-story-meta">
+                {categoryObj?.name && <span className="home-story-category">{categoryObj.name}</span>}
+                {dateText && <time dateTime={post.publishedAt}>{dateText}</time>}
+              </div>
+            )}
+            <h3 id={titleId}>{post.title}</h3>
+            {feature && (
+              <>
+                {post.excerpt && <p className="home-story-excerpt">{post.excerpt}</p>}
+                <span className="home-story-read">Đọc tiếp <ArrowRight size={17} aria-hidden="true" /></span>
+              </>
+            )}
+          </div>
+        </Link>
+      </article>
+    );
+  }
 
   if (variant === 'related') {
     return (
