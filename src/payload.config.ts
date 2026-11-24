@@ -8,6 +8,7 @@ import { vi } from '@payloadcms/translations/languages/vi';
 import { r2Storage } from '@payloadcms/storage-r2';
 
 import { adminVietnamese } from './admin/translations';
+import { richTextImageFields } from './admin/richTextImageFields';
 import { Users } from './collections/Users';
 import { Media } from './collections/Media';
 import { Documents } from './collections/Documents';
@@ -99,7 +100,7 @@ export default buildConfig({
       ...defaultFeatures.filter((feature) => !['link', 'relationship', 'upload'].includes(feature.key)),
       LinkFeature({ enabledCollections: [...richTextCollections] }),
       RelationshipFeature({ enabledCollections: [...richTextCollections] }),
-      UploadFeature({ enabledCollections: ['media'] }),
+      UploadFeature({ enabledCollections: ['media'], collections: { media: { fields: richTextImageFields } } }),
     ],
   }),
   secret: cloudflare?.PAYLOAD_SECRET || getPayloadSecret(),

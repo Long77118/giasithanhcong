@@ -234,6 +234,42 @@ html:has(nextjs-portal) .nav__controls {
 /* The native horizontal tab scroller clips an outside outline. */
 .tabs-field__tab-button:focus-visible { outline-offset: -3px; }
 
+/* Lexical 3.93 uses a serif stack that mixes fonts for Vietnamese glyphs on Windows. */
+.rich-text-lexical :is(.ContentEditable__root, .LexicalEditorTheme__placeholder) {
+  font-family: var(--font-body);
+  letter-spacing: normal;
+}
+
+/* The built-in upload card only sets its own margins when the node has a format. */
+.rich-text-lexical .LexicalEditorTheme__upload { max-inline-size: min(450px, 100%); }
+
+.rich-text-lexical .LexicalEditorTheme__upload:not(:has(> .LexicalEditorTheme__upload__contents[data-align])) {
+  width: fit-content;
+  margin-inline: auto;
+}
+
+.rich-text-lexical .LexicalEditorTheme__upload .thumbnail :is(img, svg) {
+  min-inline-size: 0;
+  min-block-size: 0;
+  max-inline-size: 100%;
+  display: block;
+  margin-inline: auto;
+}
+
+/* Payload hides its field-error tooltip on smaller screens. Keep image sizing errors in the form. */
+.admin-rich-text-image-width .field-error.tooltip {
+  position: static;
+  display: block;
+  max-width: none;
+  margin-block: 0.25rem 0.4rem;
+  color: var(--workspace-error-ink);
+  background: var(--workspace-error-bg);
+  transform: none;
+  white-space: normal;
+}
+
+.admin-rich-text-image-width .field-error.tooltip::after { display: none; }
+
 /* SEO 3.93 has inline colors and a non-wrapping character count without style slots. */
 #field-meta div:is([style*='color: rgb(154, 154, 154)'], [style*='color:#9a9a9a' i]) {
   color: var(--workspace-muted) !important;
