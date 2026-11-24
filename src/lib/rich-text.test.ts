@@ -4,22 +4,50 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { LexicalContent } from '../components/LexicalContent';
 import { publicDocumentLink, richTextImage, safeRichTextHref } from './rich-text';
+import { articleBodyImageContext, productDescriptionImageContext } from './storefront-image-sizes';
 
 const text = (value: string, format = 0) => ({type:'text',text:value,format,detail:0,mode:'normal',style:'',version:1});
 const element = (type: string, children: unknown[], rest: Record<string, unknown> = {}) => ({type,children,format:'',indent:0,direction:'ltr',version:1,...rest});
-const render = (nodes: unknown[]) => renderToStaticMarkup(React.createElement(LexicalContent,{data:{root:element('root',nodes)}}));
+const render = (nodes: unknown[], imageSizeContext = articleBodyImageContext(false)) =>
+  renderToStaticMarkup(React.createElement(LexicalContent,{data:{root:element('root',nodes)},imageSizeContext}));
 const image = {id:1,url:'/api/media/file/anh-bai-viet.jpg',mimeType:'image/jpeg',width:1600,height:900,alt:'Hộp giấy & ly PET',caption:'Ảnh minh họa giữa bài'};
 const reference = (relationTo = 'products', status = 'published') => ({relationTo,value:{id:2,slug:'ly-pet-500ml',name:'Ly PET 500ml',status}});
 
 test('Rich text renders embedded images with alt, caption, original dimensions and surrounding content', () => {
-  const html = render([element('paragraph',[text('Trước ảnh')]),{type:'upload',version:3,relationTo:'media',value:image,fields:{}},element('paragraph',[text('Sau ảnh')])]);
-  assert.match(html,/<figure><img/);
+  const html = render([element('paragraph',[text('Trước ảnh')]),{type:'upload',version:3,relationTo:'media',value:image},element('paragraph',[text('Sau ảnh')])]);
+  assert.match(html,/<figure class="rich-text-image" data-align="center" style="--rich-text-image-width:60%/);
+  assert.doesNotMatch(html,/data-wrap=/);
   assert.match(html,/src="\/api\/media\/file\/anh-bai-viet.jpg"/);
   assert.match(html,/alt="Hộp giấy &amp; ly PET"/);
   assert.match(html,/width="1600" height="900" loading="lazy"/);
   assert.match(html,/<figcaption>Ảnh minh họa giữa bài<\/figcaption>/);
-  assert.ok(html.indexOf('Trước ảnh') < html.indexOf('<figure>'));
+  assert.ok(html.indexOf('Trước ảnh') < html.indexOf('<figure '));
   assert.ok(html.indexOf('</figure>') < html.indexOf('Sau ảnh'));
+});
+
+test('Configured image output bounds widths, supports wrapping and uses the page image context', () => {
+  const node = {
+    type: 'upload', version: 3, relationTo: 'media',
+    value: {...image,sizes:{wide:{url:'/wide.jpg',width:800,height:450},crop:{url:'/crop.jpg',width:480,height:360}}},
+    fields: { imageSize: 'custom', customWidth: 2400, customWidthUnit: 'px', imageAlignment: 'right', wrapText: true, caption: 'Chú thích riêng' },
+  };
+  const product = render([node], productDescriptionImageContext);
+  const article = render([node], articleBodyImageContext(true));
+  for(const html of [product, article]) {
+    assert.match(html,/data-align="right" data-wrap="true"/);
+    assert.match(html,/--rich-text-image-width:1600px/);
+    assert.match(html,/--rich-text-image-max-width:min\(100%, 1600px\)/);
+    assert.match(html,/sizes="auto, \(width &lt; 40rem\)/);
+    assert.match(html,/srcSet="\/wide.jpg 800w,/i);
+    assert.doesNotMatch(html,/\/crop.jpg/);
+    assert.match(html,/<figcaption>Chú thích riêng<\/figcaption>/);
+  }
+  assert.match(product,/sizes="[^"]*1240px/);
+  assert.match(article,/sizes="[^"]*64rem[^"]*46.25rem[^"]*20.625rem/);
+  assert.doesNotMatch(render([node]), /sizes="[^"]*64rem/);
+  const invalid = render([{...node,fields:{ imageSize: 'custom', customWidthUnit: 'px', customWidth: '300px; color:red', imageAlignment: 'unsafe', wrapText: true }}]);
+  assert.match(invalid,/data-align="center" style="--rich-text-image-width:60%/);
+  assert.doesNotMatch(invalid,/color:red|unsafe|data-wrap/);
 });
 
 test('Internal document links and block relationships use the correct public routes', () => {
@@ -69,5 +97,5 @@ test('Responsive image variants preserve image aspect ratio; missing images do n
     const html = render([{type:'upload',version:3,relationTo:'media',value},element('paragraph',[text('Tiếp tục đọc')])]);
     assert.match(html,/Ảnh không còn khả dụng/);assert.match(html,/Tiếp tục đọc/);assert.doesNotMatch(html,/<img/);
   }
-  assert.equal(renderToStaticMarkup(React.createElement(LexicalContent,{data:null})), '');
+  assert.equal(renderToStaticMarkup(React.createElement(LexicalContent,{data:null,imageSizeContext:articleBodyImageContext(false)})), '');
 });

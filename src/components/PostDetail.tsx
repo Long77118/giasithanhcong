@@ -6,7 +6,7 @@ import { buildArticleJsonLd } from '@/lib/seo';
 import { resolvePublicImageUrl } from '@/lib/seo-images';
 import { publicContentPath } from '@/lib/slug';
 import { articleReadingMinutes, extractArticleHeadings, formatArticleDate } from '@/lib/article-content';
-import { catalogCardSizes, threeColumnCardSizes } from '@/lib/storefront-image-sizes';
+import { articleBodyImageContext, catalogCardSizes, threeColumnCardSizes } from '@/lib/storefront-image-sizes';
 import { Breadcrumbs } from './Breadcrumbs';
 import { ArticleToc } from './ArticleToc';
 import { LexicalContent } from './LexicalContent';
@@ -103,7 +103,7 @@ export async function PostDetail({ post, contact, siteUrl, preview = false }: {
 
         <div className={hasSidebar ? 'article-grid article-grid--with-aside' : 'article-grid'}>
           <div className="article-main">
-            <LexicalContent data={post.content} variant="article" headings={headings} />
+            <LexicalContent data={post.content} variant="article" headings={headings} imageSizeContext={articleBodyImageContext(hasSidebar)} />
           </div>
           {hasSidebar && (
             <aside className="article-aside" aria-label="Thông tin trong bài">

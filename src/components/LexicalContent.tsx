@@ -3,6 +3,7 @@ import type { DefaultNodeTypes, SerializedLinkNode, SerializedAutoLinkNode } fro
 import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical';
 import { RichText, type JSXConverter, type JSXConvertersFunction } from '@payloadcms/richtext-lexical/react';
 import { asRecord, publicDocumentLink, richTextImage, safeRichTextHref } from '@/lib/rich-text';
+import { richTextImageLayout, richTextImageSizes, type RichTextImageSizeContext } from '@/lib/rich-text-image-layout';
 import type { ArticleHeading } from '@/lib/article-content';
 
 const linkConverter: JSXConverter<SerializedLinkNode | SerializedAutoLinkNode> = ({ node, nodesToJSX }) => {
@@ -43,7 +44,7 @@ function articleConverters(headings: readonly ArticleHeading[]): ReturnType<JSXC
   };
 }
 
-const createConverters = (headingTag?: 'h3', hideUnavailable = false, headings?: readonly ArticleHeading[]): JSXConvertersFunction<DefaultNodeTypes> => ({ defaultConverters }) => ({
+const createConverters = (imageSizeContext: RichTextImageSizeContext, headingTag?: 'h3', hideUnavailable = false, headings?: readonly ArticleHeading[]): JSXConvertersFunction<DefaultNodeTypes> => ({ defaultConverters }) => ({
   ...defaultConverters,
   link: linkConverter,
   autolink: linkConverter,
@@ -52,9 +53,10 @@ const createConverters = (headingTag?: 'h3', hideUnavailable = false, headings?:
   upload: ({ node }) => {
     const image = node.relationTo === 'media' ? richTextImage(node.value, node.fields) : undefined;
     if (!image) return hideUnavailable ? null : <p className="rich-text-unavailable">Ảnh không còn khả dụng.</p>;
+    const layout = richTextImageLayout(node.fields, image.width);
     return (
-      <figure>
-        <img src={image.src} srcSet={image.srcSet} sizes={image.srcSet ? '(max-width: 768px) 100vw, 768px' : undefined} alt={image.alt} width={image.width} height={image.height} loading="lazy" decoding="async" />
+      <figure className="rich-text-image" data-align={layout.alignment} data-wrap={layout.wrapText ? 'true' : undefined} style={layout.style as React.CSSProperties}>
+        <img src={image.src} srcSet={image.srcSet} sizes={image.srcSet ? richTextImageSizes(layout, imageSizeContext) : undefined} alt={image.alt} width={image.width} height={image.height} loading="lazy" decoding="async" />
         {image.caption && <figcaption>{image.caption}</figcaption>}
       </figure>
     );
@@ -65,16 +67,16 @@ const createConverters = (headingTag?: 'h3', hideUnavailable = false, headings?:
   },
 });
 
-type LexicalContentProps = { data: unknown; hideUnavailable?: boolean } & (
+type LexicalContentProps = { data: unknown; hideUnavailable?: boolean; imageSizeContext: RichTextImageSizeContext } & (
   { variant?: undefined; headingTag?: 'h3' }
   | { variant: 'article'; headings: readonly ArticleHeading[]; headingTag?: never }
 );
 
 export function LexicalContent(props: LexicalContentProps) {
-  const { data, headingTag, hideUnavailable = false } = props;
+  const { data, headingTag, hideUnavailable = false, imageSizeContext } = props;
   const root = asRecord(asRecord(data)?.root);
   if (!root || !Array.isArray(root.children) || !root.children.length) return null;
   const headings = props.variant === 'article' ? props.headings : undefined;
   return <RichText className={headings ? 'lexical-content article-body' : 'lexical-content max-w-none'}
-    converters={createConverters(headingTag, hideUnavailable, headings)} data={data as SerializedEditorState} />;
+    converters={createConverters(imageSizeContext, headingTag, hideUnavailable, headings)} data={data as SerializedEditorState} />;
 }

@@ -7,7 +7,7 @@ import { resolvePublicImageUrl } from '@/lib/seo-images';
 import { categoryAncestors } from '@/lib/category-tree';
 import { publicContentPath } from '@/lib/slug';
 import { availabilityLabels, hasProductDescription, productDocuments, productQuickFacts, productTextItems, productVideos } from '@/lib/product-detail';
-import { compactCatalogCardSizes } from '@/lib/storefront-image-sizes';
+import { compactCatalogCardSizes, productDescriptionImageContext } from '@/lib/storefront-image-sizes';
 import { Breadcrumbs } from './Breadcrumbs';
 import { LexicalContent } from './LexicalContent';
 import { ProductCard } from './ProductCard';
@@ -115,7 +115,11 @@ export async function ProductDetail({ product, contact, siteUrl, canonical = '',
       {(hasDescription || benefits.length > 0 || applications.length > 0) && (
         <section className="product-detail-section" aria-labelledby="product-description-heading">
           <h2 id="product-description-heading">Mô tả sản phẩm</h2>
-          {hasDescription && <div className="product-detail-description"><LexicalContent data={product.description} headingTag="h3" hideUnavailable /></div>}
+          {hasDescription && (
+            <div className="product-detail-description">
+              <LexicalContent data={product.description} headingTag="h3" hideUnavailable imageSizeContext={productDescriptionImageContext} />
+            </div>
+          )}
           {(benefits.length > 0 || applications.length > 0) && (
             <div className="product-detail-lists">
               {benefits.length > 0 && <div><h3>Ưu điểm</h3><ul>{benefits.map((text, index) => <li key={index}>{text}</li>)}</ul></div>}

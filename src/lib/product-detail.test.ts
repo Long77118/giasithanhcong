@@ -11,6 +11,7 @@ import { ProductGallery } from '../components/ProductGallery';
 import { ProductContactActions } from '../components/ProductContactActions';
 import { resolveContactConfig } from './contact';
 import { LexicalContent } from '../components/LexicalContent';
+import { productDescriptionImageContext } from './storefront-image-sizes';
 import { Documents } from '../collections/Documents';
 import { Media } from '../collections/Media';
 import { r2Storage } from '@payloadcms/storage-r2';
@@ -111,7 +112,7 @@ test('Product rich text cannot add a second H1 or a missing-image placeholder', 
     {type:'heading',tag:'h1',version:1,format:'',indent:0,direction:'ltr',children:[{type:'text',version:1,text:'Chi tiết chai PET',format:0,detail:0,mode:'normal',style:''}]},
     {type:'upload',version:3,relationTo:'media',value:null},
   ]}};
-  const html=renderToStaticMarkup(React.createElement(LexicalContent,{data,headingTag:'h3',hideUnavailable:true}));
+  const html=renderToStaticMarkup(React.createElement(LexicalContent,{data,headingTag:'h3',hideUnavailable:true,imageSizeContext:productDescriptionImageContext}));
   assert.match(html,/<h3>Chi tiết chai PET<\/h3>/);
   assert.doesNotMatch(html,/<h1|Ảnh không còn khả dụng/);
 });

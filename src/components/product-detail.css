@@ -46,7 +46,11 @@
 .product-detail-table th { width: 36%; color: var(--detail-muted); font-weight: 500; }
 .product-detail-table tr:nth-child(odd) { background: #f8fafc; }
 .product-detail-table tr:last-child > * { border-bottom: 0; }
-.product-detail-description { max-width: 76ch; }
+.product-detail-description .lexical-content > :where(p, h1, h2, h3, h4, h5, h6, ul, ol, blockquote, pre, hr) {
+  /* Match roughly 76 characters in the body font across all text blocks. */
+  max-inline-size: 52rem;
+  margin-inline: auto;
+}
 .product-detail-lists { display: grid; gap: 1.75rem; }
 .product-detail-description + .product-detail-lists { margin-top: 1.75rem; padding-top: 1.75rem; border-top: 1px solid var(--detail-line); }
 .product-detail-lists h3 { color: var(--detail-ink); font-weight: 600; font-size: 1.0625rem; margin-bottom: .875rem; }
