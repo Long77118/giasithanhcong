@@ -1,0 +1,73 @@
+body[data-season='christmas'] {
+  --season-forest: #22392b;
+  --season-sage: #eaf0dc;
+  --season-champagne: #efd49c;
+  --season-lamp-edge: #8a6839;
+  --season-snow-fill: #fffdf4;
+  --season-snow-outline: rgb(85 112 100 / .50);
+}
+
+body:not([data-season='christmas']) :is(.seasonal-lights, .seasonal-snow-canvas, .seasonal-snow-control) { display: none; }
+
+.seasonal-lights {
+  position: absolute;
+  inset: auto 0 -9px;
+  display: flex;
+  height: 19px;
+  pointer-events: none;
+  mask-image: linear-gradient(to right, transparent, #000 2rem, #000 calc(100% - 2rem), transparent);
+}
+
+.seasonal-lights > svg { flex: 1; min-width: 0; height: 100%; overflow: visible; }
+.seasonal-lights-wire { fill: none; stroke: var(--season-forest); stroke-width: .9; opacity: .46; vector-effect: non-scaling-stroke; }
+.seasonal-lights-bulb > path { fill: var(--season-forest); opacity: .66; }
+.seasonal-lights-bulb > ellipse { fill: var(--season-champagne); stroke: var(--season-lamp-edge); stroke-width: .7; vector-effect: non-scaling-stroke; }
+
+.seasonal-snow-canvas {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.seasonal-snow-control { display: flex; justify-content: flex-end; margin-block-start: .875rem; }
+.seasonal-snow-control > button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: .4rem;
+  padding: .45rem .85rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--season-sage);
+  color: var(--season-forest);
+  font-size: .8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.seasonal-snow-control > button:hover { background: var(--season-champagne); }
+.seasonal-snow-control > button:focus-visible { outline: 2px solid var(--season-champagne); outline-offset: 4px; }
+
+@media (width < 64rem) {
+  .seasonal-lights > svg:nth-child(n + 5) { display: none; }
+}
+
+@media (width < 40rem) {
+  .seasonal-lights { inset-block-end: -7px; height: 16px; }
+  .seasonal-lights > svg:nth-child(n + 4) { display: none; }
+  .seasonal-snow-control { justify-content: flex-start; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .seasonal-lights-bulb > ellipse { animation: seasonal-lamp-glow 3.4s ease-in-out infinite alternate; }
+  .seasonal-lights-bulb:nth-of-type(2n) > ellipse { animation-delay: -.95s; }
+  .seasonal-lights-bulb:nth-of-type(3n) > ellipse { animation-delay: -2.35s; }
+  .seasonal-lights > svg:nth-child(even) .seasonal-lights-bulb > ellipse { animation-direction: alternate-reverse; }
+  @keyframes seasonal-lamp-glow { from { opacity: .63; } to { opacity: 1; } }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.seasonal-snow-canvas, .seasonal-snow-control) { display: none; }
+}

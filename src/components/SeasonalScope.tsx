@@ -1,11 +1,36 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import type { ActiveSeason } from '@/lib/seasonal-theme';
+import './seasonal.css';
 
-export type SeasonalScopeConfig = Pick<ActiveSeason, 'theme' | 'expiresAt'>;
+const SeasonalSnow = dynamic(() => import('./SeasonalSnow'), { ssr: false });
 
-export default function SeasonalScope({ theme, expiresAt, pathname }: SeasonalScopeConfig & { pathname: string }) {
+export type SeasonalScopeConfig = Pick<ActiveSeason, 'theme' | 'expiresAt' | 'intensity' | 'snow' | 'lights'>;
+
+function ChristmasLights() {
+  const bulbAnchors = [[27, 6], [76, 9], [124, 9], [173, 6]];
+  return (
+    <div className="seasonal-lights site-shell" aria-hidden="true">
+      {Array.from({ length: 6 }, (_, strand) => (
+        <svg key={strand} viewBox="0 0 200 19" preserveAspectRatio="none" focusable="false">
+          <path className="seasonal-lights-wire" d="M0 2C57 12 145 12 200 2" />
+          {bulbAnchors.map(([x, y]) => (
+            <g key={x} className="seasonal-lights-bulb" transform={`translate(${x} ${y})`}>
+              <path d="M-2 0h4v2h-4z" />
+              <ellipse cy="5.1" rx="3.1" ry="3.6" />
+            </g>
+          ))}
+        </svg>
+      ))}
+    </div>
+  );
+}
+
+export default function SeasonalScope({ theme, expiresAt, pathname, intensity, snow, lights }: SeasonalScopeConfig & { pathname: string }) {
+  const [active, setActive] = useState(false);
+
   useEffect(() => {
     const { body } = document;
     const main = document.getElementById('main-content');
@@ -15,8 +40,10 @@ export default function SeasonalScope({ theme, expiresAt, pathname }: SeasonalSc
     const syncScope = () => {
       window.clearTimeout(expiryTimer);
       const remaining = expiresAt === null ? Infinity : expiresAt - Date.now();
-      if (remaining > 0 && !main.querySelector('[data-season-excluded]')) body.dataset.season = theme;
+      const canShow = remaining > 0 && !main.querySelector('[data-season-excluded]');
+      if (canShow) body.dataset.season = theme;
       else delete body.dataset.season;
+      setActive(canShow);
 
       if (remaining <= 0) observer.disconnect();
       else if (Number.isFinite(remaining)) expiryTimer = window.setTimeout(syncScope, Math.min(remaining, 2_147_483_647));
@@ -36,5 +63,11 @@ export default function SeasonalScope({ theme, expiresAt, pathname }: SeasonalSc
     };
   }, [theme, expiresAt, pathname]);
 
-  return null;
+  if (!active) return null;
+  return (
+    <>
+      {lights && <ChristmasLights />}
+      {snow && <SeasonalSnow intensity={intensity} />}
+    </>
+  );
 }

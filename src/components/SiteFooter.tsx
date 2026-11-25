@@ -15,7 +15,7 @@ export function SiteFooter({ contact, categories }: SiteFooterProps) {
   const { phones, hasDetails } = getContactPageDetails(contact);
   return (
     <footer className="site-footer border-t border-slate-200 bg-[#0C2340] text-slate-200">
-      <div className="site-shell py-12">
+      <div id="site-footer-content" className="site-shell py-12">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-2">
             <h2 className="font-display text-lg font-bold text-white">

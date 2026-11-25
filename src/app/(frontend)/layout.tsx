@@ -108,7 +108,10 @@ export default async function FrontendLayout({
         </a>
         <SiteHeader brandName={contact.brandName} categories={categoryMenuItems(categories)} contact={headerContact}
           featured={featured ? { name: featured.name, href: publicContentPath('products', featured.slug) } : null}
-          season={season ? { theme: season.theme, expiresAt: season.expiresAt } : undefined} />
+          season={season ? {
+            theme: season.theme, expiresAt: season.expiresAt,
+            intensity: season.intensity, snow: season.snow, lights: season.lights,
+          } : undefined} />
         <main id="main-content" className="flex-1">
           <QuoteContactProvider zaloUrl={contact.zaloUrl}>{children}</QuoteContactProvider>
         </main>
