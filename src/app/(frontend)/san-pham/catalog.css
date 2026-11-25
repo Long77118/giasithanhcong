@@ -1,0 +1,106 @@
+.product-catalog {
+  --catalog-green: #286447;
+  --catalog-green-hover: #1f5138;
+  --catalog-tint: #f0f6eb;
+  --catalog-control-line: #788b78;
+  --catalog-inset: clamp(.875rem, calc(2.3 * var(--site-fluid-unit)), 2rem);
+}
+
+.product-catalog-intro {
+  min-width: 0;
+  border: 1px solid var(--listing-line);
+  border-radius: 1.25rem;
+  background: var(--listing-paper);
+}
+
+.product-catalog .listing-heading {
+  padding: clamp(1.125rem, calc(2.2 * var(--site-fluid-unit)), 1.85rem) var(--catalog-inset);
+  border-radius: calc(1.25rem - 1px) calc(1.25rem - 1px) 0 0;
+  background: var(--catalog-tint);
+}
+
+.product-catalog :is(.listing-heading h1, .product-catalog-results-heading h2) {
+  font-family: 'Packaging Rounded', var(--font-jakarta), sans-serif;
+  font-weight: 700;
+  letter-spacing: -.035em;
+}
+
+.product-catalog .listing-heading h1 {
+  max-width: none;
+  font-size: clamp(1.65rem, calc(3.2 * var(--site-fluid-unit)), 2.6rem);
+}
+
+.product-catalog .listing-heading p { max-width: 63ch; font-size: .875rem; text-wrap: pretty; }
+.product-catalog .listing-heading-summary { color: var(--catalog-green); }
+.product-catalog .listing-heading-art { inset: 50% var(--catalog-inset) auto auto; transform: translateY(-50%); }
+
+.product-catalog-filters {
+  min-width: 0;
+  padding: .875rem var(--catalog-inset) 1rem;
+  border-top: 1px solid var(--listing-line);
+}
+
+.product-catalog-filters :is(input, select, button) {
+  min-height: var(--listing-target);
+  border: 1px solid var(--catalog-control-line);
+  border-radius: .75rem;
+  background: var(--listing-paper);
+  color: var(--listing-ink);
+}
+
+.product-catalog-filters input { border-radius: 999px; }
+.product-catalog-filters input::placeholder,
+.product-catalog-filters :is(label, .product-catalog-search-icon) { color: var(--listing-muted); }
+.product-catalog-filters button { font-size: .8125rem; font-weight: 700; cursor: pointer; }
+.product-catalog-filters button:is(:hover, [aria-expanded="true"]) { background: var(--catalog-tint); }
+
+.product-catalog-filters .product-catalog-search-submit,
+.product-catalog .listing-button--primary,
+.product-catalog .listing-pagination nav span[aria-current="page"],
+.product-catalog .listing-quick-filters .listing-chip[aria-current="true"] {
+  border-color: var(--catalog-green);
+  background: var(--catalog-green);
+  color: var(--listing-paper);
+}
+
+.product-catalog-filters .product-catalog-search-submit { border-radius: 999px; }
+.product-catalog-filters .product-catalog-search-submit:hover,
+.product-catalog .listing-button--primary:hover {
+  border-color: var(--catalog-green-hover);
+  background: var(--catalog-green-hover);
+}
+
+.product-catalog .listing-quick-filters { margin-top: .85rem; }
+.product-catalog .listing-quick-filters .listing-chip { border-color: #dae5dc; color: var(--listing-muted); font-weight: 600; }
+.product-catalog .listing-quick-filters .listing-chip[aria-current="true"] { box-shadow: none; }
+.product-catalog .listing-quick-filters .listing-chip:not([aria-current]):hover { background: var(--catalog-tint); color: var(--catalog-green); }
+.product-catalog .listing-applied-filters .listing-chip { border-color: #ccdbcb; }
+.product-catalog .listing-clear-filters { color: var(--catalog-green); }
+
+.product-catalog-results-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .25rem 1rem;
+}
+
+.product-catalog-results-heading h2 { font-size: clamp(1.2rem, calc(1.65 * var(--site-fluid-unit)), 1.55rem); line-height: 1.25; }
+.product-catalog .listing-empty { background: var(--catalog-tint); }
+.product-catalog .listing-pagination nav :is(a, span) { border-radius: 999px; }
+
+@media (width < 40rem) {
+  .product-catalog .listing-heading-art { display: none; }
+  .product-catalog .listing-quick-filters { scrollbar-width: thin; scrollbar-color: #aac5ac transparent; }
+}
+
+@media (width < 23rem) {
+  .product-catalog-filters :is(.product-catalog-search-icon, .product-catalog-filter-chevron) { display: none; }
+  .product-catalog-filters input { padding-inline-start: .75rem; }
+  .product-catalog-filters .product-catalog-search-submit { padding-inline: .625rem; }
+  .product-catalog-filters button[aria-expanded] { padding-inline: .375rem; }
+}
+
+@media (width >= 40rem) {
+  .product-catalog .listing-heading { padding-inline-end: calc(var(--catalog-inset) + 12rem); }
+}

@@ -18,11 +18,12 @@ import { resolveOpenGraphImages } from '@/lib/seo-images';
 import { parsePositivePage, withPublicSearchParams, type PublicSearchParams } from '@/lib/slug';
 import { categoryTreeOptions } from '@/lib/category-tree';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { ProductListingCard } from '@/components/ProductListingCard';
+import { ProductChoiceCard } from '@/components/ProductChoiceCard';
 import { ListingHeading } from '@/components/ListingHeading';
 import { CatalogFilters } from '@/components/CatalogFilters';
 import { Pagination } from '@/components/Pagination';
 import '@/components/listing.css';
+import './catalog.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -139,7 +140,7 @@ export default async function ProductsPage({ searchParams }: SearchParamsProp) {
   ].filter(filter => filter.label);
 
   return (
-    <div className="site-shell listing-page listing-products py-4 sm:py-7 lg:py-8">
+    <div className="site-shell listing-page product-catalog py-4 sm:py-7 lg:py-8">
       <Breadcrumbs
         siteUrl={siteUrl}
         items={[
@@ -148,42 +149,46 @@ export default async function ProductsPage({ searchParams }: SearchParamsProp) {
         ]}
       />
 
-      <ListingHeading
-        title="Danh mục sản phẩm bán sỉ"
-        description="Tra theo mã hàng, quy cách đóng gói và số lượng đặt tối thiểu."
-        summary={`${new Intl.NumberFormat('vi-VN').format(catalog.totalDocs)} sản phẩm`}
-      />
-
-      <div className="listing-filter-panel">
-        <CatalogFilters
-          key={JSON.stringify([q, category, activeSort.value, page])}
-          query={q}
-          category={category}
-          sort={activeSort.value}
-          categories={categoryOptions}
-          sorts={catalogSorts}
+      <div className="product-catalog-intro">
+        <ListingHeading
+          title="Bao bì bán sỉ cho quán"
+          description="Tìm theo tên hoặc mã hàng, xem quy cách đóng gói và số lượng đặt tối thiểu."
+          summary={`${new Intl.NumberFormat('vi-VN').format(catalog.totalDocs)} sản phẩm`}
         />
-        {topCategories.length > 0 && (
-          <nav aria-label="Lọc nhanh theo nhóm hàng" className="listing-chip-row listing-quick-filters">
-            {[{ slug: '', name: 'Tất cả nhóm' }, ...topCategories].map(({ slug, name }) => (
-              <Link
-                key={slug}
-                href={withPublicSearchParams('/san-pham', { ...filters, category: slug || undefined })}
-                aria-current={category === slug ? 'true' : undefined}
-                className="listing-chip"
-              >
-                {name}
-              </Link>
-            ))}
-          </nav>
-        )}
+
+        <div className="product-catalog-filters">
+          <CatalogFilters
+            key={JSON.stringify([q, category, activeSort.value, page])}
+            query={q}
+            category={category}
+            sort={activeSort.value}
+            categories={categoryOptions}
+            sorts={catalogSorts}
+          />
+          {topCategories.length > 0 && (
+            <nav aria-label="Lọc nhanh theo nhóm hàng" className="listing-chip-row listing-quick-filters">
+              {[{ slug: '', name: 'Tất cả nhóm' }, ...topCategories].map(({ slug, name }) => (
+                <Link
+                  key={slug}
+                  href={withPublicSearchParams('/san-pham', { ...filters, category: slug || undefined })}
+                  aria-current={category === slug ? 'true' : undefined}
+                  className="listing-chip"
+                >
+                  {name}
+                </Link>
+              ))}
+            </nav>
+          )}
+        </div>
       </div>
 
       <section aria-labelledby="product-listing-results" className="listing-results">
-        <h2 id="product-listing-results" className="sr-only">Kết quả sản phẩm</h2>
-        {catalog.totalPages > 1 && (
-          <p className="listing-page-number">Trang {catalog.page} / {catalog.totalPages}</p>
-        )}
+        <div className="product-catalog-results-heading">
+          <h2 id="product-listing-results">{appliedFilters.length > 0 ? 'Kết quả sản phẩm' : 'Sản phẩm bao bì'}</h2>
+          {catalog.totalPages > 1 && (
+            <p className="listing-page-number">Trang {catalog.page} / {catalog.totalPages}</p>
+          )}
+        </div>
 
         {appliedFilters.length > 0 && (
           <ul aria-label="Bộ lọc đang áp dụng" className="listing-chip-row listing-applied-filters" role="list">
@@ -193,7 +198,7 @@ export default async function ProductsPage({ searchParams }: SearchParamsProp) {
                   href={withPublicSearchParams('/san-pham', { ...filters, [key]: undefined })}
                   aria-label={`Bỏ lọc ${label}`}
                   className="listing-chip"
-                  data-tone="sand"
+                  data-tone="sage"
                 >
                   <span className="min-w-0 [overflow-wrap:anywhere]">{label}</span>
                   <X size={13} className="shrink-0" aria-hidden="true" />
@@ -227,9 +232,9 @@ export default async function ProductsPage({ searchParams }: SearchParamsProp) {
             </div>
           </div>
         ) : (
-          <div className="listing-grid">
+          <div className="product-choice-grid">
             {catalog.docs.map((product, index) => (
-              <ProductListingCard key={product.id} product={product} index={index} />
+              <ProductChoiceCard key={product.id} product={product} quoteLabel="Hỏi báo giá" showCatalogMeta priorityIndex={index} />
             ))}
           </div>
         )}

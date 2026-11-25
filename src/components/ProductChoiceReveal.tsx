@@ -8,7 +8,7 @@ function hasHoverSpace() {
   return window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 40rem)').matches;
 }
 
-export function HomeProductReveal({ name, href, image, children }: {
+export function ProductChoiceReveal({ name, href, image, children }: {
   name: string;
   href: string;
   image: ReactNode;
@@ -33,7 +33,7 @@ export function HomeProductReveal({ name, href, image, children }: {
 
   return (
     <article
-      className="home-choice-card"
+      className="product-choice-card"
       data-open={open || undefined}
       onPointerEnter={event => {
         if (event.pointerType === 'mouse' && hasHoverSpace()) setOpen(true);
@@ -56,32 +56,34 @@ export function HomeProductReveal({ name, href, image, children }: {
         }
       }}
     >
-      <div className="home-choice-photo">
+      <div className="product-choice-photo">
         {image}
         <button
           ref={trigger}
           type="button"
-          className="home-choice-trigger"
+          className="product-choice-trigger"
           aria-label={`Xem thông tin ${name}`}
           aria-expanded={open || touchOpen}
           aria-controls={touchOpen ? `${id}-dialog` : `${id}-details`}
-          onClick={() => {
-            if (hasHoverSpace()) setOpen(true);
+          onClick={event => {
+            const pointer = event.nativeEvent;
+            const directTouch = 'pointerType' in pointer && (pointer.pointerType === 'touch' || pointer.pointerType === 'pen');
+            if (hasHoverSpace() && !directTouch) setOpen(true);
             else {
               dialog.current?.showModal();
               setTouchOpen(true);
             }
           }}
         />
-        <div ref={overlay} className="home-choice-overlay" id={`${id}-details`} aria-hidden={!open} inert={!open}>
-          <div className="home-choice-info">{children}</div>
+        <div ref={overlay} className="product-choice-overlay" id={`${id}-details`} aria-hidden={!open} inert={!open}>
+          <div className="product-choice-info">{children}</div>
         </div>
       </div>
-      <h3 className="home-choice-name"><Link href={href} prefetch={false}>{name}</Link></h3>
+      <h3 className="product-choice-name"><Link href={href} prefetch={false}>{name}</Link></h3>
       <dialog
         ref={dialog}
         id={`${id}-dialog`}
-        className="home-choice-dialog"
+        className="product-choice-dialog"
         aria-labelledby={`${id}-title`}
         onClose={() => { setTouchOpen(false); setOpen(false); }}
         onClick={event => {
@@ -91,11 +93,11 @@ export function HomeProductReveal({ name, href, image, children }: {
           }
         }}
       >
-        <div className="home-choice-dialog-heading">
+        <div className="product-choice-dialog-heading">
           <h3 id={`${id}-title`}>{name}</h3>
           <button type="button" autoFocus aria-label="Đóng thông tin sản phẩm" onClick={() => dialog.current?.close()}><X size={21} aria-hidden="true" /></button>
         </div>
-        <div className="home-choice-info">{children}</div>
+        <div className="product-choice-info">{children}</div>
       </dialog>
     </article>
   );

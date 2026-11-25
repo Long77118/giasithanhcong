@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Packaging Rounded';
+  src: url('/fonts/quicksand-variable.ttf') format('truetype');
+  font-weight: 300 700;
+  font-display: swap;
+}
+
 @layer components {
   .site-shell {
     width: 100%;

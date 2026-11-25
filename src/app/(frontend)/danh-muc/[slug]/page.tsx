@@ -21,7 +21,7 @@ import { decodePublicSlugParam, parsePositivePage, publicContentPath, withPublic
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { MediaImage, resolveMediaUrl } from '@/components/MediaImage';
 import { ListingHeading } from '@/components/ListingHeading';
-import { ProductListingCard } from '@/components/ProductListingCard';
+import { ProductChoiceCard } from '@/components/ProductChoiceCard';
 import { Pagination } from '@/components/Pagination';
 import '@/components/listing.css';
 
@@ -139,7 +139,7 @@ export default async function CategoryPage({
   const categoryImage = resolveMediaUrl(category.image);
 
   return (
-    <div className="site-shell listing-page listing-products listing-category py-4 sm:py-7 lg:py-8">
+    <div className="site-shell listing-page listing-category py-4 sm:py-7 lg:py-8">
       <Breadcrumbs
         siteUrl={siteUrl}
         items={[
@@ -208,8 +208,10 @@ export default async function CategoryPage({
             </div>
           </div>
         ) : (
-          <div className="listing-grid">
-            {catalog.docs.map((product, index) => <ProductListingCard key={product.id} product={product} index={index} />)}
+          <div className="product-choice-grid">
+            {catalog.docs.map((product, index) => (
+              <ProductChoiceCard key={product.id} product={product} quoteLabel="Hỏi báo giá" showCatalogMeta priorityIndex={index} />
+            ))}
           </div>
         )}
         <div className="listing-pagination">
