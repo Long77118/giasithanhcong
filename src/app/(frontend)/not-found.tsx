@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export default function NotFoundPage() {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-24 text-center sm:px-6">
+    <div data-season-excluded className="mx-auto max-w-2xl px-4 py-24 text-center sm:px-6">
       <p className="font-mono text-sm font-semibold tabular-nums text-[#B45309]">
         404
       </p>

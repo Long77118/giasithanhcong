@@ -12,6 +12,7 @@ import * as migration_20261121_034654_product_detail_content from './20261121_03
 import * as migration_20261122_031937_home_category_shelves from './20261122_031937_home_category_shelves';
 import * as migration_20261122_080626_secondary_hotline from './20261122_080626_secondary_hotline';
 import * as migration_20261123_025728_contact_map_embed from './20261123_025728_contact_map_embed';
+import * as migration_20261125_034717_seasonal_theme from './20261125_034717_seasonal_theme';
 
 export const migrations = [
   {
@@ -82,6 +83,11 @@ export const migrations = [
   {
     up: migration_20261123_025728_contact_map_embed.up,
     down: migration_20261123_025728_contact_map_embed.down,
-    name: '20261123_025728_contact_map_embed'
+    name: '20261123_025728_contact_map_embed',
+  },
+  {
+    up: migration_20261125_034717_seasonal_theme.up,
+    down: migration_20261125_034717_seasonal_theme.down,
+    name: '20261125_034717_seasonal_theme'
   },
 ];

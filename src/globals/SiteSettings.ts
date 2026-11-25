@@ -1,12 +1,20 @@
-import type { GlobalConfig, RelationshipFieldSingleValidation } from 'payload';
+import { ValidationError, type GlobalConfig, type RelationshipFieldSingleValidation } from 'payload';
 import { safeRevalidateTags } from '../lib/revalidate';
 import { isAdmin } from '../collections/access';
 import { normalizeFacebookPageUrl } from '../lib/facebook-page';
 import { normalizeHomePromotionHref } from '../lib/home-promotions';
 import { normalizeContactMapEmbedUrl } from '../lib/contact-map';
+import {
+  getSeasonalScheduleError,
+  normalizeSeasonalAnnouncementHref,
+  seasonalAnnouncementMaxLength,
+  type SeasonalThemeConfig,
+} from '../lib/seasonal-theme';
 
 const validateShelfCategory: RelationshipFieldSingleValidation = (value, { siblingData }) =>
   Boolean(value) || (siblingData as { enabled?: boolean } | undefined)?.enabled === false || 'Chọn danh mục cho khối đang hiển thị.';
+
+const showSeasonalOptions = (_data: unknown, siblingData: SeasonalThemeConfig) => siblingData?.enabled === true;
 
 export const SiteSettings: GlobalConfig = {
   slug: 'site-settings',
@@ -17,6 +25,23 @@ export const SiteSettings: GlobalConfig = {
     update: isAdmin,
   },
   hooks: {
+    beforeValidate: [
+      ({ data, originalDoc, req }) => {
+        if (!data?.seasonalTheme || typeof data.seasonalTheme !== 'object') return data;
+        const config: SeasonalThemeConfig = { ...originalDoc?.seasonalTheme, ...data.seasonalTheme };
+        const errors = [];
+        const schedule = getSeasonalScheduleError(config);
+        if (schedule) errors.push({ path: `seasonalTheme.${schedule.field}`, message: schedule.message });
+        if (typeof config.announcementText === 'string' && config.announcementText.length > seasonalAnnouncementMaxLength) {
+          errors.push({ path: 'seasonalTheme.announcementText', message: 'Nhập tối đa 100 ký tự cho dải thông báo.' });
+        }
+        if (typeof config.announcementHref === 'string' && config.announcementHref.trim() && !normalizeSeasonalAnnouncementHref(config.announcementHref)) {
+          errors.push({ path: 'seasonalTheme.announcementHref', message: 'Nhập đường dẫn nội bộ bắt đầu bằng / hoặc địa chỉ HTTPS hợp lệ.' });
+        }
+        if (errors.length) throw new ValidationError({ errors, global: 'site-settings', req }, req.t);
+        return data;
+      },
+    ],
     afterChange: [
       () => {
         safeRevalidateTags(
@@ -27,6 +52,59 @@ export const SiteSettings: GlobalConfig = {
     ],
   },
   fields: [
+    {
+      name: 'seasonalTheme', label: 'Giao diện theo mùa', type: 'group',
+      admin: { description: 'Trang trí website công khai theo lịch đã chọn, tính theo giờ Việt Nam.' },
+      fields: [
+        {
+          name: 'enabled', label: 'Bật giao diện theo mùa', type: 'checkbox', defaultValue: false,
+          admin: { description: 'Bật để dùng chủ đề và các hiệu ứng đã chọn. Tắt để dừng toàn bộ.' },
+        },
+        {
+          name: 'theme', label: 'Chủ đề', type: 'select', defaultValue: 'christmas',
+          options: [{ label: 'Giáng sinh', value: 'christmas' }],
+          admin: { condition: showSeasonalOptions, isClearable: false },
+        },
+        {
+          type: 'row',
+          admin: { condition: showSeasonalOptions },
+          fields: [
+            {
+              name: 'startsOn', label: 'Ngày bắt đầu', type: 'text', maxLength: 10,
+              admin: {
+                width: '50%', components: { Field: '/admin/SeasonalDateField' },
+                description: 'Bắt đầu từ 00:00 giờ Việt Nam. Để trống để bật ngay.',
+              },
+            },
+            {
+              name: 'endsOn', label: 'Ngày kết thúc', type: 'text', maxLength: 10,
+              admin: {
+                width: '50%', components: { Field: '/admin/SeasonalDateField' },
+                description: 'Hiển thị hết ngày đã chọn. Để trống để duy trì đến khi tắt thủ công.',
+              },
+            },
+          ],
+        },
+        {
+          name: 'intensity', label: 'Mức tuyết rơi', type: 'select', defaultValue: 'light',
+          options: [{ label: 'Nhẹ', value: 'light' }, { label: 'Vừa', value: 'medium' }, { label: 'Mạnh', value: 'strong' }],
+          admin: { condition: showSeasonalOptions, isClearable: false, description: 'Màn hình nhỏ sẽ dùng ít hạt tuyết hơn.' },
+        },
+        { name: 'snowEnabled', label: 'Tuyết rơi', type: 'checkbox', defaultValue: true, admin: { condition: showSeasonalOptions } },
+        { name: 'lightsEnabled', label: 'Dây đèn đầu trang', type: 'checkbox', defaultValue: true, admin: { condition: showSeasonalOptions } },
+        { name: 'decorationsEnabled', label: 'Trang trí Giáng sinh', type: 'checkbox', defaultValue: true, admin: { condition: showSeasonalOptions } },
+        { name: 'scrollEffectsEnabled', label: 'Hiệu ứng khi cuộn', type: 'checkbox', defaultValue: true, admin: { condition: showSeasonalOptions } },
+        { name: 'announcementEnabled', label: 'Dải thông báo', type: 'checkbox', defaultValue: false, admin: { condition: showSeasonalOptions } },
+        {
+          name: 'announcementText', label: 'Nội dung thông báo', type: 'text', maxLength: seasonalAnnouncementMaxLength,
+          admin: { condition: showSeasonalOptions, description: 'Tối đa 100 ký tự. Để trống nếu muốn ẩn dải thông báo.' },
+        },
+        {
+          name: 'announcementHref', label: 'Đường dẫn thông báo', type: 'text',
+          admin: { condition: showSeasonalOptions, description: 'Đường dẫn nội bộ hoặc HTTPS. Có thể để trống.', placeholder: '/san-pham' },
+        },
+      ],
+    },
     {
       label: 'Trang chủ · Kệ sản phẩm theo danh mục',
       type: 'collapsible',

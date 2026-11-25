@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type FormEventHandler, type Ref } from 'react';
+import dynamic from 'next/dynamic';
 import Form from 'next/form';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -11,6 +12,9 @@ import { HeaderBrand } from './HeaderBrand';
 import { HeaderContactDetails, HeaderQuoteLink } from './HeaderContactActions';
 import { HeaderCategoryMenu } from './HeaderCategoryMenu';
 import { MobileNav } from './MobileNav';
+import type { SeasonalScopeConfig } from './SeasonalScope';
+
+const SeasonalScope = dynamic(() => import('./SeasonalScope'), { ssr: false });
 
 function HeaderSearch({ className = '', inputRef, onSubmit, active = true, compact = false }: {
   className?: string;
@@ -29,11 +33,12 @@ function HeaderSearch({ className = '', inputRef, onSubmit, active = true, compa
   );
 }
 
-export function SiteHeader({ brandName, categories, contact, featured }: {
+export function SiteHeader({ brandName, categories, contact, featured, season }: {
   brandName: string;
   categories: CategoryMenuItem[];
   contact: HeaderContact;
   featured: HeaderFeaturedProduct | null;
+  season?: SeasonalScopeConfig;
 }) {
   const pathname = usePathname();
   const topRow = useRef<HTMLDivElement>(null);
@@ -73,6 +78,7 @@ export function SiteHeader({ brandName, categories, contact, featured }: {
 
   return (
     <header className="site-header" data-pinned={pinned}>
+      {season && pathname && !/^\/xem-truoc(?:\/|$)/.test(pathname) && <SeasonalScope {...season} pathname={pathname} />}
       <div ref={topRow} className="site-header-top" inert={pinned}>
         <div className="site-shell site-header-top-inner">
           <HeaderBrand name={brandName} />

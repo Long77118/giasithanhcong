@@ -878,6 +878,41 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
  */
 export interface SiteSetting {
   id: number;
+  /**
+   * Trang trí website công khai theo lịch đã chọn, tính theo giờ Việt Nam.
+   */
+  seasonalTheme?: {
+    /**
+     * Bật để dùng chủ đề và các hiệu ứng đã chọn. Tắt để dừng toàn bộ.
+     */
+    enabled?: boolean | null;
+    theme?: 'christmas' | null;
+    /**
+     * Bắt đầu từ 00:00 giờ Việt Nam. Để trống để bật ngay.
+     */
+    startsOn?: string | null;
+    /**
+     * Hiển thị hết ngày đã chọn. Để trống để duy trì đến khi tắt thủ công.
+     */
+    endsOn?: string | null;
+    /**
+     * Màn hình nhỏ sẽ dùng ít hạt tuyết hơn.
+     */
+    intensity?: ('light' | 'medium' | 'strong') | null;
+    snowEnabled?: boolean | null;
+    lightsEnabled?: boolean | null;
+    decorationsEnabled?: boolean | null;
+    scrollEffectsEnabled?: boolean | null;
+    announcementEnabled?: boolean | null;
+    /**
+     * Tối đa 100 ký tự. Để trống nếu muốn ẩn dải thông báo.
+     */
+    announcementText?: string | null;
+    /**
+     * Đường dẫn nội bộ hoặc HTTPS. Có thể để trống.
+     */
+    announcementHref?: string | null;
+  };
   homeCategoryShelvesEnabled?: boolean | null;
   /**
    * Kéo để đổi thứ tự, tối đa 6 khối. Để trống sẽ lấy 3 danh mục gốc đã xuất bản đầu tiên. Muốn ẩn toàn bộ, tắt công tắc phía trên. Mỗi khối tự lấy tối đa 12 sản phẩm, 4 sản phẩm mỗi slide; các khối chuyển cùng nhịp.
@@ -961,6 +996,22 @@ export interface SiteSetting {
  * via the `definition` "site-settings_select".
  */
 export interface SiteSettingsSelect<T extends boolean = true> {
+  seasonalTheme?:
+    | T
+    | {
+        enabled?: T;
+        theme?: T;
+        startsOn?: T;
+        endsOn?: T;
+        intensity?: T;
+        snowEnabled?: T;
+        lightsEnabled?: T;
+        decorationsEnabled?: T;
+        scrollEffectsEnabled?: T;
+        announcementEnabled?: T;
+        announcementText?: T;
+        announcementHref?: T;
+      };
   homeCategoryShelvesEnabled?: T;
   homeCategoryShelves?:
     | T

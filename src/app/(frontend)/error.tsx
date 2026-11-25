@@ -10,7 +10,7 @@ export default function ErrorPage({
   reset: () => void;
 }) {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-20 text-center sm:px-6">
+    <div data-season-excluded className="mx-auto max-w-2xl px-4 py-20 text-center sm:px-6">
       <p className="font-mono text-xs font-semibold tracking-wide text-slate-500">
         Sự cố tải dữ liệu
       </p>

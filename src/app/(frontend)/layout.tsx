@@ -21,6 +21,7 @@ import { MobileContactDock } from '@/components/MobileContactDock';
 import { getHeaderContact } from '@/lib/header';
 import { publicContentPath } from '@/lib/slug';
 import { QuoteContactProvider } from '@/components/QuoteContactProvider';
+import { resolveSeasonalTheme } from '@/lib/seasonal-theme';
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin', 'vietnamese'],
@@ -82,7 +83,7 @@ export default async function FrontendLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [{ contact }, categories, featuredProducts] = await Promise.all([
+  const [{ settings, contact }, categories, featuredProducts] = await Promise.all([
     getSiteSettingsCached(),
     getPublishedCategoriesCached(),
     getFeaturedProductsCached(1),
@@ -91,6 +92,7 @@ export default async function FrontendLayout({
   const topCategories = categories.filter((c) => !c.parent);
   const headerContact = getHeaderContact(contact);
   const featured = featuredProducts.find(product => product.featured);
+  const season = resolveSeasonalTheme(settings?.seasonalTheme, new Date());
 
   return (
     <html
@@ -105,7 +107,8 @@ export default async function FrontendLayout({
           Chuyển tới nội dung chính
         </a>
         <SiteHeader brandName={contact.brandName} categories={categoryMenuItems(categories)} contact={headerContact}
-          featured={featured ? { name: featured.name, href: publicContentPath('products', featured.slug) } : null} />
+          featured={featured ? { name: featured.name, href: publicContentPath('products', featured.slug) } : null}
+          season={season ? { theme: season.theme, expiresAt: season.expiresAt } : undefined} />
         <main id="main-content" className="flex-1">
           <QuoteContactProvider zaloUrl={contact.zaloUrl}>{children}</QuoteContactProvider>
         </main>
