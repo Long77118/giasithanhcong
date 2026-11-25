@@ -128,6 +128,20 @@ Nếu dùng Cloudflare **Workers Builds** kết nối GitHub:
 - Tạo database, nhập dữ liệu/admin, điền Hyperdrive ID, bucket và runtime secrets **trước khi mở URL cho người khác thử**.
 - Không đặt `CLOUDFLARE_BUILD=true` vào runtime secrets; cờ này chỉ do lệnh build sử dụng.
 
+### Mỗi lần có commit kèm migration
+
+1. Từ checkout chứa commit sắp deploy, kiểm tra `.env.staging` trỏ tới `giasithanhcong_staging` qua endpoint Neon **DIRECT** và bật `PAYLOAD_MIGRATING=true` để dùng role owner. Đối chiếu danh sách migration chờ với `src/migrations/index.ts`.
+2. Chạy migration trước khi deploy. Nếu Workers Builds tự deploy từ `main`, chạy từ checkout của commit mới trước khi đưa commit lên `main`. Nếu Worker đã deploy, chạy migration ngay trên staging trước khi kiểm tra lại website. Worker dùng `push: false` và không tự chạy migration.
+
+   ```sh
+   node --env-file=.env.staging node_modules/payload/bin.js migrate:status
+   node --env-file=.env.staging node_modules/payload/bin.js migrate
+   node --env-file=.env.staging node_modules/payload/bin.js migrate:status
+   ```
+
+3. Xác nhận mọi migration trong commit đã được ghi nhận. Có thể đối chiếu trong Neon SQL Editor ở nhánh `staging` bằng `SELECT name, batch FROM public.payload_migrations ORDER BY name;`. Kiểm tra quyền của `giasithanhcong_app` trên bảng và sequence mới theo mục 2. Với kiểu dữ liệu mới, kiểm tra `USAGE` bằng `has_type_privilege`.
+4. Chạy lại các bước kiểm tra bản cloud bên dưới. Nếu các trang công khai trả HTTP 500, đối chiếu lỗi truy vấn trong **Workers → Observability** với lịch sử migration và các cột thực tế trên Neon staging.
+
 ## 7. Kiểm tra bản cloud
 
 - `/robots.txt` trả `Disallow: /`; HTML có `noindex`; response có `X-Robots-Tag: noindex, nofollow, noarchive`.
@@ -135,7 +149,8 @@ Nếu dùng Cloudflare **Workers Builds** kết nối GitHub:
 - Đăng nhập `/admin`, mở trang sửa sản phẩm/bài viết và soạn thảo nội dung.
 - Upload ảnh thử, gắn vào sản phẩm/blog, xác nhận file có trong R2 và hiển thị ngoài website.
 - Sửa nội dung trong CMS rồi tải lại trang công khai, xác nhận thay đổi có hiệu lực.
-- Gửi form báo giá, xem yêu cầu trong admin; kiểm tra rate limit và quyền truy cập API riêng tư.
+- Sau migration giao diện theo mùa, mở nhóm **Giao diện theo mùa** trong **Cấu hình website & Liên hệ**, lưu một thay đổi thử, tải lại để xác nhận và khôi phục giá trị ban đầu.
+- Gửi form báo giá với dữ liệu giả lập và ghi rõ **Kiểm thử staging**. Đối chiếu mã yêu cầu trong admin, kiểm tra rate limit và quyền truy cập API riêng tư.
 - Đăng xuất, xác nhận khách không đọc được users hoặc danh sách báo giá.
 
 Chỉ đánh dấu deploy thành công sau các bước trên trên **URL cloud thực tế**. Build/preview local không thay thế việc kiểm tra Neon/R2 thật.
