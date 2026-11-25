@@ -21,6 +21,7 @@ test('Listing text and interactive boundaries meet their contrast thresholds', (
     ['paper', 'brick'], ['paper', 'brick-hover'], ['paper', 'ink'],
     ['ink', 'paper'], ['ink', 'sage'], ['muted', 'paper'], ['muted', 'sage'],
     ['sand-ink', 'sand'], ['brick-hover', 'clay'], ['brick-hover', 'paper'],
+    ['spruce-ink', 'spruce'], ['wheat-ink', 'wheat'], ['stone-ink', 'stone'],
   ];
   const controlPairs = [
     ['control-line', 'paper'], ['control-line', 'sage'], ['control-line', 'sand'], ['control-line', 'clay'],

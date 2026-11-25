@@ -15,9 +15,13 @@ import {
 } from '@/lib/seo';
 import { resolveOpenGraphImages } from '@/lib/seo-images';
 import { parsePositivePage, withPublicSearchParams } from '@/lib/slug';
+import { blogPostsPerPage } from '@/lib/blog-listing';
+import { homeNewsCategoryTones } from '@/lib/home-news';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { PostCard } from '@/components/PostCard';
+import { ListingHeading } from '@/components/ListingHeading';
+import { PostListingCard } from '@/components/PostListingCard';
 import { Pagination } from '@/components/Pagination';
+import '@/components/listing.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -93,15 +97,17 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
       q,
       categorySlug: category,
       page,
-      limit: 6,
+      limit: blogPostsPerPage,
     }),
   ]);
 
   if (page > 1 && page > postsResult.totalPages) notFound();
 
   const filters = { q: q || undefined, category: category || undefined };
+  const tones = homeNewsCategoryTones(postCategories.map(item => item.id));
+  const count = postsResult.docs.length;
   return (
-    <div className="site-shell py-8 lg:py-12">
+    <div className="site-shell listing-page listing-blog py-4 sm:py-7 lg:py-8">
       <Breadcrumbs
         siteUrl={siteUrl}
         items={[
@@ -110,24 +116,17 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
         ]}
       />
 
-      <div className="border-b border-slate-200 pb-6">
-        <h1 className="font-display text-3xl font-bold text-[#0C2340]">
-          Blog kiến thức bao bì & đóng gói sỉ
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-600">
-          Tổng hợp bài viết hướng dẫn chọn chất liệu nhựa thực phẩm, bao bì giấy và tính định mức tồn kho cho mô hình F&B.
-        </p>
-      </div>
+      <ListingHeading
+        title="Kiến thức bao bì và đóng gói sỉ"
+        description="Kinh nghiệm chọn chất liệu, quy cách đóng gói và tính lượng hàng cần nhập cho quán."
+      />
 
-      <div className="mt-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="listing-filter-panel listing-blog-filters">
+        <nav className="listing-chip-row" aria-label="Chuyên mục bài viết">
           <Link
             href="/blog"
-            className={`inline-flex min-h-[38px] items-center rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-              !category
-                ? 'bg-[#0C2340] text-white'
-                : 'border border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-            }`}
+            className="listing-chip"
+            aria-current={!category ? 'true' : undefined}
           >
             Tất cả chuyên mục
           </Link>
@@ -135,20 +134,18 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
             <Link
               key={pc.id}
               href={`/blog?category=${encodeURIComponent(pc.slug)}`}
-              className={`inline-flex min-h-[38px] items-center rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                category === pc.slug
-                  ? 'bg-[#0C2340] text-white'
-                  : 'border border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-              }`}
+              className="listing-chip"
+              data-tone={tones.get(pc.id)}
+              aria-current={category === pc.slug ? 'true' : undefined}
             >
               {pc.name}
             </Link>
           ))}
-        </div>
+        </nav>
 
-        <form action="/blog" method="GET" className="flex items-center gap-2">
+        <form action="/blog" method="GET" role="search" aria-label="Tìm trong blog" className="listing-blog-search">
           {category && <input type="hidden" name="category" value={category} />}
-          <div className="relative">
+          <div className="relative min-w-0 flex-1">
             <Search
               className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
               aria-hidden="true"
@@ -159,47 +156,50 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
               defaultValue={q}
               aria-label="Tìm bài viết"
               placeholder="Tìm bài viết..."
-              className="min-h-[40px] w-56 rounded-lg border border-slate-300 bg-white pr-3 pl-9 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0C2340] focus:outline-none"
+              className="w-full py-2 pl-9 pr-3 text-base sm:text-sm"
             />
           </div>
           <button
             type="submit"
-            className="min-h-[40px] rounded-lg bg-[#0C2340] px-4 py-2 text-xs font-semibold text-white hover:bg-[#163861]"
+            className="listing-button listing-button--primary"
           >
             Tìm
           </button>
         </form>
       </div>
 
-      {postsResult.docs.length === 0 ? (
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-10 text-center">
-          <h2 className="font-display text-lg font-semibold text-slate-900">
-            Chưa có bài viết phù hợp
-          </h2>
-          <p className="mt-2 text-sm text-slate-600">
-            Vui lòng thử từ khóa khác hoặc xem tất cả chuyên mục.
-          </p>
-          <Link
-            href="/blog"
-            className="mt-5 inline-flex min-h-[44px] items-center rounded-lg bg-[#0C2340] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#163861]"
-          >
-            Xem tất cả bài viết
-          </Link>
+      <section className="listing-results" aria-label="Bài viết">
+        {count === 0 ? (
+          <div className="listing-empty">
+            <span className="listing-empty-icon"><Search size={24} aria-hidden="true" /></span>
+            <h2>Chưa có bài viết phù hợp</h2>
+            <p>Thử từ khóa khác hoặc xem tất cả chuyên mục.</p>
+            <div className="listing-empty-actions">
+              <Link href="/blog" className="listing-button listing-button--primary">Xem tất cả bài viết</Link>
+            </div>
+          </div>
+        ) : (
+          <div className="listing-grid listing-blog-grid" data-count={count}>
+            {postsResult.docs.map((post, index) => (
+              <PostListingCard
+                key={post.id}
+                post={post}
+                index={index}
+                count={count}
+                tone={post.category && typeof post.category === 'object' ? tones.get(post.category.id) : undefined}
+              />
+            ))}
+          </div>
+        )}
+        <div className="listing-pagination">
+          <Pagination
+            currentPage={postsResult.page}
+            totalPages={postsResult.totalPages}
+            basePath="/blog"
+            queryParams={filters}
+          />
         </div>
-      ) : (
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {postsResult.docs.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-        </div>
-      )}
-
-      <Pagination
-        currentPage={postsResult.page}
-        totalPages={postsResult.totalPages}
-        basePath="/blog"
-        queryParams={filters}
-      />
+      </section>
     </div>
   );
 }
