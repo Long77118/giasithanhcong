@@ -114,6 +114,7 @@ export default async function FrontendLayout({
           season={season ? {
             theme: season.theme, expiresAt: season.expiresAt,
             intensity: season.intensity, snow: season.snow, lights: season.lights, decorations: season.decorations,
+            scrollEffects: season.scrollEffects,
           } : undefined} />
         <main id="main-content" className="flex-1">
           <QuoteContactProvider zaloUrl={contact.zaloUrl}>{children}</QuoteContactProvider>

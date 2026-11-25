@@ -8,8 +8,9 @@ import './seasonal.css';
 const SeasonalSnow = dynamic(() => import('./SeasonalSnow'), { ssr: false });
 const SeasonalAnnouncementControls = dynamic(() => import('./SeasonalAnnouncementControls'), { ssr: false });
 const ChristmasDecorations = dynamic(() => import('./ChristmasDecorations'), { ssr: false });
+const SeasonalScrollEffects = dynamic(() => import('./SeasonalScrollEffects'), { ssr: false });
 
-export type SeasonalScopeConfig = Pick<ActiveSeason, 'theme' | 'expiresAt' | 'intensity' | 'snow' | 'lights' | 'decorations'>;
+export type SeasonalScopeConfig = Pick<ActiveSeason, 'theme' | 'expiresAt' | 'intensity' | 'snow' | 'lights' | 'decorations' | 'scrollEffects'>;
 
 function ChristmasLights() {
   const bulbAnchors = [[27, 6], [76, 9], [124, 9], [173, 6]];
@@ -30,7 +31,7 @@ function ChristmasLights() {
   );
 }
 
-export default function SeasonalScope({ theme, expiresAt, pathname, intensity, snow, lights, decorations, hasAnnouncement }:
+export default function SeasonalScope({ theme, expiresAt, pathname, intensity, snow, lights, decorations, scrollEffects, hasAnnouncement }:
   SeasonalScopeConfig & { pathname: string; hasAnnouncement: boolean }) {
   const [active, setActive] = useState(false);
 
@@ -75,6 +76,7 @@ export default function SeasonalScope({ theme, expiresAt, pathname, intensity, s
       {snow && <SeasonalSnow intensity={intensity} />}
       {hasAnnouncement && <SeasonalAnnouncementControls />}
       {decorations && pathname === '/' && <ChristmasDecorations />}
+      {scrollEffects && <SeasonalScrollEffects pathname={pathname} />}
     </>
   );
 }

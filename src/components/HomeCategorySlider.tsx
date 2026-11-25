@@ -26,7 +26,7 @@ export function HomeCategorySliderGroup({ heading, children, canRotate }: { head
   const togglePaused = () => setPaused(current => !current);
 
   useEffect(() => {
-    if (!canRotate || !root.current) return;
+    if (!canRotate || !root.current || typeof IntersectionObserver === 'undefined') return;
     const preference = matchMedia('(prefers-reduced-motion: reduce)');
     const updateMotion = () => setReducedMotion(preference.matches);
     const updateVisibility = () => setPageVisible(!document.hidden);

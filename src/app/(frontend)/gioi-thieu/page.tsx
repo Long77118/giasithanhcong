@@ -50,7 +50,7 @@ export default async function AboutPage() {
         ]}
       />
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6 sm:p-10">
+      <section data-reveal className="rounded-xl border border-slate-200 bg-white p-6 sm:p-10">
         <p className="text-xs font-semibold tracking-wide text-[#B45309]">
           Giới thiệu đơn vị cung ứng (Nội dung minh họa)
         </p>
@@ -65,7 +65,7 @@ export default async function AboutPage() {
         </p>
 
         <div className="mt-8 grid gap-6 md:grid-cols-3">
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">
+          <div data-reveal className="rounded-lg border border-slate-200 bg-slate-50 p-5">
             <h2 className="font-display text-base font-semibold text-[#0C2340]">
               01. Danh mục đồng bộ theo ngành hàng
             </h2>
@@ -73,7 +73,7 @@ export default async function AboutPage() {
               Cung ứng đầy đủ ly PET/PP, nắp cầu/nắp bằng, hộp thực phẩm chịu nhiệt, chai hũ PET, túi giấy kraft và phụ kiện mang đi.
             </p>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">
+          <div data-reveal className="rounded-lg border border-slate-200 bg-slate-50 p-5">
             <h2 className="font-display text-base font-semibold text-[#0C2340]">
               02. Thông số & quy cách rõ ràng
             </h2>
@@ -81,7 +81,7 @@ export default async function AboutPage() {
               Mỗi mã sản phẩm đều công bố kích thước, chất liệu, quy cách đóng thùng và số lượng đặt tối thiểu (MOQ) giúp dễ dự toán tồn kho.
             </p>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">
+          <div data-reveal className="rounded-lg border border-slate-200 bg-slate-50 p-5">
             <h2 className="font-display text-base font-semibold text-[#0C2340]">
               03. Tiếp nhận báo giá nhanh chóng
             </h2>
@@ -103,7 +103,7 @@ export default async function AboutPage() {
       </section>
 
       <div className="mt-10 grid gap-8 lg:grid-cols-12">
-        <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 sm:p-8 lg:col-span-5">
+        <div data-reveal className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 sm:p-8 lg:col-span-5">
           <h2 className="font-display text-xl font-bold text-[#0C2340]">
             Thông tin liên hệ
           </h2>

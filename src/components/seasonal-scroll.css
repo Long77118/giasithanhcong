@@ -1,0 +1,73 @@
+.seasonal-scroll-progress {
+  --season-scroll-progress: 0;
+  position: fixed;
+  z-index: 1;
+  inset: 0 0 auto;
+  height: .6875rem;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+body:not([data-season='christmas']) .seasonal-scroll-progress { display: none; }
+
+.seasonal-scroll-fill {
+  height: .1875rem;
+  background: var(--season-champagne);
+  box-shadow: 0 1px 0 rgb(75 56 26 / .22);
+  transform: scaleX(var(--season-scroll-progress));
+  transform-origin: left;
+}
+
+.seasonal-scroll-cursor {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: flex-end;
+  transform: translateX(calc((var(--season-scroll-progress) - 1) * 100%));
+}
+
+.seasonal-scroll-cursor svg { flex: none; fill: var(--season-champagne); stroke: #8a6839; stroke-width: 1; }
+
+@media (width < 80rem) {
+  body[data-season='christmas'] .site-header[data-seasonal-scroll-shadow] .site-header-bar { box-shadow: var(--header-shadow); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seasonal-scroll-progress { display: none; }
+}
+
+@supports (animation-timeline: scroll(root)) {
+  @media (prefers-reduced-motion: no-preference) {
+    body:has(.article-progress) .seasonal-scroll-progress { display: none; }
+    .seasonal-scroll-fill {
+      animation: seasonal-scroll-fill 1ms linear both;
+      animation-timeline: scroll(root);
+    }
+    .seasonal-scroll-cursor {
+      animation: seasonal-scroll-cursor 1ms linear both;
+      animation-timeline: scroll(root);
+    }
+    @keyframes seasonal-scroll-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+    @keyframes seasonal-scroll-cursor { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+  }
+}
+
+@supports (animation-timeline: view()) and (animation-range: cover 45% cover 90%) {
+  @media (prefers-reduced-motion: no-preference) {
+    body[data-season='christmas']:has(.seasonal-scroll-progress) .home-banner-wrap {
+      view-timeline-name: --seasonal-home-banner;
+      view-timeline-axis: block;
+    }
+
+    body[data-season='christmas']:has(.seasonal-scroll-progress) :is(.seasonal-banner-baubles, .seasonal-banner-snowflake) {
+      animation: seasonal-banner-drift 1ms linear both;
+      animation-timeline: --seasonal-home-banner;
+      animation-range: cover 45% cover 90%;
+    }
+
+    .seasonal-banner-baubles { --season-parallax-travel: .65rem; }
+    .seasonal-banner-snowflake { --season-parallax-travel: 1.5rem; }
+
+    @keyframes seasonal-banner-drift { from { translate: none; } to { translate: 0 var(--season-parallax-travel); } }
+  }
+}

@@ -1,0 +1,17 @@
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal='pending']:not(:focus-within) { opacity: 0; }
+
+  [data-reveal='entering']:not(:focus-within) {
+    animation: scroll-reveal-enter .32s ease-out backwards;
+    animation-delay: var(--reveal-delay, 0ms);
+  }
+
+  [data-reveal-step='1'] { --reveal-delay: 38ms; }
+  [data-reveal-step='2'] { --reveal-delay: 76ms; }
+  [data-reveal-step='3'] { --reveal-delay: 114ms; }
+
+  @keyframes scroll-reveal-enter {
+    from { opacity: 0; translate: 0 .5rem; }
+    to { opacity: 1; translate: none; }
+  }
+}

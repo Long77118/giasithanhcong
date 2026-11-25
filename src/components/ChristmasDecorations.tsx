@@ -12,12 +12,15 @@ function BannerDecoration() {
       <path d="M86 15q9-19 17-12c4 4-2 9-15 13 16-1 23 2 22 7-2 9-16 3-24-5Z" fill="none" stroke="var(--season-brick)" strokeWidth="2.6" strokeLinecap="round" />
       <path d="M86 15Q74 7 66 13c-7 8 4 12 20 5m2-2c-3 8-6 14-15 18m16-16q7 9 19 11" fill="none" stroke="var(--season-brick)" strokeWidth="2.6" strokeLinecap="round" />
       <path d="M18 2C47 7 63 13 88 16M27 5 32 17M36 7l9 14M46 10l13 13M52 11l14 10M30 5l17-4M42 8l19-5M55 12l16-4" fill="none" stroke="var(--season-forest)" strokeWidth="1.25" strokeLinecap="round" opacity=".62" />
-      <path d="M43 9v29m85 18v16" fill="none" stroke="var(--season-gold-edge)" strokeWidth="1" />
-      <path d="M40 37h6v4h-6zm85 33h6v4h-6z" fill="var(--season-gold-edge)" />
-      <circle cx="43" cy="51" r="11" fill="var(--season-champagne)" stroke="var(--season-gold-edge)" />
-      <path d="M35 48q8 6 16 0m-16 7q8 6 16 0" fill="none" stroke="var(--season-gold-edge)" strokeWidth=".8" opacity=".7" />
-      <circle cx="128" cy="82" r="9" fill="var(--season-brick)" opacity=".85" />
-      <path d="M125 78q-4 3-1 7m17-55v12m-6-6h12M79 55v14m-7-7h14m66 31v10m-5-5h10" fill="none" stroke="var(--season-gold-edge)" strokeWidth="1.05" strokeLinecap="round" />
+      <g className="seasonal-banner-baubles">
+        <path d="M43 1v37m85 10v24" fill="none" stroke="var(--season-gold-edge)" strokeWidth="1" />
+        <path d="M40 37h6v4h-6zm85 33h6v4h-6z" fill="var(--season-gold-edge)" />
+        <circle cx="43" cy="51" r="11" fill="var(--season-champagne)" stroke="var(--season-gold-edge)" />
+        <path d="M35 48q8 6 16 0m-16 7q8 6 16 0" fill="none" stroke="var(--season-gold-edge)" strokeWidth=".8" opacity=".7" />
+        <circle cx="128" cy="82" r="9" fill="var(--season-brick)" opacity=".85" />
+        <path d="M125 78q-4 3-1 7" fill="none" stroke="var(--season-gold-edge)" strokeWidth="1.05" strokeLinecap="round" />
+      </g>
+      <path d="M142 30v12m-6-6h12M79 55v14m-7-7h14m66 31v10m-5-5h10" fill="none" stroke="var(--season-gold-edge)" strokeWidth="1.05" strokeLinecap="round" />
     </svg>
   );
 }
@@ -54,7 +57,15 @@ export default function ChristmasDecorations() {
 
   return (
     <>
-      {createPortal(<BannerDecoration />, banner)}
+      {createPortal(
+        <>
+          <BannerDecoration />
+          <svg className="seasonal-banner-snowflake" viewBox="0 0 80 80" aria-hidden="true" focusable="false">
+            <path d="M40 6v68M10.5 23l59 34m0-34-59 34M29 12l11 11 11-11M29 68l11-11 11 11M11 37l15-4-4-15m36 44-4-15 15-4M11 43l15 4-4 15m36-44-4 15 15 4" fill="none" stroke="currentColor" strokeWidth="1.55" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </>,
+        banner,
+      )}
       {productsTitle && createPortal(
         <svg className="seasonal-title-cap" viewBox="0 0 34 11" aria-hidden="true" focusable="false">
           <path d="M1 7c0-1.8 2.1-3.5 4.7-3.5C6.2.3 11-.1 13 2.1 15.8.4 19.2.9 21 3c1.7-.9 4.8-.4 6.2 1.4C30.3 3.8 33 5.2 33 7.4c0 2.1-2.6 2.3-5.7 1.8-3.2-.5-4.8-1-7 .1-3 1.2-5.8-.8-9.2 0C6 10.7 1 10 1 7Z" fill="#fffefa" stroke="var(--season-gold-edge)" strokeWidth=".65" />

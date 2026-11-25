@@ -62,7 +62,7 @@ export function SiteHeader({ brandName, categories, contact, featured, season, a
   }, [brandName]);
 
   useEffect(() => {
-    if (!topRow.current) return;
+    if (!topRow.current || typeof IntersectionObserver === 'undefined') return;
     const observer = new IntersectionObserver(([entry]) => setPinned(entry.boundingClientRect.bottom <= 1), { threshold: [0, 0.01, 1] });
     observer.observe(topRow.current);
     return () => observer.disconnect();

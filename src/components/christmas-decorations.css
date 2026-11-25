@@ -3,9 +3,9 @@ body[data-season='christmas'] {
   --season-gold-edge: #8a6839;
 }
 
-body:not([data-season='christmas']) :is(.seasonal-banner-decoration, .seasonal-title-cap, .seasonal-title-bauble, .seasonal-footer-decoration) { display: none; }
+body:not([data-season='christmas']) :is(.seasonal-banner-decoration, .seasonal-banner-snowflake, .seasonal-title-cap, .seasonal-title-bauble, .seasonal-footer-decoration) { display: none; }
 
-:is(.seasonal-banner-decoration, .seasonal-title-cap, .seasonal-title-bauble, .seasonal-footer-decoration) {
+:is(.seasonal-banner-decoration, .seasonal-banner-snowflake, .seasonal-title-cap, .seasonal-title-bauble, .seasonal-footer-decoration) {
   position: absolute;
   pointer-events: none;
 }
@@ -16,6 +16,15 @@ body:not([data-season='christmas']) :is(.seasonal-banner-decoration, .seasonal-t
   width: clamp(5.35rem, 15vw, 10.875rem);
   height: auto;
   border-start-end-radius: 1.5rem;
+}
+
+.seasonal-banner-snowflake {
+  z-index: 2;
+  inset: 7% clamp(5.1rem, 14vw, 13rem) auto auto;
+  width: clamp(2.55rem, 6.35vw, 5.75rem);
+  height: auto;
+  color: var(--season-forest);
+  opacity: .17;
 }
 
 :is(h2:has(> .seasonal-title-cap), h2:has(> .seasonal-title-bauble), .site-footer:has(> .seasonal-footer-decoration)) { position: relative; }
