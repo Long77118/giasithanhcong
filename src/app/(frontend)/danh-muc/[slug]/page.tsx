@@ -19,10 +19,11 @@ import { resolveOpenGraphImages } from '@/lib/seo-images';
 import { categoryAncestors } from '@/lib/category-tree';
 import { decodePublicSlugParam, parsePositivePage, publicContentPath, withPublicSearchParams, type PublicSearchParams } from '@/lib/slug';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { MediaImage } from '@/components/MediaImage';
-import { ProductCard } from '@/components/ProductCard';
-import { catalogCardSizes } from '@/lib/storefront-image-sizes';
+import { MediaImage, resolveMediaUrl } from '@/components/MediaImage';
+import { ListingHeading } from '@/components/ListingHeading';
+import { ProductListingCard } from '@/components/ProductListingCard';
 import { Pagination } from '@/components/Pagination';
+import '@/components/listing.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -135,9 +136,10 @@ export default async function CategoryPage({
       c.parent && typeof c.parent === 'object' ? c.parent.id : c.parent;
     return parentId === category.id;
   });
+  const categoryImage = resolveMediaUrl(category.image);
 
   return (
-    <div className="site-shell py-8 lg:py-12">
+    <div className="site-shell listing-page listing-products listing-category py-4 sm:py-7 lg:py-8">
       <Breadcrumbs
         siteUrl={siteUrl}
         items={[
@@ -154,87 +156,71 @@ export default async function CategoryPage({
         ]}
       />
 
-      <section className="grid grid-cols-1 items-center gap-8 rounded-xl border border-slate-200 bg-white p-4 sm:p-8 lg:grid-cols-12">
-        <div className="lg:col-span-8">
-          <p className="text-xs font-semibold tracking-wide text-[#B45309]">
-            Danh mục sản phẩm bán sỉ
-          </p>
-          <h1 className="mt-2 font-display text-3xl font-bold text-[#0C2340]">
-            {category.name}
-          </h1>
-          {category.description && (
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">
-              {category.description}
-            </p>
-          )}
-          <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-slate-500">
-            <span className="tabular-nums">
-              {catalog.totalDocs} sản phẩm đang cung cấp
-            </span>
+      <ListingHeading
+        title={category.name}
+        description={category.description}
+        summary={`${new Intl.NumberFormat('vi-VN').format(catalog.totalDocs)} sản phẩm`}
+        actions={(
+          <div className="listing-category-actions">
             <Link
               href="/lien-he#bao-gia"
-              className="font-semibold text-[#B45309] hover:underline"
+              className="listing-button"
+              aria-label={`Nhận báo giá trọn nhóm ${category.name}`}
             >
-              Nhận báo giá trọn nhóm {category.name} →
+              Nhận báo giá trọn nhóm
             </Link>
           </div>
-        </div>
-        <div className="lg:col-span-4">
-          <div className="aspect-[4/3] overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+        )}
+        media={categoryImage.url ? (
+          <div className="listing-category-image">
             <MediaImage
               media={category.image}
-              prefer="card"
-              sizes="(min-width: 64rem) calc(33.333vw - 65px), (min-width: 40rem) calc(100vw - 116px), calc(100vw - 66px)"
-              fallbackTitle={category.name}
+              sizes="(min-width: 40rem) clamp(7rem, 14vw, 10rem), clamp(3.5rem, 19vw, 5rem)"
             />
           </div>
-        </div>
-      </section>
+        ) : undefined}
+      />
 
       {childCategories.length > 0 && (
-        <div className="mt-6 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-slate-500">Nhóm con:</span>
-          {childCategories.map((child) => (
-            <Link
-              key={child.id}
-              href={publicContentPath('product-categories', child.slug)}
-              className="inline-flex min-h-[36px] items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-[#0C2340] hover:text-[#0C2340]"
-            >
-              {child.name}
-            </Link>
-          ))}
+        <div className="listing-filter-panel listing-category-children">
+          <h2 id="listing-category-children">Danh mục con</h2>
+          <nav className="listing-chip-row listing-quick-filters" aria-labelledby="listing-category-children">
+            {childCategories.map((child) => (
+              <Link key={child.id} href={publicContentPath('product-categories', child.slug)} className="listing-chip">
+                {child.name}
+              </Link>
+            ))}
+          </nav>
         </div>
       )}
 
-      {catalog.docs.length === 0 ? (
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-10 text-center">
-          <h2 className="font-display text-lg font-semibold text-slate-900">
-            Danh mục hiện chưa có sản phẩm xuất bản
-          </h2>
-          <p className="mt-2 text-sm text-slate-600">
-            Vui lòng quay lại danh sách tổng hợp hoặc gửi yêu cầu để được tư vấn quy cách tương đương.
-          </p>
-          <Link
-            href="/san-pham"
-            className="mt-5 inline-flex min-h-[44px] items-center rounded-lg bg-[#0C2340] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#163861]"
-          >
-            Xem tất cả sản phẩm
-          </Link>
+      <section className="listing-results" aria-labelledby="listing-category-results">
+        <h2 id="listing-category-results" className="sr-only">Sản phẩm trong danh mục</h2>
+        {catalog.totalPages > 1 && (
+          <p className="listing-page-number">Trang {catalog.page} / {catalog.totalPages}</p>
+        )}
+        {catalog.docs.length === 0 ? (
+          <div className="listing-empty">
+            <h3>Danh mục hiện chưa có sản phẩm xuất bản</h3>
+            <p>Vui lòng quay lại danh sách tổng hợp hoặc gửi yêu cầu để được tư vấn quy cách tương đương.</p>
+            <div className="listing-empty-actions">
+              <Link href="/san-pham" className="listing-button listing-button--primary">Xem tất cả sản phẩm</Link>
+            </div>
+          </div>
+        ) : (
+          <div className="listing-grid">
+            {catalog.docs.map((product, index) => <ProductListingCard key={product.id} product={product} index={index} />)}
+          </div>
+        )}
+        <div className="listing-pagination">
+          <Pagination
+            currentPage={catalog.page}
+            totalPages={catalog.totalPages}
+            basePath={categoryPath}
+            queryParams={filters}
+          />
         </div>
-      ) : (
-        <div className="catalog-grid mt-8">
-          {catalog.docs.map((product) => (
-            <ProductCard key={product.id} product={product} sizes={catalogCardSizes} />
-          ))}
-        </div>
-      )}
-
-      <Pagination
-        currentPage={catalog.page}
-        totalPages={catalog.totalPages}
-        basePath={categoryPath}
-        queryParams={filters}
-      />
+      </section>
     </div>
   );
 }
