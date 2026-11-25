@@ -22,6 +22,7 @@ import { getHeaderContact } from '@/lib/header';
 import { publicContentPath } from '@/lib/slug';
 import { QuoteContactProvider } from '@/components/QuoteContactProvider';
 import { resolveSeasonalTheme } from '@/lib/seasonal-theme';
+import { SeasonalAnnouncement } from '@/components/SeasonalAnnouncement';
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin', 'vietnamese'],
@@ -92,7 +93,8 @@ export default async function FrontendLayout({
   const topCategories = categories.filter((c) => !c.parent);
   const headerContact = getHeaderContact(contact);
   const featured = featuredProducts.find(product => product.featured);
-  const season = resolveSeasonalTheme(settings?.seasonalTheme, new Date());
+  const now = new Date();
+  const season = resolveSeasonalTheme(settings?.seasonalTheme, now);
 
   return (
     <html
@@ -108,9 +110,10 @@ export default async function FrontendLayout({
         </a>
         <SiteHeader brandName={contact.brandName} categories={categoryMenuItems(categories)} contact={headerContact}
           featured={featured ? { name: featured.name, href: publicContentPath('products', featured.slug) } : null}
+          announcement={season?.announcement ? <SeasonalAnnouncement announcement={season.announcement} now={now} /> : undefined}
           season={season ? {
             theme: season.theme, expiresAt: season.expiresAt,
-            intensity: season.intensity, snow: season.snow, lights: season.lights,
+            intensity: season.intensity, snow: season.snow, lights: season.lights, decorations: season.decorations,
           } : undefined} />
         <main id="main-content" className="flex-1">
           <QuoteContactProvider zaloUrl={contact.zaloUrl}>{children}</QuoteContactProvider>

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   getChristmasCountdown,
+  getSeasonalAnnouncementIdentity,
   getSeasonalScheduleError,
   getSnowParticleCount,
   normalizeSeasonalAnnouncementHref,
@@ -97,4 +98,16 @@ test('Christmas countdown runs until midnight in Vietnam and rounds the last sec
 test('the next countdown begins when the Vietnamese calendar year changes', () => {
   assert.equal(getChristmasCountdown(new Date('2026-12-31T16:59:59.999Z')), null);
   assert.equal(getChristmasCountdown(new Date('2026-12-31T17:00:00.000Z'))?.deadline, Date.parse('2027-12-25T17:00:00Z'));
+});
+
+test('an announcement dismissal is scoped to its text, link and year in Vietnam', () => {
+  const notice = { text: 'Chúc bạn Giáng sinh an lành', href: '/san-pham' };
+  const beforeNewYear = new Date('2026-12-31T16:59:59.999Z');
+  const afterNewYear = new Date('2026-12-31T17:00:00.000Z');
+  const identity = getSeasonalAnnouncementIdentity(notice, beforeNewYear);
+  assert.equal(getSeasonalAnnouncementIdentity(notice, december), identity);
+  assert.notEqual(getSeasonalAnnouncementIdentity({ ...notice, href: '/lien-he' }, beforeNewYear), identity);
+  assert.notEqual(getSeasonalAnnouncementIdentity({ text: notice.text }, beforeNewYear), identity);
+  assert.notEqual(getSeasonalAnnouncementIdentity({ ...notice, text: 'Thông báo khác' }, beforeNewYear), identity);
+  assert.notEqual(getSeasonalAnnouncementIdentity(notice, afterNewYear), identity);
 });

@@ -1,0 +1,93 @@
+:is(body[data-season='christmas'], .seasonal-announcement) {
+  --season-forest: #22392b;
+  --season-sage: #eaf0dc;
+  --season-champagne: #efd49c;
+}
+
+.seasonal-announcement {
+  border-block-end: 1px solid var(--season-champagne);
+  background: var(--season-forest);
+  color: var(--season-sage);
+}
+
+.seasonal-announcement:is([data-dismissed='true'], [hidden]),
+body:has(#main-content [data-season-excluded]) .seasonal-announcement { display: none; }
+
+.seasonal-announcement-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 2.75rem;
+  align-items: center;
+  column-gap: .65rem;
+  min-height: 2.875rem;
+}
+
+.seasonal-announcement-message {
+  display: flex;
+  align-items: baseline;
+  gap: .65rem;
+  padding-block: .55rem;
+  font-size: .8125rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.seasonal-announcement-message p { min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.seasonal-announcement-message svg { align-self: center; flex: none; color: var(--season-champagne); }
+.seasonal-announcement .seasonal-announcement-link {
+  display: inline-block;
+  margin-inline-start: .65em;
+  color: var(--season-champagne);
+  white-space: nowrap;
+  text-decoration: underline;
+  text-underline-offset: .18em;
+}
+
+.seasonal-announcement-countdown { grid-column: 1; min-height: 1.875rem; }
+.seasonal-countdown {
+  display: flex;
+  align-items: baseline;
+  gap: .55rem;
+  font-size: .75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+.seasonal-countdown time { font-weight: 700; white-space: nowrap; }
+.seasonal-countdown time b { margin-inline-start: .2rem; }
+.seasonal-countdown-label { color: var(--season-champagne); }
+
+.seasonal-announcement-close-slot { grid-area: 1 / 2; min-height: 2.75rem; }
+.seasonal-announcement-close {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border-radius: .65rem;
+  color: var(--season-champagne);
+  cursor: pointer;
+}
+.seasonal-announcement-close:hover { background: var(--season-champagne); color: var(--season-forest); }
+.seasonal-announcement :is(.seasonal-announcement-close, .seasonal-announcement-link):focus-visible {
+  outline: 2px solid var(--season-champagne);
+  outline-offset: 2px;
+}
+
+@media (width < 48rem) {
+  .seasonal-announcement-inner { column-gap: .25rem; }
+  .seasonal-announcement-message { gap: .4rem; }
+  .seasonal-announcement-message svg { width: .9rem; height: .9rem; }
+  .seasonal-announcement-countdown { padding-inline-start: 1.3rem; }
+}
+
+@media (width >= 48rem) {
+  .seasonal-announcement-inner { column-gap: .875rem; }
+  .seasonal-announcement-inner:has(.seasonal-announcement-countdown) { grid-template-columns: minmax(0, 1fr) 15.25rem 2.75rem; }
+  .seasonal-announcement-countdown {
+    grid-area: 1 / 2;
+    display: grid;
+    align-content: center;
+    min-height: 1.625rem;
+    padding-inline-start: .85rem;
+    border-inline-start: 1px solid color-mix(in srgb, var(--season-champagne) 40%, transparent);
+  }
+  .seasonal-announcement-inner:has(.seasonal-announcement-countdown) .seasonal-announcement-close-slot { grid-column: 3; }
+}

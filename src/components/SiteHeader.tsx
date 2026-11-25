@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type FormEventHandler, type Ref } from 'react';
+import { useEffect, useRef, useState, type FormEventHandler, type ReactNode, type Ref } from 'react';
 import dynamic from 'next/dynamic';
 import Form from 'next/form';
 import Link from 'next/link';
@@ -33,12 +33,13 @@ function HeaderSearch({ className = '', inputRef, onSubmit, active = true, compa
   );
 }
 
-export function SiteHeader({ brandName, categories, contact, featured, season }: {
+export function SiteHeader({ brandName, categories, contact, featured, season, announcement }: {
   brandName: string;
   categories: CategoryMenuItem[];
   contact: HeaderContact;
   featured: HeaderFeaturedProduct | null;
   season?: SeasonalScopeConfig;
+  announcement?: ReactNode;
 }) {
   const pathname = usePathname();
   const topRow = useRef<HTMLDivElement>(null);
@@ -46,6 +47,7 @@ export function SiteHeader({ brandName, categories, contact, featured, season }:
   const searchInput = useRef<HTMLInputElement>(null);
   const [pinned, setPinned] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const seasonalPath = pathname && !/^\/xem-truoc(?:\/|$)/.test(pathname) ? pathname : null;
 
   useEffect(() => {
     const row = topRow.current;
@@ -78,13 +80,16 @@ export function SiteHeader({ brandName, categories, contact, featured, season }:
 
   return (
     <header className="site-header" data-pinned={pinned}>
-      {season && pathname && !/^\/xem-truoc(?:\/|$)/.test(pathname) && <SeasonalScope {...season} pathname={pathname} />}
-      <div ref={topRow} className="site-header-top" inert={pinned}>
-        <div className="site-shell site-header-top-inner">
-          <HeaderBrand name={brandName} />
-          <HeaderSearch className="site-header-desktop-search" active={!pinned && !searchOpen} />
-          <HeaderContactDetails contact={contact} />
-          <nav aria-label="Báo giá tại đầu trang"><HeaderQuoteLink contact={contact} /></nav>
+      {season && seasonalPath && <SeasonalScope {...season} pathname={seasonalPath} hasAnnouncement={Boolean(announcement)} />}
+      <div ref={topRow} inert={pinned}>
+        {seasonalPath && announcement}
+        <div className="site-header-top">
+          <div className="site-shell site-header-top-inner">
+            <HeaderBrand name={brandName} />
+            <HeaderSearch className="site-header-desktop-search" active={!pinned && !searchOpen} />
+            <HeaderContactDetails contact={contact} />
+            <nav aria-label="Báo giá tại đầu trang"><HeaderQuoteLink contact={contact} /></nav>
+          </div>
         </div>
       </div>
       <div className="site-header-bar">

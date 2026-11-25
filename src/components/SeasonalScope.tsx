@@ -6,8 +6,10 @@ import type { ActiveSeason } from '@/lib/seasonal-theme';
 import './seasonal.css';
 
 const SeasonalSnow = dynamic(() => import('./SeasonalSnow'), { ssr: false });
+const SeasonalAnnouncementControls = dynamic(() => import('./SeasonalAnnouncementControls'), { ssr: false });
+const ChristmasDecorations = dynamic(() => import('./ChristmasDecorations'), { ssr: false });
 
-export type SeasonalScopeConfig = Pick<ActiveSeason, 'theme' | 'expiresAt' | 'intensity' | 'snow' | 'lights'>;
+export type SeasonalScopeConfig = Pick<ActiveSeason, 'theme' | 'expiresAt' | 'intensity' | 'snow' | 'lights' | 'decorations'>;
 
 function ChristmasLights() {
   const bulbAnchors = [[27, 6], [76, 9], [124, 9], [173, 6]];
@@ -28,7 +30,8 @@ function ChristmasLights() {
   );
 }
 
-export default function SeasonalScope({ theme, expiresAt, pathname, intensity, snow, lights }: SeasonalScopeConfig & { pathname: string }) {
+export default function SeasonalScope({ theme, expiresAt, pathname, intensity, snow, lights, decorations, hasAnnouncement }:
+  SeasonalScopeConfig & { pathname: string; hasAnnouncement: boolean }) {
   const [active, setActive] = useState(false);
 
   useEffect(() => {
@@ -43,6 +46,8 @@ export default function SeasonalScope({ theme, expiresAt, pathname, intensity, s
       const canShow = remaining > 0 && !main.querySelector('[data-season-excluded]');
       if (canShow) body.dataset.season = theme;
       else delete body.dataset.season;
+      const notice = document.getElementById('seasonal-announcement');
+      if (notice) notice.hidden = remaining <= 0;
       setActive(canShow);
 
       if (remaining <= 0) observer.disconnect();
@@ -68,6 +73,8 @@ export default function SeasonalScope({ theme, expiresAt, pathname, intensity, s
     <>
       {lights && <ChristmasLights />}
       {snow && <SeasonalSnow intensity={intensity} />}
+      {hasAnnouncement && <SeasonalAnnouncementControls />}
+      {decorations && pathname === '/' && <ChristmasDecorations />}
     </>
   );
 }

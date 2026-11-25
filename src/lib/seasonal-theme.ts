@@ -10,6 +10,7 @@ const vietnamDate = new Intl.DateTimeFormat('en-CA', {
 });
 
 export const seasonalAnnouncementMaxLength = 100;
+export const seasonalAnnouncementStorageKey = 'storefront:seasonal:announcement';
 
 const snowParticles = { light: 26, medium: 44, strong: 64 } as const;
 type SnowIntensity = keyof typeof snowParticles;
@@ -38,6 +39,10 @@ export interface ActiveSeason {
   decorations: boolean;
   scrollEffects: boolean;
   announcement: { text: string; href?: string } | null;
+}
+
+export function getSeasonalAnnouncementIdentity(announcement: NonNullable<ActiveSeason['announcement']>, now: Date): string {
+  return JSON.stringify([localDateKey(now).slice(0, 4), announcement.text, announcement.href ?? '']);
 }
 
 function localDateKey(now: Date): string {

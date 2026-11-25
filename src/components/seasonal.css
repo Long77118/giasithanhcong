@@ -1,7 +1,4 @@
 body[data-season='christmas'] {
-  --season-forest: #22392b;
-  --season-sage: #eaf0dc;
-  --season-champagne: #efd49c;
   --season-lamp-edge: #8a6839;
   --season-snow-fill: #fffdf4;
   --season-snow-outline: rgb(85 112 100 / .50);

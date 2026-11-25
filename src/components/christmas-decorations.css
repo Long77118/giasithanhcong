@@ -1,0 +1,49 @@
+body[data-season='christmas'] {
+  --season-brick: #a3422f;
+  --season-gold-edge: #8a6839;
+}
+
+body:not([data-season='christmas']) :is(.seasonal-banner-decoration, .seasonal-title-cap, .seasonal-title-bauble, .seasonal-footer-decoration) { display: none; }
+
+:is(.seasonal-banner-decoration, .seasonal-title-cap, .seasonal-title-bauble, .seasonal-footer-decoration) {
+  position: absolute;
+  pointer-events: none;
+}
+
+.seasonal-banner-decoration {
+  z-index: 2;
+  inset: 0 0 auto auto;
+  width: clamp(5.35rem, 15vw, 10.875rem);
+  height: auto;
+  border-start-end-radius: 1.5rem;
+}
+
+:is(h2:has(> .seasonal-title-cap), h2:has(> .seasonal-title-bauble), .site-footer:has(> .seasonal-footer-decoration)) { position: relative; }
+.seasonal-title-cap { inset: -.425rem auto auto -.12rem; width: 1.8rem; height: auto; }
+.seasonal-title-bauble { inset: -.85rem auto auto -.375rem; width: .68rem; height: auto; }
+
+.seasonal-footer-decoration {
+  inset: .25rem 0 auto;
+  width: min(14rem, 58%);
+  height: auto;
+  margin-inline: auto;
+  color: var(--season-champagne);
+  opacity: .78;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body[data-season='christmas'] .home-page:has(.seasonal-banner-decoration) :is(.home-banner-action, .home-quote-button) { position: relative; overflow: hidden; }
+  body[data-season='christmas'] .home-page:has(.seasonal-banner-decoration) :is(.home-banner-action, .home-quote-button):hover::after {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 30%, var(--season-champagne) 50%, transparent 70%);
+    pointer-events: none;
+    animation: seasonal-cta-glint .65s ease-out both;
+    content: '';
+  }
+  @keyframes seasonal-cta-glint {
+    from { transform: translateX(-80%); }
+    to { transform: translateX(80%); }
+  }
+}
