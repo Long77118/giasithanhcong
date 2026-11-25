@@ -18,12 +18,15 @@ import { resolveOpenGraphImages } from '@/lib/seo-images';
 import { parsePositivePage, withPublicSearchParams, type PublicSearchParams } from '@/lib/slug';
 import { categoryTreeOptions } from '@/lib/category-tree';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { ProductCard } from '@/components/ProductCard';
-import { compactCatalogCardSizes } from '@/lib/storefront-image-sizes';
+import { ProductListingCard } from '@/components/ProductListingCard';
+import { ListingHeading } from '@/components/ListingHeading';
 import { CatalogFilters } from '@/components/CatalogFilters';
 import { Pagination } from '@/components/Pagination';
+import '@/components/listing.css';
 
 export const dynamic = 'force-dynamic';
+
+const productsPerPage = 12;
 
 const catalogSorts = [
   { value: '', label: 'Mới thêm' },
@@ -107,7 +110,7 @@ export default async function ProductsPage({ searchParams }: SearchParamsProp) {
       categorySlug: category,
       sort,
       page,
-      limit: 9,
+      limit: productsPerPage,
     }),
   ]);
 
@@ -136,7 +139,7 @@ export default async function ProductsPage({ searchParams }: SearchParamsProp) {
   ].filter(filter => filter.label);
 
   return (
-    <div className="site-shell catalog-page py-4 sm:py-7 lg:py-8">
+    <div className="site-shell listing-page listing-products py-4 sm:py-7 lg:py-8">
       <Breadcrumbs
         siteUrl={siteUrl}
         items={[
@@ -145,16 +148,13 @@ export default async function ProductsPage({ searchParams }: SearchParamsProp) {
         ]}
       />
 
-      <header className="catalog-masthead rounded-2xl px-4 py-4 text-white sm:px-7 sm:py-6 lg:px-9 lg:py-8">
-        <h1 className="font-display text-[1.6rem] font-bold leading-tight tracking-tight sm:text-4xl lg:text-[2.75rem]">
-          Danh mục sản phẩm bán sỉ
-        </h1>
-        <p className="mt-2 hidden max-w-xl text-sm text-slate-200 sm:block">
-          Tra theo mã hàng, đối chiếu quy cách đóng gói và số lượng đặt tối thiểu.
-        </p>
-      </header>
+      <ListingHeading
+        title="Danh mục sản phẩm bán sỉ"
+        description="Tra theo mã hàng, quy cách đóng gói và số lượng đặt tối thiểu."
+        summary={`${new Intl.NumberFormat('vi-VN').format(catalog.totalDocs)} sản phẩm`}
+      />
 
-      <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3 sm:mt-4 sm:p-4">
+      <div className="listing-filter-panel">
         <CatalogFilters
           key={JSON.stringify([q, category, activeSort.value, page])}
           query={q}
@@ -164,15 +164,13 @@ export default async function ProductsPage({ searchParams }: SearchParamsProp) {
           sorts={catalogSorts}
         />
         {topCategories.length > 0 && (
-          <nav aria-label="Lọc nhanh theo nhóm hàng" className="mt-2.5 flex gap-2 overflow-x-auto py-1 sm:mt-3 lg:flex-wrap">
+          <nav aria-label="Lọc nhanh theo nhóm hàng" className="listing-chip-row listing-quick-filters">
             {[{ slug: '', name: 'Tất cả nhóm' }, ...topCategories].map(({ slug, name }) => (
               <Link
                 key={slug}
                 href={withPublicSearchParams('/san-pham', { ...filters, category: slug || undefined })}
                 aria-current={category === slug ? 'true' : undefined}
-                className={`inline-flex min-h-11 shrink-0 items-center rounded-lg px-3 text-xs font-semibold focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#0C2340] ${category === slug
-                  ? 'bg-[#e6eef6] text-[#0C2340]'
-                  : 'bg-slate-50 text-slate-700 hover:bg-slate-100'}`}
+                className="listing-chip"
               >
                 {name}
               </Link>
@@ -181,26 +179,21 @@ export default async function ProductsPage({ searchParams }: SearchParamsProp) {
         )}
       </div>
 
-      <section aria-label="Kết quả sản phẩm" className="mt-4 sm:mt-6">
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
-          <h2 className="font-display text-base font-bold text-[#0C2340] sm:text-lg">
-            {new Intl.NumberFormat('vi-VN').format(catalog.totalDocs)} sản phẩm
-          </h2>
-          {catalog.totalPages > 1 && (
-            <span className="text-xs font-medium tabular-nums text-slate-600">
-              Trang {catalog.page} / {catalog.totalPages}
-            </span>
-          )}
-        </div>
+      <section aria-labelledby="product-listing-results" className="listing-results">
+        <h2 id="product-listing-results" className="sr-only">Kết quả sản phẩm</h2>
+        {catalog.totalPages > 1 && (
+          <p className="listing-page-number">Trang {catalog.page} / {catalog.totalPages}</p>
+        )}
 
         {appliedFilters.length > 0 && (
-          <ul aria-label="Bộ lọc đang áp dụng" className="mt-2 flex min-w-0 flex-wrap gap-2">
+          <ul aria-label="Bộ lọc đang áp dụng" className="listing-chip-row listing-applied-filters" role="list">
             {appliedFilters.map(({ key, label }) => (
               <li key={key} className="min-w-0 max-w-full">
                 <Link
                   href={withPublicSearchParams('/san-pham', { ...filters, [key]: undefined })}
                   aria-label={`Bỏ lọc ${label}`}
-                  className="inline-flex min-h-11 max-w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-[#294762] hover:border-slate-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0C2340]"
+                  className="listing-chip"
+                  data-tone="sand"
                 >
                   <span className="min-w-0 [overflow-wrap:anywhere]">{label}</span>
                   <X size={13} className="shrink-0" aria-hidden="true" />
@@ -209,7 +202,7 @@ export default async function ProductsPage({ searchParams }: SearchParamsProp) {
             ))}
             {appliedFilters.length > 1 && (
               <li>
-                <Link href="/san-pham" className="inline-flex min-h-11 items-center px-1 text-xs font-semibold text-[#294762] underline underline-offset-4">
+                <Link href="/san-pham" className="listing-clear-filters">
                   Xóa tất cả
                 </Link>
               </li>
@@ -218,35 +211,37 @@ export default async function ProductsPage({ searchParams }: SearchParamsProp) {
         )}
 
         {catalog.docs.length === 0 ? (
-          <div className="mt-3 rounded-2xl border border-slate-200 bg-white px-4 py-8 text-center sm:p-10">
-            <Search size={24} className="mx-auto text-[#6b8197]" aria-hidden="true" />
-            <h3 className="mt-3 font-display text-lg font-bold text-[#0C2340]">Không tìm thấy sản phẩm phù hợp</h3>
-            <p className="mt-2 text-sm text-slate-600">
+          <div className="listing-empty">
+            <span className="listing-empty-icon"><Search size={24} aria-hidden="true" /></span>
+            <h3>Không tìm thấy sản phẩm phù hợp</h3>
+            <p>
               Thử mã hàng, từ khóa ngắn hơn hoặc bỏ bớt bộ lọc.
             </p>
-            <div className="mt-4 flex flex-wrap justify-center gap-2">
-              <Link href="/san-pham" className="inline-flex min-h-11 items-center rounded-lg bg-[#0C2340] px-4 text-sm font-semibold text-white hover:bg-[#163861]">
+            <div className="listing-empty-actions">
+              <Link href="/san-pham" className="listing-button listing-button--primary">
                 Xem tất cả sản phẩm
               </Link>
-              <Link href="/lien-he#bao-gia" className="inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-4 text-sm font-semibold text-[#0C2340] hover:bg-slate-50">
+              <Link href="/lien-he#bao-gia" className="listing-button">
                 Nhờ tư vấn tìm hàng
               </Link>
             </div>
           </div>
         ) : (
-          <div className="catalog-grid mt-3 max-sm:gap-2.5">
-            {catalog.docs.map((product) => (
-              <ProductCard key={product.id} product={product} sizes={compactCatalogCardSizes} variant="catalog" />
+          <div className="listing-grid">
+            {catalog.docs.map((product, index) => (
+              <ProductListingCard key={product.id} product={product} index={index} />
             ))}
           </div>
         )}
 
-        <Pagination
-          currentPage={catalog.page}
-          totalPages={catalog.totalPages}
-          basePath="/san-pham"
-          queryParams={filters}
-        />
+        <div className="listing-pagination">
+          <Pagination
+            currentPage={catalog.page}
+            totalPages={catalog.totalPages}
+            basePath="/san-pham"
+            queryParams={filters}
+          />
+        </div>
       </section>
     </div>
   );
